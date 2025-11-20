@@ -422,6 +422,7 @@ router.get('/users/:userId/reset-flow/:flowId', async (req, res) => {
 
   // Get all submissions for this user/flow
   const submissions = await Submission.find({ user: userId, flow: flowId });
+
   const totalPoints = submissions.reduce((sum, s) => sum + s.pointsEarned, 0);
 
   // Check if bonus was awarded
@@ -437,6 +438,148 @@ router.get('/users/:userId/reset-flow/:flowId', async (req, res) => {
   await FlowProgress.deleteOne({ user: userId, flow: flowId });
 
   res.redirect('/admin/users');
+});
+
+// CSV Export for submissions
+router.get('/submissions/export', async (req, res) => {
+  const { flow, status, user, approved } = req.query;
+  const filter = {};
+  if (flow) filter.flow = flow;
+  if (status) filter.status = status;
+  if (user) filter.user = user;
+  if (approved === 'pending') filter.pointsAwarded = false;
+  if (approved === 'approved') filter.pointsAwarded = true;
+
+  const submissions = await Submission.find(filter)
+    .sort('-createdAt')
+    .populate('user testCase flow');
+
+  // Build CSV
+  const headers = [
+    'Date', 'Time', 'Username', 'Email', 'Flow', 'Test Case',
+    'Status', 'Points Earned', 'Approved', 'Feedback',
+    'Has Screenshot', 'Bug Points', 'Feedback Points', 'Screenshot Points',
+    'Useful Feedback', 'Admin Notes'
+  ];
+
+  const rows = submissions.map(sub => [
+    sub.createdAt.toLocaleDateString(),
+    sub.createdAt.toLocaleTimeString(),
+    sub.user ? sub.user.username : 'N/A',
+    sub.user ? sub.user.email : 'N/A',
+    sub.flow ? sub.flow.name : 'N/A',
+    sub.testCase ? sub.testCase.title : 'N/A',
+    sub.status,
+    sub.pointsEarned,
+    sub.pointsAwarded ? 'Yes' : 'No',
+    sub.feedback ? sub.feedback.replace(/[\n\r,]/g, ' ') : '',
+    sub.screenshot ? 'Yes' : 'No',
+    sub.status === 'failed' && (!sub.rejectedPoints || !sub.rejectedPoints.bug) ? '3' : '0',
+    sub.feedback && (!sub.rejectedPoints || !sub.rejectedPoints.feedback) ? '1' : '0',
+    sub.screenshot && (!sub.rejectedPoints || !sub.rejectedPoints.screenshot) ? '1' : '0',
+    sub.isUsefulFeedback ? 'Yes' : 'No',
+    sub.adminNotes ? sub.adminNotes.replace(/[\n\r,]/g, ' ') : ''
+  ]);
+
+  // Escape CSV values
+  const escapeCSV = (val) => {
+    const str = String(val);
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  };
+
+  const csvContent = [
+    headers.map(escapeCSV).join(','),
+    ...rows.map(row => row.map(escapeCSV).join(','))
+  ].join('\n');
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename=submissions-${Date.now()}.csv`);
+  res.send(csvContent);
+});
+
+// Flow Analytics Dashboard
+router.get('/analytics', async (req, res) => {
+  const FlowProgress = require('../models/FlowProgress');
+
+  const [flows, allSubmissions, allProgress, users] = await Promise.all([
+    Flow.find({ isActive: true }).populate('testCases'),
+    Submission.find().populate('user testCase flow'),
+    FlowProgress.find().populate('user flow'),
+    User.find({ role: 'tester' })
+  ]);
+
+  // Build analytics data for each flow
+  const flowAnalytics = flows.map(flow => {
+    const flowSubmissions = allSubmissions.filter(s => s.flow && s.flow._id.equals(flow._id));
+    const flowProgress = allProgress.filter(p => p.flow && p.flow._id.equals(flow._id) && p.user);
+
+    // Users who started this flow
+    const usersStarted = new Set(flowProgress.map(p => p.user._id.toString())).size;
+    // Users who completed this flow
+    const usersCompleted = flowProgress.filter(p => p.isCompleted).length;
+    // Users with all approved
+    const usersFullyApproved = flowProgress.filter(p => {
+      if (!p.isCompleted || !p.user) return false;
+      const userSubs = flowSubmissions.filter(s => s.user && s.user._id.equals(p.user._id));
+      return userSubs.length > 0 && userSubs.every(s => s.pointsAwarded);
+    }).length;
+
+    // Test case statistics
+    const testCaseStats = flow.testCases.map(tc => {
+      const tcSubs = flowSubmissions.filter(s => s.testCase && s.testCase._id.equals(tc._id));
+      const passed = tcSubs.filter(s => s.status === 'passed').length;
+      const failed = tcSubs.filter(s => s.status === 'failed').length;
+      const approved = tcSubs.filter(s => s.pointsAwarded).length;
+      const pending = tcSubs.filter(s => !s.pointsAwarded).length;
+
+      return {
+        id: tc._id,
+        title: tc.title,
+        total: tcSubs.length,
+        passed,
+        failed,
+        approved,
+        pending,
+        passRate: tcSubs.length > 0 ? Math.round((passed / tcSubs.length) * 100) : 0
+      };
+    });
+
+    return {
+      id: flow._id,
+      name: flow.name,
+      description: flow.description,
+      totalTestCases: flow.testCases.length,
+      completionBonus: flow.completionBonus,
+      usersStarted,
+      usersCompleted,
+      usersFullyApproved,
+      completionRate: usersStarted > 0 ? Math.round((usersCompleted / usersStarted) * 100) : 0,
+      totalSubmissions: flowSubmissions.length,
+      passedSubmissions: flowSubmissions.filter(s => s.status === 'passed').length,
+      failedSubmissions: flowSubmissions.filter(s => s.status === 'failed').length,
+      approvedSubmissions: flowSubmissions.filter(s => s.pointsAwarded).length,
+      pendingSubmissions: flowSubmissions.filter(s => !s.pointsAwarded).length,
+      testCaseStats
+    };
+  });
+
+  // Overall stats
+  const overallStats = {
+    totalFlows: flows.length,
+    totalTestCases: flows.reduce((sum, f) => sum + f.testCases.length, 0),
+    totalSubmissions: allSubmissions.length,
+    totalUsers: users.length,
+    approvedSubmissions: allSubmissions.filter(s => s.pointsAwarded).length,
+    pendingSubmissions: allSubmissions.filter(s => !s.pointsAwarded).length,
+    passRate: allSubmissions.length > 0
+      ? Math.round((allSubmissions.filter(s => s.status === 'passed').length / allSubmissions.length) * 100)
+      : 0
+  };
+
+  res.render('admin/analytics', { flowAnalytics, overallStats });
 });
 
 module.exports = router;

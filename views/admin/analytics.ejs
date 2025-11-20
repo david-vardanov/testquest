@@ -1,0 +1,472 @@
+<% layout('layouts/boilerplate') %>
+
+<style>
+  .stat-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #333;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #757575;
+  }
+  .flow-tree {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  .flow-header {
+    background: #f5f5f5;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .flow-body {
+    padding: 1rem;
+  }
+
+  /* Tree Flow Visualization */
+  .tree-flow-container {
+    padding: 1.5rem;
+    overflow-x: auto;
+  }
+  .tree-flow {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    min-width: max-content;
+  }
+  .tree-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+  .tree-node-box {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    min-width: 140px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  .tree-node-box.flow-start {
+    background: #1976d2;
+    border-color: #1976d2;
+    color: white;
+  }
+  .tree-node-box.flow-end {
+    background: #4caf50;
+    border-color: #4caf50;
+    color: white;
+  }
+  .tree-node-box.test-case {
+    background: #fafafa;
+  }
+  .tree-node-title {
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tree-node-count {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  .tree-node-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+  .tree-connector-line {
+    display: flex;
+    align-items: center;
+    padding: 0 0.5rem;
+  }
+  .connector-arrow {
+    width: 40px;
+    height: 2px;
+    background: #bdbdbd;
+    position: relative;
+  }
+  .connector-arrow::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -4px;
+    border: 5px solid transparent;
+    border-left-color: #bdbdbd;
+  }
+  .drop-off-indicator {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    color: #f44336;
+    white-space: nowrap;
+  }
+  .tree-node-stats {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.65rem;
+  }
+  .mini-stat {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .mini-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+  }
+  .mini-dot.passed { background: #4caf50; }
+  .mini-dot.failed { background: #f44336; }
+
+  /* Original styles */
+  .test-case-node {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #fafafa;
+    border-radius: 6px;
+    border-left: 3px solid #ddd;
+  }
+  .test-case-node.all-passed {
+    border-left-color: #4caf50;
+  }
+  .test-case-node.has-failed {
+    border-left-color: #f44336;
+  }
+  .test-case-node.pending {
+    border-left-color: #ff9800;
+  }
+  .node-title {
+    flex: 1;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .node-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+  }
+  .node-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .stat-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .stat-dot.passed { background: #4caf50; }
+  .stat-dot.failed { background: #f44336; }
+  .stat-dot.pending { background: #ff9800; }
+  .stat-dot.approved { background: #2196f3; }
+  .progress-bar-custom {
+    height: 6px;
+    border-radius: 3px;
+    background: #e0e0e0;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+  .progress-fill.passed { background: #4caf50; }
+  .progress-fill.failed { background: #f44336; }
+  .flow-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .flow-metric {
+    text-align: center;
+    padding: 0.5rem;
+    background: #f5f5f5;
+    border-radius: 4px;
+  }
+  .metric-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  .metric-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: #757575;
+  }
+  .tree-connector {
+    width: 20px;
+    border-left: 2px solid #ddd;
+    height: 100%;
+    margin-left: 10px;
+  }
+  .completion-badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+  }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">Flow Analytics</h2>
+</div>
+
+<!-- Overall Statistics -->
+<div class="row mb-4">
+  <div class="col-md-2">
+    <div class="stat-card">
+      <div class="stat-number"><%= overallStats.totalFlows %></div>
+      <div class="stat-label">Flows</div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="stat-card">
+      <div class="stat-number"><%= overallStats.totalTestCases %></div>
+      <div class="stat-label">Test Cases</div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="stat-card">
+      <div class="stat-number"><%= overallStats.totalUsers %></div>
+      <div class="stat-label">Testers</div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="stat-card">
+      <div class="stat-number"><%= overallStats.totalSubmissions %></div>
+      <div class="stat-label">Submissions</div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="stat-card">
+      <div class="stat-number"><%= overallStats.pendingSubmissions %></div>
+      <div class="stat-label">Pending</div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="stat-card">
+      <div class="stat-number"><%= overallStats.passRate %>%</div>
+      <div class="stat-label">Pass Rate</div>
+    </div>
+  </div>
+</div>
+
+<% if (flowAnalytics.length === 0) { %>
+  <div class="text-center py-5">
+    <div style="font-size: 3rem;">📊</div>
+    <h5 class="mt-3">No flows found</h5>
+    <p class="text-muted">Create flows to see analytics</p>
+  </div>
+<% } %>
+
+<!-- Flow Trees -->
+<% flowAnalytics.forEach(flow => { %>
+<div class="flow-tree">
+  <div class="flow-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-1"><%= flow.name %></h5>
+        <small class="text-muted"><%= flow.description || 'No description' %></small>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="completion-badge bg-primary text-white">
+          <%= flow.completionRate %>% completion
+        </span>
+        <span class="completion-badge bg-secondary text-white">
+          +<%= flow.completionBonus %> bonus
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-body">
+    <!-- Tree Flow Visualization -->
+    <div class="tree-flow-container" style="background: #f8f9fa; border-radius: 6px; margin-bottom: 1rem;">
+      <div class="tree-flow">
+        <!-- Start Node -->
+        <div class="tree-node">
+          <div class="tree-node-box flow-start">
+            <div class="tree-node-title">Start</div>
+            <div class="tree-node-count"><%= flow.usersStarted %></div>
+            <div class="tree-node-label">users</div>
+          </div>
+        </div>
+
+        <% flow.testCaseStats.forEach((tc, idx) => {
+          const prevTotal = idx === 0 ? flow.usersStarted : flow.testCaseStats[idx-1].total;
+          const dropOff = prevTotal - tc.total;
+        %>
+          <!-- Connector -->
+          <div class="tree-connector-line">
+            <div class="connector-arrow"></div>
+          </div>
+
+          <!-- Test Case Node -->
+          <div class="tree-node">
+            <div class="tree-node-box test-case">
+              <div class="tree-node-title" title="<%= tc.title %>"><%= tc.title %></div>
+              <div class="tree-node-count"><%= tc.total %></div>
+              <div class="tree-node-label">submissions</div>
+              <div class="tree-node-stats">
+                <div class="mini-stat">
+                  <span class="mini-dot passed"></span>
+                  <%= tc.passed %>
+                </div>
+                <div class="mini-stat">
+                  <span class="mini-dot failed"></span>
+                  <%= tc.failed %>
+                </div>
+              </div>
+            </div>
+            <% if (dropOff > 0) { %>
+              <div class="drop-off-indicator">-<%= dropOff %> drop-off</div>
+            <% } %>
+          </div>
+        <% }) %>
+
+        <!-- Connector to End -->
+        <div class="tree-connector-line">
+          <div class="connector-arrow"></div>
+        </div>
+
+        <!-- End Node -->
+        <div class="tree-node">
+          <div class="tree-node-box flow-end">
+            <div class="tree-node-title">Complete</div>
+            <div class="tree-node-count"><%= flow.usersCompleted %></div>
+            <div class="tree-node-label">users</div>
+          </div>
+          <% if (flow.usersStarted - flow.usersCompleted > 0) { %>
+            <div class="drop-off-indicator">
+              <%= Math.round((flow.usersCompleted / flow.usersStarted) * 100) || 0 %>% completion
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flow Summary Metrics -->
+    <div class="flow-metrics">
+      <div class="flow-metric">
+        <div class="metric-value"><%= flow.usersStarted %></div>
+        <div class="metric-label">Started</div>
+      </div>
+      <div class="flow-metric">
+        <div class="metric-value"><%= flow.usersCompleted %></div>
+        <div class="metric-label">Completed</div>
+      </div>
+      <div class="flow-metric">
+        <div class="metric-value"><%= flow.usersFullyApproved %></div>
+        <div class="metric-label">Fully Approved</div>
+      </div>
+      <div class="flow-metric">
+        <div class="metric-value"><%= flow.pendingSubmissions %></div>
+        <div class="metric-label">Pending Review</div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="mb-3">
+      <div class="d-flex justify-content-between mb-1">
+        <small class="text-muted">Pass/Fail Distribution</small>
+        <small>
+          <span style="color: #4caf50;"><%= flow.passedSubmissions %> passed</span> /
+          <span style="color: #f44336;"><%= flow.failedSubmissions %> failed</span>
+        </small>
+      </div>
+      <div class="progress-bar-custom">
+        <% const passPercent = flow.totalSubmissions > 0 ? (flow.passedSubmissions / flow.totalSubmissions * 100) : 0; %>
+        <div class="progress-fill passed" style="width: <%= passPercent %>%;"></div>
+      </div>
+    </div>
+
+    <!-- Test Case Details -->
+    <h6 class="mb-3" style="font-size: 0.75rem; text-transform: uppercase; color: #757575;">
+      Test Case Details (<%= flow.totalTestCases %>)
+    </h6>
+
+    <% flow.testCaseStats.forEach((tc, idx) => {
+      let nodeClass = 'test-case-node';
+      if (tc.pending > 0) nodeClass += ' pending';
+      else if (tc.failed > 0) nodeClass += ' has-failed';
+      else if (tc.passed > 0) nodeClass += ' all-passed';
+    %>
+      <div class="<%= nodeClass %>">
+        <div class="node-title">
+          <span style="color: #999; margin-right: 0.5rem;"><%= idx + 1 %>.</span>
+          <%= tc.title %>
+        </div>
+        <div class="node-stats">
+          <div class="node-stat">
+            <span class="stat-dot passed"></span>
+            <span><%= tc.passed %></span>
+          </div>
+          <div class="node-stat">
+            <span class="stat-dot failed"></span>
+            <span><%= tc.failed %></span>
+          </div>
+          <div class="node-stat">
+            <span class="stat-dot pending"></span>
+            <span><%= tc.pending %></span>
+          </div>
+          <div class="node-stat">
+            <span class="stat-dot approved"></span>
+            <span><%= tc.approved %></span>
+          </div>
+          <div class="node-stat" style="color: #757575;">
+            <%= tc.passRate %>%
+          </div>
+        </div>
+      </div>
+    <% }) %>
+
+    <% if (flow.testCaseStats.length === 0) { %>
+      <div class="text-center py-3 text-muted">
+        <em>No test cases in this flow</em>
+      </div>
+    <% } %>
+  </div>
+</div>
+<% }) %>
+
+<!-- Legend -->
+<div class="card mt-4">
+  <div class="card-body">
+    <h6 class="mb-3" style="font-size: 0.75rem; text-transform: uppercase; color: #757575;">Legend</h6>
+    <div class="d-flex gap-4" style="font-size: 0.8rem;">
+      <div class="d-flex align-items-center gap-1">
+        <span class="stat-dot passed"></span> Passed
+      </div>
+      <div class="d-flex align-items-center gap-1">
+        <span class="stat-dot failed"></span> Failed
+      </div>
+      <div class="d-flex align-items-center gap-1">
+        <span class="stat-dot pending"></span> Pending Review
+      </div>
+      <div class="d-flex align-items-center gap-1">
+        <span class="stat-dot approved"></span> Approved
+      </div>
+    </div>
+  </div>
+</div>
