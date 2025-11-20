@@ -61,3 +61,21 @@ jobs:
         run: |
           docker tag testquiz-app ${{ secrets.DOCKER_USERNAME }}/testquiz-app:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/testquiz-app:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /root/testquest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/testquiz-app:latest
+            docker-compose down
+            docker-compose up -d
