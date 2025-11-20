@@ -9,6 +9,7 @@ const path = require("path");
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const testerRoutes = require("./routes/tester");
+const User = require("./models/User");
 
 const app = express();
 
@@ -40,9 +41,14 @@ app.use(
   })
 );
 
-// Make user available to all views
-app.use((req, res, next) => {
-  res.locals.currentUser = req.session.user;
+// Make user available to all views (fetch fresh data for updated points)
+app.use(async (req, res, next) => {
+  if (req.session.user && req.session.user.id) {
+    const freshUser = await User.findById(req.session.user.id);
+    res.locals.currentUser = freshUser;
+  } else {
+    res.locals.currentUser = null;
+  }
   next();
 });
 
