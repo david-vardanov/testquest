@@ -1,0 +1,38 @@
+<% layout('layouts/boilerplate') %>
+
+<h2>My Submissions</h2>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Flow</th>
+      <th>Test Case</th>
+      <th>Status</th>
+      <th>Points</th>
+      <th>Approval</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% submissions.forEach(sub => { %>
+      <tr>
+        <td><%= sub.createdAt.toLocaleDateString() %></td>
+        <td><%= sub.flow ? sub.flow.name : 'N/A' %></td>
+        <td><%= sub.testCase ? sub.testCase.title : 'N/A' %></td>
+        <td class="status-<%= sub.status %>"><%= sub.status %></td>
+        <td><%= sub.pointsEarned %><%= sub.isUsefulFeedback ? ' +1' : '' %></td>
+        <td>
+          <% if (sub.pointsAwarded) { %>
+            <span class="badge bg-success">Approved</span>
+          <% } else { %>
+            <span class="badge bg-warning text-dark">Pending</span>
+          <% } %>
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<% if (submissions.length === 0) { %>
+  <div class="alert alert-info">No submissions yet. Start a test flow!</div>
+<% } %>

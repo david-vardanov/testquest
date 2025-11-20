@@ -1,0 +1,130 @@
+<% layout('layouts/boilerplate') %>
+
+<style>
+  .rank-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .rank-number { font-size: 3rem; font-weight: bold; }
+  .reward-progress { background: #f8f9fa; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+  .progress-bar-custom { height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #667eea; }
+  .claim-history { font-size: 0.8125rem; }
+  .claim-item { padding: 0.5rem; border-bottom: 1px solid #eee; }
+</style>
+
+<div class="row">
+  <div class="col-md-8">
+    <h4 class="mb-3">Available Test Flows</h4>
+
+    <div class="row">
+      <% flows.forEach(flow => {
+        const progress = progressMap[flow._id.toString()];
+        const completed = progress ? progress.completedTestCases.length : 0;
+        const total = flow.testCases.length;
+        const isComplete = progress && progress.isCompleted;
+      %>
+        <div class="col-md-6 mb-3">
+          <div class="card h-100">
+            <div class="card-body">
+              <h6 class="card-title"><%= flow.name %></h6>
+              <p class="card-text text-muted" style="font-size: 0.8rem;"><%= flow.description || 'No description' %></p>
+              <div class="d-flex justify-content-between" style="font-size: 0.75rem;">
+                <span><%= total %> tests</span>
+                <span>+<%= flow.completionBonus %> bonus</span>
+              </div>
+              <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar" style="width: <%= total > 0 ? (completed/total*100) : 0 %>%"></div>
+              </div>
+              <div class="mt-2">
+                <% if (isComplete) { %>
+                  <span class="badge bg-success">Completed</span>
+                <% } else { %>
+                  <a href="/tester/flow/<%= flow._id %>" class="btn btn-sm btn-dark">
+                    <%= completed > 0 ? 'Continue' : 'Start' %>
+                  </a>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <% if (flows.length === 0) { %>
+      <div class="alert alert-info">No test flows available yet.</div>
+    <% } %>
+  </div>
+
+  <div class="col-md-4">
+    <div class="rank-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.8;">Your Rank</div>
+          <div class="rank-number">#<%= rank %></div>
+        </div>
+        <div class="text-end">
+          <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.8;">Points</div>
+          <div style="font-size: 1.5rem; font-weight: bold;"><%= user.points %></div>
+        </div>
+      </div>
+      <% if (currentReward) { %>
+        <div class="mt-3 p-2" style="background: rgba(255,255,255,0.2); border-radius: 6px;">
+          <small>Current Prize:</small>
+          <div><strong><%= currentReward.prizeDescription || currentReward.name %></strong></div>
+        </div>
+      <% } %>
+    </div>
+
+    <% if (nextReward && pointsToNext) { %>
+      <div class="reward-progress">
+        <div class="d-flex justify-content-between" style="font-size: 0.75rem;">
+          <span>Next tier: <%= nextReward.prizeDescription || nextReward.name %></span>
+          <span><%= pointsToNext %> pts needed</span>
+        </div>
+        <div class="progress-bar-custom mt-2">
+          <div class="progress-fill" style="width: <%= Math.max(0, 100 - (pointsToNext / 10)) %>%"></div>
+        </div>
+      </div>
+    <% } %>
+
+    <h6>My Rewards</h6>
+    <div class="claim-history">
+      <% if (myClaims.length > 0) { %>
+        <% myClaims.forEach(claim => { %>
+          <div class="claim-item">
+            <div class="d-flex justify-content-between">
+              <span><%= claim.reward ? claim.reward.name : 'Reward' %></span>
+              <span class="badge <%= claim.status === 'delivered' ? 'bg-success' : claim.status === 'claimed' ? 'bg-info' : 'bg-warning' %>">
+                <%= claim.status %>
+              </span>
+            </div>
+            <div class="text-muted" style="font-size: 0.7rem;">Position #<%= claim.position %> · <%= claim.createdAt.toLocaleDateString() %></div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p class="text-muted" style="font-size: 0.8rem;">No rewards yet. Keep testing to climb the leaderboard!</p>
+      <% } %>
+    </div>
+
+    <h6 class="mt-3">Leaderboard</h6>
+    <table class="table table-sm" style="font-size: 0.8rem;">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>User</th>
+          <th>Pts</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% leaderboard.forEach(function(entry, i) { %>
+          <% if (i === 10) { %>
+            <tr><td colspan="3" class="text-center text-muted">...</td></tr>
+          <% } %>
+          <tr class="<%= entry.isCurrentUser ? 'table-warning' : '' %>">
+            <td><%= entry.position %></td>
+            <td><%= entry.username %> <% if (entry.isCurrentUser) { %><span class="badge bg-primary" style="font-size: 0.6rem;">You</span><% } %></td>
+            <td><%= entry.points %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

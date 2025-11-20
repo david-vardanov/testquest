@@ -1,0 +1,28 @@
+<% layout('layouts/boilerplate') %>
+
+<h2><%= user ? 'Edit' : 'Add' %> Tester</h2>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST" action="/admin/users<%= user ? '/' + user._id : '' %>">
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" value="<%= user ? user.username : '' %>" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" value="<%= user ? user.email : '' %>" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password <%= user ? '(leave blank to keep current)' : '' %></label>
+        <input type="password" name="password" class="form-control" <%= user ? '' : 'required' %>>
+      </div>
+      <div class="mb-3 form-check">
+        <input type="checkbox" name="isActive" class="form-check-input" <%= (!user || user.isActive) ? 'checked' : '' %>>
+        <label class="form-check-label">Active</label>
+      </div>
+      <button type="submit" class="btn btn-primary">Save</button>
+      <a href="/admin/users" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+</div>

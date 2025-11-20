@@ -1,0 +1,35 @@
+<% layout('layouts/boilerplate') %>
+
+<h4>Leaderboard</h4>
+<table class="table table-sm">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>User</th>
+      <th>Points</th>
+      <th>Reward</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% users.forEach(function(user, i) { %>
+      <% var pos = i + 1; %>
+      <% var userReward = null; %>
+      <% if (rewards) rewards.forEach(function(r) { if (!userReward && pos >= r.positionFrom && pos <= r.positionTo) userReward = r; }); %>
+      <tr>
+        <td><strong><%= pos %></strong></td>
+        <td><%= user.username %></td>
+        <td><%= user.points %></td>
+        <td>
+          <% if (userReward) { %>
+            <span class="badge bg-success"><%= userReward.prizeDescription || userReward.name %></span>
+          <% } else { %>
+            <span class="text-muted">-</span>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+    <% if (!users || users.length === 0) { %>
+      <tr><td colspan="4" class="text-muted text-center">No users yet</td></tr>
+    <% } %>
+  </tbody>
+</table>

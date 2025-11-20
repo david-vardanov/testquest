@@ -1,0 +1,286 @@
+<% layout('layouts/boilerplate') %>
+
+<style>
+  .submission-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+  }
+  .submission-card:hover {
+    border-color: #bdbdbd;
+  }
+  .submission-header {
+    background: #fafafa;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .submission-body {
+    padding: 1rem;
+  }
+  .feedback-box {
+    background: #fafafa;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    white-space: pre-wrap;
+    font-size: 0.8125rem;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  .screenshot-preview {
+    max-width: 120px;
+    max-height: 80px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .points-breakdown {
+    background: #f5f5f5;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    font-size: 0.8125rem;
+  }
+  .points-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+  }
+  .points-item.rejected {
+    text-decoration: line-through;
+    opacity: 0.4;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .status-dot.passed { background: #4caf50; }
+  .status-dot.failed { background: #f44336; }
+  .filter-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  .action-buttons {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+  .action-buttons .btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 500;
+  }
+  h6 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #757575;
+    margin-bottom: 0.5rem;
+  }
+</style>
+
+<h2 class="mb-4">Submissions Review</h2>
+
+<div class="filter-card">
+  <form method="GET" class="row g-3 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label">Flow</label>
+      <select name="flow" class="form-select">
+        <option value="">All Flows</option>
+        <% flows.forEach(f => { %>
+          <option value="<%= f._id %>" <%= filters.flow === f._id.toString() ? 'selected' : '' %>><%= f.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Status</label>
+      <select name="status" class="form-select">
+        <option value="">All</option>
+        <option value="passed" <%= filters.status === 'passed' ? 'selected' : '' %>>Passed</option>
+        <option value="failed" <%= filters.status === 'failed' ? 'selected' : '' %>>Failed</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">User</label>
+      <select name="user" class="form-select">
+        <option value="">All Users</option>
+        <% users.forEach(u => { %>
+          <option value="<%= u._id %>" <%= filters.user === u._id.toString() ? 'selected' : '' %>><%= u.username %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Approval</label>
+      <select name="approved" class="form-select">
+        <option value="">All</option>
+        <option value="pending" <%= filters.approved === 'pending' ? 'selected' : '' %>>Pending</option>
+        <option value="approved" <%= filters.approved === 'approved' ? 'selected' : '' %>>Approved</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary w-100">Filter</button>
+    </div>
+  </form>
+</div>
+
+<% if (submissions.length === 0) { %>
+  <div class="text-center py-5">
+    <div style="font-size: 3rem;">📋</div>
+    <h5 class="mt-3">No submissions found</h5>
+    <p class="text-muted">Try adjusting your filters</p>
+  </div>
+<% } %>
+
+<div class="row">
+<% submissions.forEach((sub, idx) => { %>
+  <div class="col-md-6">
+    <div class="submission-card">
+      <div class="submission-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="status-dot <%= sub.status %>"></span>
+            <strong><%= sub.user ? sub.user.username : 'N/A' %></strong>
+            <span class="text-muted">· <%= sub.createdAt.toLocaleDateString() %></span>
+            <% if (!sub.pointsAwarded) { %>
+              <span class="badge bg-warning text-dark ms-2">Pending</span>
+            <% } %>
+          </div>
+          <div>
+            <span class="text-muted"><%= sub.pointsEarned %> pts</span>
+          </div>
+        </div>
+        <div class="mt-1">
+          <small class="text-muted">
+            <%= sub.flow ? sub.flow.name : 'N/A' %> → <%= sub.testCase ? sub.testCase.title : 'N/A' %>
+          </small>
+          <% if (sub.testCase) { %>
+            <a class="ms-2" style="font-size: 0.7rem; cursor: pointer;" data-bs-toggle="collapse" href="#testcase-<%= sub._id %>">Show test details</a>
+          <% } %>
+        </div>
+        <% if (sub.testCase) { %>
+          <div class="collapse mt-2" id="testcase-<%= sub._id %>">
+            <div style="background: #f0f0f0; padding: 0.5rem; border-radius: 4px; font-size: 0.75rem;">
+              <div><strong>Objective:</strong> <%= sub.testCase.description %></div>
+              <div class="mt-1"><strong>Steps:</strong></div>
+              <pre style="font-size: 0.7rem; margin: 0; white-space: pre-wrap;"><%= sub.testCase.scenario %></pre>
+              <div class="mt-1"><strong>Expected:</strong> <%= sub.testCase.expectedResult %></div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+
+      <div class="submission-body">
+        <div class="row">
+          <div class="col-8">
+            <% if (sub.feedback) { %>
+              <h6>Feedback</h6>
+              <div class="feedback-box"><%= sub.feedback %></div>
+            <% } else { %>
+              <div class="text-muted mb-3"><em>No feedback provided</em></div>
+            <% } %>
+
+            <% if (sub.screenshot) { %>
+              <h6>Screenshot</h6>
+              <a href="/uploads/<%= sub.screenshot %>" target="_blank">
+                <img src="/uploads/<%= sub.screenshot %>" alt="Screenshot" class="screenshot-preview">
+              </a>
+            <% } %>
+          </div>
+
+        <div class="col-4">
+          <h6>Points</h6>
+          <div class="points-breakdown">
+            <div class="points-item">
+              <span>Base</span>
+              <span>1</span>
+            </div>
+            <% if (sub.status === 'failed') { %>
+              <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.bug ? 'rejected' : '' %>">
+                <span>Bug</span>
+                <span class="d-flex align-items-center gap-1">
+                  +3
+                  <% if (!sub.pointsAwarded) { %>
+                    <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/bug" class="d-inline">
+                      <button type="submit" class="btn btn-link btn-sm p-0 <%= sub.rejectedPoints && sub.rejectedPoints.bug ? 'text-success' : 'text-danger' %>" style="font-size: 0.7rem;">
+                        <%= sub.rejectedPoints && sub.rejectedPoints.bug ? '✓' : '✕' %>
+                      </button>
+                    </form>
+                  <% } %>
+                </span>
+              </div>
+            <% } %>
+            <% if (sub.feedback && sub.feedback.trim()) { %>
+              <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? 'rejected' : '' %>">
+                <span>Feedback</span>
+                <span class="d-flex align-items-center gap-1">
+                  +1
+                  <% if (!sub.pointsAwarded) { %>
+                    <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/feedback" class="d-inline">
+                      <button type="submit" class="btn btn-link btn-sm p-0 <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? 'text-success' : 'text-danger' %>" style="font-size: 0.7rem;">
+                        <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? '✓' : '✕' %>
+                      </button>
+                    </form>
+                  <% } %>
+                </span>
+              </div>
+            <% } %>
+            <% if (sub.screenshot) { %>
+              <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? 'rejected' : '' %>">
+                <span>Screenshot</span>
+                <span class="d-flex align-items-center gap-1">
+                  +1
+                  <% if (!sub.pointsAwarded) { %>
+                    <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/screenshot" class="d-inline">
+                      <button type="submit" class="btn btn-link btn-sm p-0 <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? 'text-success' : 'text-danger' %>" style="font-size: 0.7rem;">
+                        <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? '✓' : '✕' %>
+                      </button>
+                    </form>
+                  <% } %>
+                </span>
+              </div>
+            <% } %>
+            <% if (sub.isUsefulFeedback) { %>
+              <div class="points-item">
+                <span>Useful</span>
+                <span>+1</span>
+              </div>
+            <% } %>
+            <div class="points-item" style="border-top: 1px solid #ddd; margin-top: 0.25rem; padding-top: 0.5rem;">
+              <strong>Total</strong>
+              <strong><%= sub.pointsEarned + (sub.isUsefulFeedback ? 1 : 0) %></strong>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <% if (!sub.pointsAwarded) { %>
+              <form method="POST" action="/admin/submissions/<%= sub._id %>/approve" class="d-inline">
+                <button type="submit" class="btn btn-dark btn-sm">Approve</button>
+              </form>
+            <% } %>
+            <% if (sub.feedback && !sub.isUsefulFeedback && sub.pointsAwarded) { %>
+              <form method="POST" action="/admin/submissions/<%= sub._id %>/useful" class="d-inline">
+                <button type="submit" class="btn btn-outline-dark btn-sm">+1 Useful</button>
+              </form>
+            <% } %>
+            <form method="POST" action="/admin/submissions/<%= sub._id %>/rerun" class="d-inline">
+              <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Allow retake?')">Rerun</button>
+            </form>
+            <form method="POST" action="/admin/submissions/<%= sub._id %>/reset" class="d-inline">
+              <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Delete and deduct points?')">Reset</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+<% }) %>
+</div>

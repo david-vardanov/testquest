@@ -1,0 +1,29 @@
+<% layout('layouts/boilerplate') %>
+
+<h2>Leaderboard</h2>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Rank</th>
+      <th>Username</th>
+      <th>Points</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% users.forEach((user, index) => { %>
+      <tr class="<%= user._id.toString() === currentUser._id.toString() ? 'table-warning' : '' %>">
+        <td>
+          <span class="leaderboard-rank rank-<%= index + 1 %>"><%= index + 1 %></span>
+        </td>
+        <td>
+          <%= user.username %>
+          <% if (user._id.toString() === currentUser._id.toString()) { %>
+            <span class="badge bg-primary">You</span>
+          <% } %>
+        </td>
+        <td><strong><%= user.points %></strong></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>

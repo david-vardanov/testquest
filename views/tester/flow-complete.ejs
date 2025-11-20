@@ -1,0 +1,17 @@
+<% layout('layouts/boilerplate') %>
+
+<div class="text-center py-5">
+  <h1 class="text-success">Flow Completed!</h1>
+  <p class="lead">You have completed all test cases in "<%= flow.name %>"</p>
+
+  <% if (progress.bonusAwarded) { %>
+    <div class="alert alert-success d-inline-block">
+      <strong>+<%= flow.completionBonus %> bonus points awarded!</strong>
+    </div>
+  <% } %>
+
+  <div class="mt-4">
+    <a href="/tester" class="btn btn-primary btn-lg">Back to Flows</a>
+    <a href="/tester/leaderboard" class="btn btn-outline-primary btn-lg">View Leaderboard</a>
+  </div>
+</div>

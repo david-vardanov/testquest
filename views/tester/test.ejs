@@ -1,0 +1,68 @@
+<% layout('layouts/boilerplate') %>
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/tester">Flows</a></li>
+    <li class="breadcrumb-item active"><%= flow.name %></li>
+  </ol>
+</nav>
+
+<div class="card">
+  <div class="card-header">
+    <h4><%= testCase.title %></h4>
+    <small class="text-muted">Progress: <%= progress.completedTestCases.length + 1 %> of <%= flow.testCases.length %></small>
+  </div>
+  <div class="card-body">
+    <p><strong>Description:</strong> <%= testCase.description %></p>
+
+    <div class="scenario-box mb-3">
+      <h6>Scenario / Steps:</h6>
+      <pre style="white-space: pre-wrap;"><%= testCase.scenario %></pre>
+    </div>
+
+    <div class="expected-result-box mb-4">
+      <h6>Expected Result:</h6>
+      <pre style="white-space: pre-wrap;"><%= testCase.expectedResult %></pre>
+    </div>
+
+    <hr>
+
+    <form method="POST" action="/tester/flow/<%= flow._id %>/submit/<%= testCase._id %>" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label class="form-label"><strong>Test Result:</strong></label>
+        <div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="status" value="passed" required>
+            <label class="form-check-label text-success">Passed</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="status" value="failed" required>
+            <label class="form-check-label text-danger">Failed (+3 pts for finding bug)</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Feedback (+1 pt)</label>
+        <textarea name="feedback" class="form-control" rows="3" placeholder="Describe what you observed, any issues found, or suggestions..."></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Screenshot (+1 pt)</label>
+        <input type="file" name="screenshot" class="form-control" accept="image/*">
+      </div>
+
+      <div class="alert alert-info">
+        <strong>Points breakdown:</strong>
+        <ul class="mb-0">
+          <li>Base: 1 pt</li>
+          <li>Failed status (bug found): +3 pts</li>
+          <li>Feedback: +1 pt</li>
+          <li>Screenshot: +1 pt</li>
+        </ul>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg">Submit Result</button>
+    </form>
+  </div>
+</div>

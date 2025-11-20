@@ -1,0 +1,54 @@
+<% layout('layouts/boilerplate') %>
+
+<h2>Admin Dashboard</h2>
+
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card text-white bg-primary">
+      <div class="card-body">
+        <h5 class="card-title">Testers</h5>
+        <p class="card-text display-4"><%= stats.users %></p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-white bg-success">
+      <div class="card-body">
+        <h5 class="card-title">Test Cases</h5>
+        <p class="card-text display-4"><%= stats.testCases %></p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-white bg-info">
+      <div class="card-body">
+        <h5 class="card-title">Flows</h5>
+        <p class="card-text display-4"><%= stats.flows %></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h4>Recent Submissions</h4>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>User</th>
+      <th>Test Case</th>
+      <th>Status</th>
+      <th>Points</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% recentSubmissions.forEach(sub => { %>
+      <tr>
+        <td><%= sub.createdAt.toLocaleDateString() %></td>
+        <td><%= sub.user ? sub.user.username : 'N/A' %></td>
+        <td><%= sub.testCase ? sub.testCase.title : 'N/A' %></td>
+        <td class="status-<%= sub.status %>"><%= sub.status %></td>
+        <td><%= sub.pointsEarned %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
