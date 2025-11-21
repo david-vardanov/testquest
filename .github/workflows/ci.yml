@@ -76,6 +76,6 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /root/testquest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/testquiz-app:latest
-            docker-compose down
-            docker-compose up -d
+            git pull origin main
+            npm install --production
+            pm2 restart testquest
