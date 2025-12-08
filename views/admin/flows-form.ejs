@@ -13,6 +13,7 @@
     border-radius: 12px;
     transition: all 0.3s ease;
     margin-bottom: 1rem;
+    position: relative;
   }
   .test-case-card:hover {
     border-color: #667eea;
@@ -102,6 +103,40 @@
   .collapsed .collapse-icon {
     transform: rotate(-90deg);
   }
+  .drag-handle {
+    cursor: grab;
+    color: #adb5bd;
+    padding: 0.25rem;
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+    transition: color 0.2s ease;
+  }
+  .drag-handle:hover {
+    color: #667eea;
+  }
+  .drag-handle:active {
+    cursor: grabbing;
+  }
+  .test-case-card.dragging {
+    opacity: 0.5;
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  }
+  .test-case-card.drag-over {
+    border-color: #667eea;
+    border-style: dashed;
+    background: #f8f9ff;
+  }
+  .test-case-card.drag-over::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #667eea;
+    border-radius: 3px;
+  }
   .empty-state {
     text-align: center;
     padding: 3rem;
@@ -186,9 +221,10 @@
       <div id="testCasesContainer">
         <% if (flow && flow.testCases && flow.testCases.length > 0) { %>
           <% flow.testCases.forEach((tc, index) => { %>
-            <div class="card test-case-card" data-case-id="<%= tc._id %>">
+            <div class="card test-case-card" data-case-id="<%= tc._id %>" draggable="true">
               <div class="card-header d-flex justify-content-between align-items-center" onclick="toggleCollapse(this)">
                 <div class="d-flex align-items-center gap-2">
+                  <span class="drag-handle" onclick="event.stopPropagation()" title="Drag to reorder">⋮⋮</span>
                   <span class="case-number-badge"><%= index + 1 %></span>
                   <strong class="case-title"><%= tc.title %></strong>
                 </div>
@@ -299,9 +335,10 @@
 
 <!-- New Case Template -->
 <template id="newCaseTemplate">
-  <div class="card test-case-card">
+  <div class="card test-case-card" draggable="true">
     <div class="card-header d-flex justify-content-between align-items-center" onclick="toggleCollapse(this)">
       <div class="d-flex align-items-center gap-2">
+        <span class="drag-handle" onclick="event.stopPropagation()" title="Drag to reorder">⋮⋮</span>
         <span class="case-number-badge">1</span>
         <strong class="case-title">New Test Case</strong>
       </div>
@@ -346,9 +383,10 @@
 
 <!-- Reused Case Template -->
 <template id="reusedCaseTemplate">
-  <div class="card test-case-card reused">
+  <div class="card test-case-card reused" draggable="true">
     <div class="card-header d-flex justify-content-between align-items-center" onclick="toggleCollapse(this)">
       <div class="d-flex align-items-center gap-2">
+        <span class="drag-handle" onclick="event.stopPropagation()" title="Drag to reorder">⋮⋮</span>
         <span class="case-number-badge reused-badge">1</span>
         <strong class="case-title">Reused Case</strong>
         <span class="badge bg-success">Reused</span>
@@ -377,6 +415,73 @@
 <script>
 let testCaseIndex = <%= flow && flow.testCases ? flow.testCases.length : 0 %>;
 let selectedCase = null;
+let draggedCard = null;
+
+// Drag and Drop functionality
+function initDragAndDrop() {
+  const container = document.getElementById('testCasesContainer');
+
+  container.addEventListener('dragstart', (e) => {
+    const card = e.target.closest('.test-case-card');
+    if (!card) return;
+
+    draggedCard = card;
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', card.outerHTML);
+  });
+
+  container.addEventListener('dragend', (e) => {
+    const card = e.target.closest('.test-case-card');
+    if (card) {
+      card.classList.remove('dragging');
+    }
+    draggedCard = null;
+    document.querySelectorAll('.test-case-card').forEach(c => c.classList.remove('drag-over'));
+  });
+
+  container.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    const card = e.target.closest('.test-case-card');
+    if (!card || card === draggedCard) return;
+
+    document.querySelectorAll('.test-case-card').forEach(c => c.classList.remove('drag-over'));
+    card.classList.add('drag-over');
+  });
+
+  container.addEventListener('dragleave', (e) => {
+    const card = e.target.closest('.test-case-card');
+    if (card) {
+      card.classList.remove('drag-over');
+    }
+  });
+
+  container.addEventListener('drop', (e) => {
+    e.preventDefault();
+
+    const targetCard = e.target.closest('.test-case-card');
+    if (!targetCard || !draggedCard || targetCard === draggedCard) return;
+
+    const cards = [...container.querySelectorAll('.test-case-card')];
+    const draggedIndex = cards.indexOf(draggedCard);
+    const targetIndex = cards.indexOf(targetCard);
+
+    if (draggedIndex < targetIndex) {
+      targetCard.parentNode.insertBefore(draggedCard, targetCard.nextSibling);
+    } else {
+      targetCard.parentNode.insertBefore(draggedCard, targetCard);
+    }
+
+    targetCard.classList.remove('drag-over');
+    updateCaseNumbers();
+    updateSummary();
+  });
+}
+
+// Initialize drag and drop on page load
+document.addEventListener('DOMContentLoaded', initDragAndDrop);
 
 function addNewTestCase() {
   const container = document.getElementById('testCasesContainer');

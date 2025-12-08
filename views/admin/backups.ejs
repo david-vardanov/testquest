@@ -1,0 +1,72 @@
+<% layout('layouts/boilerplate') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Database Backups</h2>
+  <form method="POST" action="/admin/backups" class="d-inline">
+    <button type="submit" class="btn btn-success" onclick="this.disabled=true; this.innerHTML='Creating backup...'; this.form.submit();">
+      Create New Backup
+    </button>
+  </form>
+</div>
+
+<% if (req.query.success) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= req.query.success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<% if (req.query.error) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= req.query.error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<div class="card mb-4">
+  <div class="card-header bg-info text-white">
+    <strong>Backup Information</strong>
+  </div>
+  <div class="card-body">
+    <ul class="mb-0">
+      <li>Backups are stored as compressed MongoDB dumps (.gz files)</li>
+      <li>Download backups regularly and store them in a safe location (Google Drive, Dropbox, etc.)</li>
+      <li>Only the last 10 backups are kept on the server</li>
+      <li>To restore: <code>docker exec -i mongodb mongorestore --archive --gzip < backup-file.gz</code></li>
+    </ul>
+  </div>
+</div>
+
+<% if (backups.length === 0) { %>
+  <div class="alert alert-warning">
+    No backups found. Create your first backup now!
+  </div>
+<% } else { %>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Filename</th>
+        <th>Size</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% backups.forEach(backup => { %>
+        <tr>
+          <td><code><%= backup.filename %></code></td>
+          <td><%= backup.size %></td>
+          <td><%= backup.created.toLocaleString() %></td>
+          <td>
+            <a href="/admin/backups/<%= backup.filename %>/download" class="btn btn-sm btn-primary">
+              Download
+            </a>
+            <form method="POST" action="/admin/backups/<%= backup.filename %>/delete" class="d-inline" onsubmit="return confirm('Delete this backup?');">
+              <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+<% } %>

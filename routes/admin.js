@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 const { isAdmin } = require('../middleware/auth');
 const User = require('../models/User');
 const TestCase = require('../models/TestCase');
@@ -9,6 +12,12 @@ const Submission = require('../models/Submission');
 const Reward = require('../models/Reward');
 const RewardClaim = require('../models/RewardClaim');
 const LeaderboardSettings = require('../models/LeaderboardSettings');
+
+// Ensure backups directory exists
+const BACKUPS_DIR = path.join(__dirname, '..', 'backups');
+if (!fs.existsSync(BACKUPS_DIR)) {
+  fs.mkdirSync(BACKUPS_DIR, { recursive: true });
+}
 
 router.use(isAdmin);
 
@@ -580,6 +589,110 @@ router.get('/analytics', async (req, res) => {
   };
 
   res.render('admin/analytics', { flowAnalytics, overallStats });
+});
+
+// Backup Management
+router.get('/backups', async (req, res) => {
+  try {
+    const files = fs.readdirSync(BACKUPS_DIR)
+      .filter(f => f.endsWith('.gz'))
+      .map(filename => {
+        const filePath = path.join(BACKUPS_DIR, filename);
+        const stats = fs.statSync(filePath);
+        return {
+          filename,
+          size: (stats.size / 1024 / 1024).toFixed(2) + ' MB',
+          created: stats.mtime
+        };
+      })
+      .sort((a, b) => b.created - a.created);
+
+    res.render('admin/backups', { backups: files, error: null, success: null });
+  } catch (err) {
+    res.render('admin/backups', { backups: [], error: 'Failed to list backups', success: null });
+  }
+});
+
+router.post('/backups', async (req, res) => {
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `testquiz-backup-${timestamp}.gz`;
+    const filePath = path.join(BACKUPS_DIR, filename);
+
+    // Try docker exec first, fall back to direct mongodump
+    try {
+      // For Docker setup
+      execSync(`docker exec mongodb mongodump --db testquiz --archive --gzip > "${filePath}"`, {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        shell: true
+      });
+    } catch (dockerErr) {
+      // Fall back to direct mongodump (if MongoDB is on localhost)
+      execSync(`mongodump --uri="${process.env.MONGODB_URI}" --archive="${filePath}" --gzip`, {
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+    }
+
+    // Verify file was created and has content
+    const stats = fs.statSync(filePath);
+    if (stats.size < 100) {
+      fs.unlinkSync(filePath);
+      throw new Error('Backup file is too small, may be corrupted');
+    }
+
+    // Keep only last 10 backups
+    const files = fs.readdirSync(BACKUPS_DIR)
+      .filter(f => f.endsWith('.gz'))
+      .map(f => ({ name: f, time: fs.statSync(path.join(BACKUPS_DIR, f)).mtime }))
+      .sort((a, b) => b.time - a.time);
+
+    if (files.length > 10) {
+      files.slice(10).forEach(f => fs.unlinkSync(path.join(BACKUPS_DIR, f.name)));
+    }
+
+    res.redirect('/admin/backups?success=Backup created successfully');
+  } catch (err) {
+    console.error('Backup error:', err);
+    res.redirect('/admin/backups?error=' + encodeURIComponent('Backup failed: ' + err.message));
+  }
+});
+
+router.get('/backups/:filename/download', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    // Security: prevent directory traversal
+    if (filename.includes('..') || filename.includes('/')) {
+      return res.status(400).send('Invalid filename');
+    }
+
+    const filePath = path.join(BACKUPS_DIR, filename);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).send('Backup not found');
+    }
+
+    res.download(filePath, filename);
+  } catch (err) {
+    res.status(500).send('Download failed');
+  }
+});
+
+router.post('/backups/:filename/delete', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    // Security: prevent directory traversal
+    if (filename.includes('..') || filename.includes('/')) {
+      return res.status(400).send('Invalid filename');
+    }
+
+    const filePath = path.join(BACKUPS_DIR, filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    res.redirect('/admin/backups?success=Backup deleted');
+  } catch (err) {
+    res.redirect('/admin/backups?error=' + encodeURIComponent('Delete failed: ' + err.message));
+  }
 });
 
 module.exports = router;
