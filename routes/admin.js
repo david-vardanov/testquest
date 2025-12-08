@@ -607,7 +607,11 @@ router.get('/backups', async (req, res) => {
       })
       .sort((a, b) => b.created - a.created);
 
-    res.render('admin/backups', { backups: files, error: null, success: null });
+    res.render('admin/backups', {
+      backups: files,
+      error: req.query.error || null,
+      success: req.query.success || null
+    });
   } catch (err) {
     res.render('admin/backups', { backups: [], error: 'Failed to list backups', success: null });
   }
