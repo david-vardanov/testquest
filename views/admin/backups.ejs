@@ -32,7 +32,7 @@
       <li>Backups are stored as compressed MongoDB dumps (.gz files)</li>
       <li>Download backups regularly and store them in a safe location (Google Drive, Dropbox, etc.)</li>
       <li>Only the last 10 backups are kept on the server</li>
-      <li>To restore: <code>docker exec -i mongodb mongorestore --archive --gzip < backup-file.gz</code></li>
+      <li>To restore: <code>zcat backup-file.gz | docker exec -i testquest-mongo-1 mongorestore --archive --gzip --drop</code></li>
     </ul>
   </div>
 </div>

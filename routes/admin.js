@@ -625,11 +625,26 @@ router.post('/backups', async (req, res) => {
 
     // Try docker exec first, fall back to direct mongodump
     try {
-      // For Docker setup
-      execSync(`docker exec mongodb mongodump --db testquiz --archive --gzip > "${filePath}"`, {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        shell: true
-      });
+      // For Docker Compose setup - try common container names
+      const containerNames = ['testquest-mongo-1', 'testquest_mongo_1', 'mongo', 'mongodb'];
+      let success = false;
+
+      for (const containerName of containerNames) {
+        try {
+          execSync(`docker exec ${containerName} mongodump --db testquiz --archive --gzip > "${filePath}"`, {
+            stdio: ['pipe', 'pipe', 'pipe'],
+            shell: true
+          });
+          success = true;
+          break;
+        } catch (e) {
+          continue;
+        }
+      }
+
+      if (!success) {
+        throw new Error('No docker container found');
+      }
     } catch (dockerErr) {
       // Fall back to direct mongodump (if MongoDB is on localhost)
       execSync(`mongodump --uri="${process.env.MONGODB_URI}" --archive="${filePath}" --gzip`, {
