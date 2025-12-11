@@ -407,6 +407,17 @@ router.post('/submissions/:id/reset', async (req, res) => {
   if (submission) {
     // Remove from flow progress
     const FlowProgress = require('../models/FlowProgress');
+
+    // Check if flow completion bonus was awarded
+    const progress = await FlowProgress.findOne({ user: submission.user, flow: submission.flow });
+    let bonusToDeduct = 0;
+    if (progress && progress.bonusAwarded) {
+      const flow = await Flow.findById(submission.flow);
+      if (flow) {
+        bonusToDeduct = flow.completionBonus || 0;
+      }
+    }
+
     await FlowProgress.updateOne(
       { user: submission.user, flow: submission.flow },
       {
@@ -414,9 +425,15 @@ router.post('/submissions/:id/reset', async (req, res) => {
         $set: { isCompleted: false, bonusAwarded: false }
       }
     );
-    // Deduct points if they were awarded
+
+    // Deduct points if they were awarded (submission points + useful feedback + flow bonus)
     if (submission.pointsAwarded) {
-      await User.findByIdAndUpdate(submission.user, { $inc: { points: -submission.pointsEarned } });
+      let totalDeduct = submission.pointsEarned;
+      if (submission.isUsefulFeedback) {
+        totalDeduct += 1;
+      }
+      totalDeduct += bonusToDeduct;
+      await User.findByIdAndUpdate(submission.user, { $inc: { points: -totalDeduct } });
     }
     // Delete submission
     await Submission.findByIdAndDelete(req.params.id);
@@ -673,6 +690,70 @@ router.post('/backups', async (req, res) => {
   } catch (err) {
     console.error('Backup error:', err);
     res.redirect('/admin/backups?error=' + encodeURIComponent('Backup failed: ' + err.message));
+  }
+});
+
+// Upload and restore backup
+const backupUpload = multer({
+  dest: BACKUPS_DIR,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max
+  fileFilter: (req, file, cb) => {
+    if (file.originalname.endsWith('.gz')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only .gz files are allowed'));
+    }
+  }
+});
+
+router.post('/backups/restore', backupUpload.single('backup'), async (req, res) => {
+  try {
+    if (!req.file) {
+      throw new Error('No backup file uploaded');
+    }
+
+    const uploadedPath = req.file.path;
+
+    // Try docker exec first, fall back to direct mongorestore
+    try {
+      const containerNames = ['testquest-mongo-1', 'testquest_mongo_1', 'mongo', 'mongodb'];
+      let success = false;
+
+      for (const containerName of containerNames) {
+        try {
+          execSync(`docker exec -i ${containerName} mongorestore --archive --gzip --drop --db testquiz < "${uploadedPath}"`, {
+            stdio: ['pipe', 'pipe', 'pipe'],
+            shell: true
+          });
+          success = true;
+          break;
+        } catch (e) {
+          continue;
+        }
+      }
+
+      if (!success) {
+        throw new Error('No docker container found');
+      }
+    } catch (dockerErr) {
+      // Fall back to direct mongorestore (if MongoDB is on localhost)
+      execSync(`mongorestore --uri="${process.env.MONGODB_URI}" --archive="${uploadedPath}" --gzip --drop`, {
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+    }
+
+    // Rename uploaded file to keep it in backups
+    const newFilename = `restored-${Date.now()}-${req.file.originalname}`;
+    fs.renameSync(uploadedPath, path.join(BACKUPS_DIR, newFilename));
+
+    res.redirect('/admin/backups?success=Backup restored successfully');
+  } catch (err) {
+    console.error('Restore error:', err);
+    // Clean up uploaded file on error
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.redirect('/admin/backups?error=' + encodeURIComponent('Restore failed: ' + err.message));
   }
 });
 

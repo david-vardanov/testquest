@@ -1,16 +1,28 @@
-version: "3.8"
-
 services:
-  mongodb:
-    image: mongo:7.0
-    container_name: testquiz-mongodb
+  app:
+    build: .
     ports:
-      - "27011:27017"
-    volumes:
-      - mongodb_data:/data/db
+      - "3000:3000"
     environment:
-      - MONGO_INITDB_DATABASE=testquiz
+      - MONGODB_URI=mongodb://mongo:27017/testquiz
+      - SESSION_SECRET=${SESSION_SECRET}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    depends_on:
+      - mongo
+    restart: unless-stopped
+    volumes:
+      - uploads:/app/uploads
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "127.0.0.1:27018:27017"
+    volumes:
+      - mongo_data:/data/db
     restart: unless-stopped
 
 volumes:
-  mongodb_data:
+  mongo_data:
+  uploads:
