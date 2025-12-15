@@ -176,22 +176,35 @@ Understanding how points work will help you maximize your score.
 
 ### Points Breakdown
 
-| Action                     | Points | Notes                                             |
-| -------------------------- | ------ | ------------------------------------------------- |
-| Complete a test case       | 1      | Always awarded for valid submissions              |
-| Find a bug (Failed status) | +3     | Only when you genuinely find an issue             |
-| Provide feedback           | +1     | Any meaningful feedback text                      |
-| Attach screenshot          | +1     | Valid screenshot evidence                         |
-| Useful feedback bonus      | +1     | Admin marks your feedback as particularly helpful |
-| Flow completion bonus      | +3\*   | Awarded when all tests in a flow are approved     |
+| Action                     | Points    | Notes                                             |
+| -------------------------- | --------- | ------------------------------------------------- |
+| Complete a test case       | Varies\*  | Base points depend on test case difficulty        |
+| Find a bug (Failed status) | +3        | Only when you genuinely find an issue             |
+| Provide feedback           | +1        | Any meaningful feedback text                      |
+| Attach screenshot          | +1        | Valid screenshot evidence                         |
+| Useful feedback bonus      | +1        | Admin marks your feedback as particularly helpful |
+| Flow completion bonus      | +3\*\*    | Awarded when all tests in a flow are approved     |
 
-\*Flow completion bonus may vary per flow.
+\*Each test case has a base point value set by the administrator based on complexity/difficulty. Simple tests may be worth 1 point, while complex tests could be worth more.
+
+\*\*Flow completion bonus may vary per flow.
+
+### Understanding Flow Points
+
+Each flow displays a total point value (e.g., "50 pts"). This represents the sum of:
+- Base points for all test cases in the flow
+- The flow completion bonus
+
+Different flows have different point totals based on:
+- Number of test cases
+- Difficulty of individual test cases
+- Flow completion bonus amount
 
 ### Maximum Points Per Submission
 
-A single submission can earn up to **7 points**:
+A single submission can earn the **base points + up to 6 bonus points**:
 
-- 1 (base) + 3 (bug) + 1 (feedback) + 1 (screenshot) + 1 (useful feedback) = 7 points
+- Base (varies) + 3 (bug) + 1 (feedback) + 1 (screenshot) + 1 (useful feedback)
 
 ### Point Approval Process
 

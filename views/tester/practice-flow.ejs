@@ -1,0 +1,195 @@
+<% layout('layouts/boilerplate') %>
+
+<style>
+  .step-checkbox {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+  }
+  .step-checkbox:last-child {
+    border-bottom: none;
+  }
+  .step-checkbox label {
+    cursor: pointer;
+    margin-left: 0.5rem;
+  }
+  .step-checkbox input:checked + label {
+    text-decoration: line-through;
+    color: #6c757d;
+  }
+  .checklist-box {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .checklist-box h6 {
+    margin-bottom: 0.75rem;
+    color: #495057;
+  }
+  .practice-header {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px 8px 0 0;
+    margin: -1rem -1rem 1rem -1rem;
+  }
+</style>
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/tester">Dashboard</a></li>
+    <li class="breadcrumb-item active">Practice Flow</li>
+  </ol>
+</nav>
+
+<div class="tutorial-hint">
+  <strong>Practice Mode:</strong> This is a practice flow to help you learn how TestQuest works.
+  No points will be awarded - just follow along and learn the interface!
+</div>
+
+<div class="card">
+  <div class="practice-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h4 class="mb-0"><%= testCase.title %></h4>
+      <span class="badge bg-light text-dark">Practice <%= currentStep + 1 %> of <%= totalSteps %></span>
+    </div>
+  </div>
+  <div class="card-body">
+    <p><strong>Description:</strong> <%= testCase.description %></p>
+
+    <%
+      // Parse scenario steps
+      const scenarioSteps = testCase.scenario.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+      const expectedSteps = testCase.expectedResult.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+      const totalCheckboxes = scenarioSteps.length + expectedSteps.length;
+    %>
+
+    <div class="checklist-box mb-3">
+      <h6>Scenario / Steps: <span class="badge bg-secondary" id="steps-counter">0/<%= scenarioSteps.length %></span></h6>
+      <% scenarioSteps.forEach((step, idx) => { %>
+        <div class="step-checkbox">
+          <input type="checkbox" class="form-check-input step-check" id="step-<%= idx %>" data-type="step">
+          <label for="step-<%= idx %>"><%= step %></label>
+        </div>
+      <% }) %>
+    </div>
+
+    <div class="checklist-box mb-4">
+      <h6>Expected Result: <span class="badge bg-secondary" id="expected-counter">0/<%= expectedSteps.length %></span></h6>
+      <% expectedSteps.forEach((step, idx) => { %>
+        <div class="step-checkbox">
+          <input type="checkbox" class="form-check-input expected-check" id="expected-<%= idx %>" data-type="expected">
+          <label for="expected-<%= idx %>"><%= step %></label>
+        </div>
+      <% }) %>
+    </div>
+
+    <hr>
+
+    <form method="POST" action="/tester/practice-flow/submit" id="practice-form">
+      <div class="mb-3">
+        <label class="form-label"><strong>Test Result:</strong></label>
+        <div class="tutorial-hint mb-2">
+          <strong>Tip:</strong>
+          <% if (currentStep === 0) { %>
+            Check all the boxes above to unlock "Passed". In real tests, you only select "Passed" after verifying all steps work correctly.
+          <% } else if (currentStep === 1) { %>
+            Select "Failed" to practice reporting a bug. When you find a real bug, this earns you +3 bonus points!
+          <% } else { %>
+            You can select either - this teaches you about screenshots and feedback.
+          <% } %>
+        </div>
+        <div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input passed-radio" type="radio" name="status" id="status-passed" value="passed" disabled>
+            <label class="form-check-label text-success" for="status-passed">Passed</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="status" id="status-failed" value="failed">
+            <label class="form-check-label text-danger" for="status-failed">Failed (+3 pts for finding bug)</label>
+          </div>
+        </div>
+        <div class="text-muted small mt-1" id="unlock-hint">
+          Check all steps above to unlock "Passed"
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Feedback (+1 pt)</label>
+        <div class="tutorial-hint mb-2">
+          <strong>Tip:</strong> Adding detailed feedback helps developers understand issues. In real tests, always describe what you observed!
+        </div>
+        <textarea name="feedback" class="form-control" rows="3" placeholder="Describe what you observed, any issues found, or suggestions..."></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Screenshot (+1 pt)</label>
+        <div class="tutorial-hint mb-2">
+          <strong>Tip:</strong> Screenshots provide visual proof. Try uploading any image to see how it works!
+        </div>
+        <input type="file" name="screenshot" class="form-control" accept="image/*">
+      </div>
+
+      <div class="alert alert-secondary">
+        <strong>Points reminder (for real tests):</strong>
+        <ul class="mb-0">
+          <li>Base: varies by test difficulty</li>
+          <li>Failed status (bug found): +3 pts</li>
+          <li>Feedback: +1 pt</li>
+          <li>Screenshot: +1 pt</li>
+          <li>Admin useful feedback bonus: +1 pt</li>
+          <li>Flow completion bonus: awarded when all tests approved</li>
+        </ul>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg">
+        <%= currentStep < totalSteps - 1 ? 'Continue to Next Practice' : 'Complete Practice' %>
+      </button>
+      <a href="/tester" class="btn btn-outline-secondary btn-lg ms-2">Exit Practice</a>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const totalSteps = <%= scenarioSteps.length %>;
+    const totalExpected = <%= expectedSteps.length %>;
+    const totalCheckboxes = totalSteps + totalExpected;
+
+    const stepChecks = document.querySelectorAll('.step-check');
+    const expectedChecks = document.querySelectorAll('.expected-check');
+    const passedRadio = document.getElementById('status-passed');
+    const failedRadio = document.getElementById('status-failed');
+    const unlockHint = document.getElementById('unlock-hint');
+    const stepsCounter = document.getElementById('steps-counter');
+    const expectedCounter = document.getElementById('expected-counter');
+
+    function updateState() {
+      const checkedSteps = document.querySelectorAll('.step-check:checked').length;
+      const checkedExpected = document.querySelectorAll('.expected-check:checked').length;
+      const allChecked = (checkedSteps + checkedExpected) === totalCheckboxes;
+
+      stepsCounter.textContent = checkedSteps + '/' + totalSteps;
+      expectedCounter.textContent = checkedExpected + '/' + totalExpected;
+
+      stepsCounter.className = 'badge ' + (checkedSteps === totalSteps ? 'bg-success' : 'bg-secondary');
+      expectedCounter.className = 'badge ' + (checkedExpected === totalExpected ? 'bg-success' : 'bg-secondary');
+
+      if (allChecked) {
+        passedRadio.disabled = false;
+        unlockHint.style.display = 'none';
+      } else {
+        passedRadio.disabled = true;
+        if (passedRadio.checked) {
+          passedRadio.checked = false;
+        }
+        unlockHint.style.display = 'block';
+      }
+    }
+
+    stepChecks.forEach(cb => cb.addEventListener('change', updateState));
+    expectedChecks.forEach(cb => cb.addEventListener('change', updateState));
+
+    updateState();
+  })();
+</script>

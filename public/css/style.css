@@ -46,3 +46,179 @@ body {
   border-radius: 8px;
   border-left: 4px solid #198754;
 }
+
+/* Tutorial Styles */
+.tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9998;
+  pointer-events: none;
+}
+
+.tutorial-highlight {
+  position: relative;
+  z-index: 9999;
+  box-shadow: 0 0 0 4px #667eea, 0 0 20px rgba(102, 126, 234, 0.5);
+  border-radius: 8px;
+  animation: tutorial-pulse 2s infinite;
+}
+
+@keyframes tutorial-pulse {
+  0% { box-shadow: 0 0 0 4px #667eea, 0 0 20px rgba(102, 126, 234, 0.5); }
+  50% { box-shadow: 0 0 0 8px #667eea, 0 0 30px rgba(102, 126, 234, 0.7); }
+  100% { box-shadow: 0 0 0 4px #667eea, 0 0 20px rgba(102, 126, 234, 0.5); }
+}
+
+.tutorial-tooltip {
+  position: fixed;
+  z-index: 10000;
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  max-width: 350px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: tutorial-fade-in 0.3s ease-out;
+}
+
+@keyframes tutorial-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tutorial-tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.tutorial-tooltip-title {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.tutorial-tooltip-step {
+  font-size: 0.75rem;
+  color: #667eea;
+  background: #f0f2ff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+}
+
+.tutorial-tooltip-content {
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.tutorial-tooltip-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.tutorial-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.tutorial-btn-skip {
+  background: transparent;
+  color: #888;
+}
+
+.tutorial-btn-skip:hover {
+  color: #333;
+}
+
+.tutorial-btn-next {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  flex-grow: 1;
+}
+
+.tutorial-btn-next:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.tutorial-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.tutorial-arrow-top {
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid white;
+}
+
+.tutorial-arrow-bottom {
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid white;
+}
+
+.tutorial-arrow-left {
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 10px solid white;
+}
+
+.tutorial-arrow-right {
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 10px solid white;
+}
+
+/* Practice Flow Card */
+.practice-flow-card {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+}
+
+.practice-flow-card .card-body {
+  color: white;
+}
+
+.practice-flow-card .badge {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Tutorial hint boxes */
+.tutorial-hint {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.tutorial-hint strong {
+  color: #856404;
+}

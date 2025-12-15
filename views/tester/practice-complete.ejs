@@ -1,0 +1,83 @@
+<% layout('layouts/boilerplate') %>
+
+<style>
+  .completion-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 3rem;
+    text-align: center;
+    max-width: 600px;
+    margin: 2rem auto;
+  }
+  .completion-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+  .completion-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  .completion-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+  }
+  .summary-box {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: left;
+  }
+  .summary-box h5 {
+    margin-bottom: 1rem;
+    font-weight: bold;
+  }
+  .summary-box ul {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+  .summary-box li {
+    margin-bottom: 0.5rem;
+  }
+</style>
+
+<div class="completion-card">
+  <div class="completion-icon">&#127881;</div>
+  <div class="completion-title">Practice Complete!</div>
+  <div class="completion-subtitle">
+    Great job! You've learned the basics of TestQuest.
+  </div>
+
+  <div class="summary-box">
+    <h5>What You Learned:</h5>
+    <ul>
+      <li><strong>Checklists:</strong> Follow steps and check them off as you go</li>
+      <li><strong>Pass/Fail:</strong> Mark tests based on actual vs expected results</li>
+      <li><strong>Bug Reporting:</strong> Select "Failed" when something doesn't work (+3 pts)</li>
+      <li><strong>Feedback:</strong> Describe what you observed (+1 pt)</li>
+      <li><strong>Screenshots:</strong> Upload visual evidence (+1 pt)</li>
+    </ul>
+  </div>
+
+  <div class="summary-box">
+    <h5>Quick Points Reference:</h5>
+    <ul>
+      <li>Base completion: <strong>varies by difficulty</strong> (harder tests = more points)</li>
+      <li>Finding a bug: <strong>+3 pts</strong></li>
+      <li>Adding feedback: <strong>+1 pt</strong></li>
+      <li>Uploading screenshot: <strong>+1 pt</strong></li>
+      <li>Admin useful feedback bonus: <strong>+1 pt</strong></li>
+      <li>Flow completion bonus: <strong>varies</strong> (when all tests in a flow are approved)</li>
+    </ul>
+    <p class="mt-2 mb-0" style="font-size: 0.9rem; opacity: 0.9;">
+      <em>Tip: Check each flow card to see its total points!</em>
+    </p>
+  </div>
+
+  <a href="/tester" class="btn btn-light btn-lg">
+    Start Real Testing
+  </a>
+</div>

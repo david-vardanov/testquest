@@ -57,24 +57,34 @@ router.get('/', async (req, res) => {
 
   // Build leaderboard: top 10, plus user if not in top 10
   const top10 = allUsers.slice(0, 10);
-  const leaderboard = top10.map((u, i) => ({
-    username: u.username,
-    points: u.points,
-    position: i + 1,
-    isCurrentUser: u._id.toString() === user._id.toString()
-  }));
+  const leaderboard = top10.map((u, i) => {
+    const pos = i + 1;
+    const reward = rewards.find(r => pos >= r.positionFrom && pos <= r.positionTo);
+    return {
+      username: u.username,
+      points: u.points,
+      position: pos,
+      isCurrentUser: u._id.toString() === user._id.toString(),
+      reward: reward ? (reward.prizeDescription || reward.name) : '-'
+    };
+  });
 
   // If user is not in top 10, add them
   if (rank > 10) {
+    const userReward = rewards.find(r => rank >= r.positionFrom && rank <= r.positionTo);
     leaderboard.push({
       username: user.username,
       points: user.points,
       position: rank,
-      isCurrentUser: true
+      isCurrentUser: true,
+      reward: userReward ? (userReward.prizeDescription || userReward.name) : '-'
     });
   }
 
-  res.render('tester/dashboard', { flows, user, progressMap, rank, currentReward, nextReward, pointsToNext, myClaims, leaderboard, rewards, seasonSettings });
+  // Check if user needs tutorial
+  const showTutorial = !user.hasCompletedTutorial;
+
+  res.render('tester/dashboard', { flows, user, progressMap, rank, currentReward, nextReward, pointsToNext, myClaims, leaderboard, rewards, seasonSettings, showTutorial });
 });
 
 // Start/Continue a flow
@@ -188,6 +198,80 @@ router.get('/history/:id', async (req, res) => {
   }
   const currentUserId = req.session.user.id;
   res.render('tester/history-detail', { archive, currentUserId });
+});
+
+// Tutorial - mark as complete
+router.post('/tutorial/complete', async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.session.user.id, { hasCompletedTutorial: true });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to complete tutorial' });
+  }
+});
+
+// Practice Flow - hardcoded flow for learning
+const practiceTestCases = [
+  {
+    id: 1,
+    title: 'Verify the Login Page',
+    description: 'This practice test teaches you how to complete a basic test case by following the checklist.',
+    scenario: 'Look at the checklist below - these are the steps you need to verify\nClick each checkbox as you complete that step\nOnce all steps are checked, you can select "Passed"',
+    expectedResult: 'You should see all checkboxes turn green\nThe "Passed" option becomes enabled\nYou understand how the checklist system works'
+  },
+  {
+    id: 2,
+    title: 'Practice Reporting a Bug',
+    description: 'Sometimes you\'ll find bugs! This teaches you how to report them for bonus points.',
+    scenario: 'Pretend you found a problem with the application\nSelect "Failed" in the test result section below\nWrite a description of the bug in the feedback box',
+    expectedResult: 'You selected Failed which awards +3 bonus points\nYou wrote feedback describing the issue\nYou understand how bug reporting earns extra points'
+  },
+  {
+    id: 3,
+    title: 'Submit with Evidence',
+    description: 'Screenshots provide visual proof. Learn how to attach them for extra points!',
+    scenario: 'Take a screenshot of this page (or any image)\nClick "Choose File" and upload your screenshot\nAdd some feedback text explaining what the screenshot shows',
+    expectedResult: 'Screenshot uploaded successfully (+1 point)\nFeedback provided (+1 point)\nYou understand how to maximize points on each submission'
+  }
+];
+
+router.get('/practice-flow', async (req, res) => {
+  const user = await User.findById(req.session.user.id);
+
+  // Get current step from session or default to 0
+  const currentStep = req.session.practiceFlowStep || 0;
+
+  if (currentStep >= practiceTestCases.length) {
+    // Practice flow complete
+    return res.render('tester/practice-complete');
+  }
+
+  const testCase = practiceTestCases[currentStep];
+  res.render('tester/practice-flow', {
+    testCase,
+    currentStep,
+    totalSteps: practiceTestCases.length,
+    user
+  });
+});
+
+router.post('/practice-flow/submit', async (req, res) => {
+  // Just advance to next step - no database interaction
+  const currentStep = req.session.practiceFlowStep || 0;
+  req.session.practiceFlowStep = currentStep + 1;
+
+  if (currentStep + 1 >= practiceTestCases.length) {
+    // Mark practice as complete - redirect to completion page
+    return res.redirect('/tester/practice-flow/complete');
+  }
+
+  res.redirect('/tester/practice-flow');
+});
+
+router.get('/practice-flow/complete', (req, res) => {
+  // Reset practice flow step for potential re-do
+  req.session.practiceFlowStep = 0;
+  res.render('tester/practice-complete');
 });
 
 module.exports = router;

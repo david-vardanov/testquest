@@ -11,10 +11,31 @@
 </style>
 
 <div class="row">
-  <div class="col-md-8">
+  <div class="col-md-8" id="flows-section">
     <h4 class="mb-3">Available Test Flows</h4>
 
+    <% if (showTutorial) { %>
+      <!-- Practice Flow Card - pinned at top for new users -->
+      <div class="row mb-3">
+        <div class="col-12">
+          <div class="card practice-flow-card" id="practice-flow-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h5 class="card-title mb-1">Practice Flow - Learn TestQuest</h5>
+                  <p class="mb-2" style="opacity: 0.9; font-size: 0.9rem;">Complete this practice flow to learn how TestQuest works. No points awarded - just for learning!</p>
+                  <span class="badge">3 practice tests</span>
+                </div>
+                <a href="/tester/practice-flow" class="btn btn-light btn-lg">Start Practice</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
     <div class="row">
+      <% let firstFlowRendered = false; %>
       <% flows.forEach(flow => {
         const progress = progressMap[flow._id.toString()];
         const completed = progress ? progress.completedTestCases.length : 0;
@@ -22,7 +43,8 @@
         const isComplete = progress && progress.isCompleted;
       %>
         <div class="col-md-6 mb-3">
-          <div class="card h-100">
+          <div class="card h-100 flow-card <%= !firstFlowRendered ? 'flow-card-example' : '' %>">
+            <% firstFlowRendered = true; %>
             <div class="card-body">
               <h6 class="card-title"><%= flow.name %></h6>
               <p class="card-text text-muted" style="font-size: 0.8rem;"><%= flow.description || 'No description' %></p>
@@ -54,7 +76,7 @@
   </div>
 
   <div class="col-md-4">
-    <div class="rank-card">
+    <div class="rank-card" id="rank-card">
       <% if (seasonSettings && seasonSettings.name) { %>
         <div class="mb-2" style="font-size: 0.8rem; opacity: 0.9;">
           <strong><%= seasonSettings.name %></strong>
@@ -99,26 +121,37 @@
     </p>
 
     <h6 class="mt-3">Leaderboard</h6>
-    <table class="table table-sm" style="font-size: 0.8rem;">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>User</th>
-          <th>Pts</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% leaderboard.forEach(function(entry, i) { %>
-          <% if (i === 10) { %>
-            <tr><td colspan="3" class="text-center text-muted">...</td></tr>
-          <% } %>
-          <tr class="<%= entry.isCurrentUser ? 'table-warning' : '' %>">
-            <td><%= entry.position %></td>
-            <td><%= entry.username %> <% if (entry.isCurrentUser) { %><span class="badge bg-primary" style="font-size: 0.6rem;">You</span><% } %></td>
-            <td><%= entry.points %></td>
+    <div id="leaderboard-section">
+      <table class="table table-sm" style="font-size: 0.8rem;">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>User</th>
+            <th>Pts</th>
+            <th>Reward</th>
           </tr>
-        <% }); %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% leaderboard.forEach(function(entry, i) { %>
+            <% if (i === 10) { %>
+              <tr><td colspan="4" class="text-center text-muted">...</td></tr>
+            <% } %>
+            <tr class="<%= entry.isCurrentUser ? 'table-warning' : '' %>">
+              <td><%= entry.position %></td>
+              <td><%= entry.username %> <% if (entry.isCurrentUser) { %><span class="badge bg-primary" style="font-size: 0.6rem;">You</span><% } %></td>
+              <td><%= entry.points %></td>
+              <td style="font-size: 0.7rem;"><%= entry.reward %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
+
+<% if (showTutorial) { %>
+<script>
+  window.shouldShowTutorial = true;
+</script>
+<script src="/js/tutorial.js"></script>
+<% } %>
