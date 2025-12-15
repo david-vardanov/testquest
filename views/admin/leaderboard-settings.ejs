@@ -2,12 +2,12 @@
 
 <div class="row">
   <div class="col-md-8">
-    <h4>Leaderboard</h4>
+    <h4>Current Leaderboard</h4>
 
-    <% if (typeof error !== 'undefined' && error) { %>
+    <% if (error) { %>
       <div class="alert alert-danger"><%= error %></div>
     <% } %>
-    <% if (typeof success !== 'undefined' && success) { %>
+    <% if (success) { %>
       <div class="alert alert-success"><%= success %></div>
     <% } %>
 
@@ -21,10 +21,13 @@
         </tr>
       </thead>
       <tbody>
-        <% users.forEach(function(user, i) { %>
+        <% for (var i = 0; i < users.length; i++) { %>
+          <% var user = users[i]; %>
           <% var pos = i + 1; %>
           <% var userReward = null; %>
-          <% if (rewards) rewards.forEach(function(r) { if (!userReward && pos >= r.positionFrom && pos <= r.positionTo) userReward = r; }); %>
+          <% for (var j = 0; j < rewards.length; j++) { %>
+            <% if (!userReward && pos >= rewards[j].positionFrom && pos <= rewards[j].positionTo) userReward = rewards[j]; %>
+          <% } %>
           <tr>
             <td><strong><%= pos %></strong></td>
             <td><%= user.username %></td>
@@ -37,8 +40,8 @@
               <% } %>
             </td>
           </tr>
-        <% }); %>
-        <% if (!users || users.length === 0) { %>
+        <% } %>
+        <% if (users.length === 0) { %>
           <tr><td colspan="4" class="text-muted text-center">No users yet</td></tr>
         <% } %>
       </tbody>
@@ -52,7 +55,7 @@
         <form method="POST" action="/admin/leaderboard/settings">
           <div class="mb-3">
             <label class="form-label" style="font-size: 0.85rem;">Season Name</label>
-            <input type="text" name="name" class="form-control form-control-sm" value="<%= seasonSettings ? seasonSettings.name : 'Current Season' %>" required>
+            <input type="text" name="name" class="form-control form-control-sm" value="<%= settings ? settings.name : 'Current Season' %>" required>
           </div>
           <div class="mb-3">
             <label class="form-label" style="font-size: 0.85rem;">End Date</label>
@@ -67,7 +70,7 @@
       <div class="card-body">
         <h6>Close Season</h6>
         <p class="text-muted" style="font-size: 0.8rem;">
-          Archive leaderboard and reset all points to 0.
+          This will archive the current leaderboard and reset all user points to 0.
         </p>
         <form method="POST" action="/admin/leaderboard/close" onsubmit="return confirm('Are you sure? All points will be reset to 0.');">
           <button type="submit" class="btn btn-danger btn-sm w-100">Close Season & Reset Points</button>
@@ -76,8 +79,9 @@
     </div>
 
     <h6>Past Seasons</h6>
-    <% if (typeof archives !== 'undefined' && archives.length > 0) { %>
-      <% archives.forEach(function(archive) { %>
+    <% if (archives.length > 0) { %>
+      <% for (var k = 0; k < archives.length; k++) { %>
+        <% var archive = archives[k]; %>
         <div class="mb-2 p-2 border-start border-primary border-3">
           <strong><%= archive.name %></strong>
           <div class="text-muted" style="font-size: 0.75rem;">
@@ -85,7 +89,7 @@
           </div>
           <a href="/admin/leaderboard/archive/<%= archive._id %>" class="btn btn-outline-primary btn-sm mt-1">View</a>
         </div>
-      <% }); %>
+      <% } %>
     <% } else { %>
       <p class="text-muted" style="font-size: 0.85rem;">No archived seasons yet.</p>
     <% } %>

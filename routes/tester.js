@@ -9,6 +9,8 @@ const Submission = require('../models/Submission');
 const FlowProgress = require('../models/FlowProgress');
 const Reward = require('../models/Reward');
 const RewardClaim = require('../models/RewardClaim');
+const SeasonArchive = require('../models/SeasonArchive');
+const LeaderboardSettings = require('../models/LeaderboardSettings');
 
 // Multer config for screenshots
 const storage = multer.diskStorage({
@@ -23,14 +25,21 @@ router.use(isLoggedIn);
 
 // Dashboard - show available flows
 router.get('/', async (req, res) => {
-  const [flows, user, progresses, allUsers, rewards, myClaims] = await Promise.all([
+  const [flows, user, progresses, allUsers, rewards, myClaims, seasonSettings] = await Promise.all([
     Flow.find({ isActive: true }).populate('testCases'),
     User.findById(req.session.user.id),
     FlowProgress.find({ user: req.session.user.id }),
     User.find({ role: 'tester' }).sort('-points'),
     Reward.find({ isActive: true }).sort('positionFrom'),
-    RewardClaim.find({ user: req.session.user.id }).populate('reward').sort('-createdAt')
+    RewardClaim.find({ user: req.session.user.id }).populate('reward').sort('-createdAt'),
+    LeaderboardSettings.findOne({ isActive: true })
   ]);
+
+  // User not found in DB (deleted?) - destroy session and redirect to login
+  if (!user) {
+    req.session.destroy();
+    return res.redirect('/login');
+  }
 
   const progressMap = {};
   progresses.forEach(p => progressMap[p.flow.toString()] = p);
@@ -65,7 +74,7 @@ router.get('/', async (req, res) => {
     });
   }
 
-  res.render('tester/dashboard', { flows, user, progressMap, rank, currentReward, nextReward, pointsToNext, myClaims, leaderboard, rewards });
+  res.render('tester/dashboard', { flows, user, progressMap, rank, currentReward, nextReward, pointsToNext, myClaims, leaderboard, rewards, seasonSettings });
 });
 
 // Start/Continue a flow
@@ -139,9 +148,46 @@ router.get('/submissions', async (req, res) => {
 
 // Leaderboard
 router.get('/leaderboard', async (req, res) => {
-  const users = await User.find({ role: 'tester' }).sort('-points').limit(50);
-  const currentUser = await User.findById(req.session.user.id);
-  res.render('tester/leaderboard', { users, currentUser });
+  const [users, currentUser, rewards] = await Promise.all([
+    User.find({ role: 'tester' }).sort('-points'),
+    User.findById(req.session.user.id),
+    Reward.find({ isActive: true }).sort('positionFrom')
+  ]);
+  res.render('tester/leaderboard', { users, currentUser, rewards });
+});
+
+// Season History - list of past seasons
+router.get('/history', async (req, res) => {
+  const userId = req.session.user.id;
+  const archives = await SeasonArchive.find().sort('-closedAt');
+
+  // For each archive, find user's position and reward
+  const seasonsWithUserData = archives.map(archive => {
+    const userEntry = archive.leaderboard.find(entry =>
+      entry.user && entry.user.toString() === userId
+    );
+    return {
+      _id: archive._id,
+      name: archive.name,
+      closedAt: archive.closedAt,
+      totalParticipants: archive.leaderboard.length,
+      userPosition: userEntry ? userEntry.position : null,
+      userPoints: userEntry ? userEntry.points : null,
+      userReward: userEntry ? userEntry.reward : null
+    };
+  });
+
+  res.render('tester/history', { seasons: seasonsWithUserData });
+});
+
+// View specific archived season
+router.get('/history/:id', async (req, res) => {
+  const archive = await SeasonArchive.findById(req.params.id);
+  if (!archive) {
+    return res.redirect('/tester/history');
+  }
+  const currentUserId = req.session.user.id;
+  res.render('tester/history-detail', { archive, currentUserId });
 });
 
 module.exports = router;

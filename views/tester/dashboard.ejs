@@ -28,7 +28,7 @@
               <p class="card-text text-muted" style="font-size: 0.8rem;"><%= flow.description || 'No description' %></p>
               <div class="d-flex justify-content-between" style="font-size: 0.75rem;">
                 <span><%= total %> tests</span>
-                <span>+<%= flow.completionBonus %> bonus</span>
+                <span><%= flow.points || 0 %> pts</span>
               </div>
               <div class="progress mt-2" style="height: 6px;">
                 <div class="progress-bar" style="width: <%= total > 0 ? (completed/total*100) : 0 %>%"></div>
@@ -55,6 +55,14 @@
 
   <div class="col-md-4">
     <div class="rank-card">
+      <% if (seasonSettings && seasonSettings.name) { %>
+        <div class="mb-2" style="font-size: 0.8rem; opacity: 0.9;">
+          <strong><%= seasonSettings.name %></strong>
+          <% if (seasonSettings.endDate) { %>
+            <span style="opacity: 0.7;"> - Ends <%= new Date(seasonSettings.endDate).toLocaleDateString() %></span>
+          <% } %>
+        </div>
+      <% } %>
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.8;">Your Rank</div>
@@ -85,24 +93,10 @@
       </div>
     <% } %>
 
-    <h6>My Rewards</h6>
-    <div class="claim-history">
-      <% if (myClaims.length > 0) { %>
-        <% myClaims.forEach(claim => { %>
-          <div class="claim-item">
-            <div class="d-flex justify-content-between">
-              <span><%= claim.reward ? claim.reward.name : 'Reward' %></span>
-              <span class="badge <%= claim.status === 'delivered' ? 'bg-success' : claim.status === 'claimed' ? 'bg-info' : 'bg-warning' %>">
-                <%= claim.status %>
-              </span>
-            </div>
-            <div class="text-muted" style="font-size: 0.7rem;">Position #<%= claim.position %> · <%= claim.createdAt.toLocaleDateString() %></div>
-          </div>
-        <% }) %>
-      <% } else { %>
-        <p class="text-muted" style="font-size: 0.8rem;">No rewards yet. Keep testing to climb the leaderboard!</p>
-      <% } %>
-    </div>
+    <h6>Season History</h6>
+    <p class="text-muted" style="font-size: 0.8rem;">
+      <a href="/tester/history">View past seasons</a> to see your previous results and rewards.
+    </p>
 
     <h6 class="mt-3">Leaderboard</h6>
     <table class="table table-sm" style="font-size: 0.8rem;">

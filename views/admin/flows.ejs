@@ -10,6 +10,7 @@
     <tr>
       <th>Name</th>
       <th>Test Cases</th>
+      <th>Points</th>
       <th>Completion Bonus</th>
       <th>Status</th>
       <th>Actions</th>
@@ -20,6 +21,7 @@
       <tr>
         <td><%= flow.name %></td>
         <td><%= flow.testCases.length %> cases</td>
+        <td><%= flow.points || 0 %> pts</td>
         <td>+<%= flow.completionBonus %> pts</td>
         <td><%= flow.isActive ? 'Active' : 'Inactive' %></td>
         <td>

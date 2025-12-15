@@ -178,7 +178,16 @@
                 <input type="text" name="name" class="form-control" value="<%= flow ? flow.name : '' %>" required placeholder="e.g., Authentication Testing">
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-2">
+              <div class="mb-3">
+                <label class="form-label">Flow Points</label>
+                <div class="input-group">
+                  <input type="number" name="points" class="form-control" value="<%= flow ? flow.points : 0 %>" min="0">
+                  <span class="input-group-text">pts</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2">
               <div class="mb-3">
                 <label class="form-label">Completion Bonus</label>
                 <div class="input-group">

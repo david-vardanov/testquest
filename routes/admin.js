@@ -12,6 +12,7 @@ const Submission = require('../models/Submission');
 const Reward = require('../models/Reward');
 const RewardClaim = require('../models/RewardClaim');
 const LeaderboardSettings = require('../models/LeaderboardSettings');
+const SeasonArchive = require('../models/SeasonArchive');
 
 // Ensure backups directory exists
 const BACKUPS_DIR = path.join(__dirname, '..', 'backups');
@@ -22,12 +23,22 @@ if (!fs.existsSync(BACKUPS_DIR)) {
 router.use(isAdmin);
 
 // Leaderboard/Rankings
-router.get('/rankings', async (req, res) => {
-  const [users, rewards] = await Promise.all([
-    User.find({ role: 'tester' }).sort('-points').limit(50),
-    Reward.find({ isActive: true }).sort('positionFrom')
-  ]);
-  res.render('admin/rankings', { users: users || [], rewards: rewards || [] });
+router.get('/rankings', function(req, res) {
+  Promise.all([
+    User.find({ role: 'tester' }).sort('-points'),
+    Reward.find({ isActive: true }).sort('positionFrom'),
+    LeaderboardSettings.findOne({ isActive: true }),
+    SeasonArchive.find().sort('-closedAt')
+  ]).then(function(results) {
+    res.render('admin/rankings', {
+      users: results[0] || [],
+      rewards: results[1] || [],
+      seasonSettings: results[2] || null,
+      archives: results[3] || [],
+      error: req.query.error || null,
+      success: req.query.success || null
+    });
+  });
 });
 
 // Dashboard
@@ -121,7 +132,7 @@ router.get('/flows/new', async (req, res) => {
 });
 
 router.post('/flows', async (req, res) => {
-  const { name, description, testCases, completionBonus, isActive } = req.body;
+  const { name, description, testCases, points, completionBonus, isActive } = req.body;
 
   // Create or reuse test cases
   const testCaseIds = [];
@@ -148,6 +159,7 @@ router.post('/flows', async (req, res) => {
   await Flow.create({
     name, description,
     testCases: testCaseIds,
+    points: points || 0,
     completionBonus,
     isActive: isActive === 'on'
   });
@@ -163,7 +175,7 @@ router.get('/flows/:id/edit', async (req, res) => {
 });
 
 router.post('/flows/:id', async (req, res) => {
-  const { name, description, testCases, completionBonus, isActive } = req.body;
+  const { name, description, testCases, points, completionBonus, isActive } = req.body;
 
   const flow = await Flow.findById(req.params.id);
   const newTestCaseIds = [];
@@ -206,6 +218,7 @@ router.post('/flows/:id', async (req, res) => {
   await Flow.findByIdAndUpdate(req.params.id, {
     name, description,
     testCases: newTestCaseIds,
+    points: points || 0,
     completionBonus,
     isActive: isActive === 'on'
   });
@@ -224,18 +237,82 @@ router.post('/flows/:id/delete', async (req, res) => {
 
 // Leaderboard Settings & Rewards
 router.post('/leaderboard/settings', async (req, res) => {
-  const { name, budget, startDate, endDate } = req.body;
+  const { name, endDate } = req.body;
   let settings = await LeaderboardSettings.findOne({ isActive: true });
   if (settings) {
     settings.name = name;
-    settings.budget = budget;
-    settings.startDate = startDate || null;
     settings.endDate = endDate || null;
     await settings.save();
   } else {
-    await LeaderboardSettings.create({ name, budget, startDate, endDate });
+    await LeaderboardSettings.create({ name, endDate, startDate: new Date() });
   }
-  res.redirect('/admin/leaderboard');
+  res.redirect('/admin/rankings?success=Settings saved');
+});
+
+// Close season - archive leaderboard and reset points
+router.post('/leaderboard/close', async (req, res) => {
+  try {
+    const settings = await LeaderboardSettings.findOne({ isActive: true });
+    const users = await User.find({ role: 'tester' }).sort('-points');
+    const rewards = await Reward.find({ isActive: true }).sort('positionFrom');
+
+    if (users.length === 0) {
+      return res.redirect('/admin/rankings?error=No users to archive');
+    }
+
+    // Build leaderboard snapshot with rewards
+    const leaderboard = users.map((user, index) => {
+      const position = index + 1;
+      const userReward = rewards.find(r => position >= r.positionFrom && position <= r.positionTo);
+      return {
+        user: user._id,
+        username: user.username,
+        position,
+        points: user.points,
+        reward: userReward ? {
+          name: userReward.name,
+          prizeDescription: userReward.prizeDescription,
+          prizeAmount: userReward.prizeAmount
+        } : null
+      };
+    });
+
+    // Create archive
+    await SeasonArchive.create({
+      name: settings ? settings.name : 'Season',
+      startDate: settings ? settings.startDate : null,
+      endDate: settings ? settings.endDate : new Date(),
+      closedAt: new Date(),
+      leaderboard
+    });
+
+    // Reset all tester points to 0
+    await User.updateMany({ role: 'tester' }, { $set: { points: 0 } });
+
+    // Reset or create new season settings
+    if (settings) {
+      settings.name = 'New Season';
+      settings.startDate = new Date();
+      settings.endDate = null;
+      await settings.save();
+    } else {
+      await LeaderboardSettings.create({ name: 'New Season', startDate: new Date() });
+    }
+
+    res.redirect('/admin/rankings?success=Season closed and archived. All points have been reset.');
+  } catch (err) {
+    console.error('Close season error:', err);
+    res.redirect('/admin/rankings?error=' + encodeURIComponent('Failed to close season: ' + err.message));
+  }
+});
+
+// View archived season
+router.get('/leaderboard/archive/:id', async (req, res) => {
+  const archive = await SeasonArchive.findById(req.params.id);
+  if (!archive) {
+    return res.redirect('/admin/rankings?error=Archive not found');
+  }
+  res.render('admin/leaderboard-archive', { archive });
 });
 
 // Rewards CRUD
@@ -294,7 +371,7 @@ router.post('/leaderboard/award', async (req, res) => {
       }
     }
   }
-  res.redirect('/admin/leaderboard');
+  res.redirect('/admin/rankings');
 });
 
 // Update claim status
@@ -304,7 +381,7 @@ router.post('/claims/:id/status', async (req, res) => {
     status,
     claimedAt: status === 'claimed' ? new Date() : null
   });
-  res.redirect('/admin/leaderboard');
+  res.redirect('/admin/rankings');
 });
 
 // Submissions / Feedback Review

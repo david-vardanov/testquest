@@ -8,13 +8,17 @@
       <th>Rank</th>
       <th>Username</th>
       <th>Points</th>
+      <th>Reward</th>
     </tr>
   </thead>
   <tbody>
     <% users.forEach((user, index) => { %>
+      <% var pos = index + 1; %>
+      <% var userReward = null; %>
+      <% if (rewards) rewards.forEach(function(r) { if (!userReward && pos >= r.positionFrom && pos <= r.positionTo) userReward = r; }); %>
       <tr class="<%= user._id.toString() === currentUser._id.toString() ? 'table-warning' : '' %>">
         <td>
-          <span class="leaderboard-rank rank-<%= index + 1 %>"><%= index + 1 %></span>
+          <span class="leaderboard-rank rank-<%= pos %>"><%= pos %></span>
         </td>
         <td>
           <%= user.username %>
@@ -23,6 +27,13 @@
           <% } %>
         </td>
         <td><strong><%= user.points %></strong></td>
+        <td>
+          <% if (userReward) { %>
+            <span class="badge bg-success"><%= userReward.prizeDescription || userReward.name %></span>
+          <% } else { %>
+            <span class="text-muted">-</span>
+          <% } %>
+        </td>
       </tr>
     <% }) %>
   </tbody>

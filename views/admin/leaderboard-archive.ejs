@@ -1,0 +1,42 @@
+<% layout('layouts/boilerplate') %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h4><%= archive.name %></h4>
+    <p class="text-muted mb-0">
+      <% if (archive.startDate && archive.endDate) { %>
+        <%= new Date(archive.startDate).toLocaleDateString() %> - <%= new Date(archive.endDate).toLocaleDateString() %>
+      <% } %>
+      | Closed: <%= archive.closedAt ? new Date(archive.closedAt).toLocaleDateString() : 'N/A' %>
+      | <%= archive.leaderboard ? archive.leaderboard.length : 0 %> participants
+    </p>
+  </div>
+  <a href="/admin/leaderboard" class="btn btn-outline-secondary btn-sm">Back to Leaderboard</a>
+</div>
+
+<table class="table table-sm">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>User</th>
+      <th>Points</th>
+      <th>Reward</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% archive.leaderboard.forEach(function(entry) { %>
+      <tr>
+        <td><strong><%= entry.position %></strong></td>
+        <td><%= entry.username %></td>
+        <td><%= entry.points %></td>
+        <td>
+          <% if (entry.reward) { %>
+            <span class="badge bg-success"><%= entry.reward.prizeDescription || entry.reward.name %></span>
+          <% } else { %>
+            <span class="text-muted">-</span>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+  </tbody>
+</table>

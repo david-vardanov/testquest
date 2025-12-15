@@ -1,0 +1,46 @@
+<% layout('layouts/boilerplate') %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2><%= archive.name %></h2>
+    <p class="text-muted mb-0">
+      Closed: <%= archive.closedAt ? new Date(archive.closedAt).toLocaleDateString() : 'N/A' %> |
+      <%= archive.leaderboard ? archive.leaderboard.length : 0 %> participants
+    </p>
+  </div>
+  <a href="/tester/history" class="btn btn-outline-secondary btn-sm">Back to History</a>
+</div>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Rank</th>
+      <th>Username</th>
+      <th>Points</th>
+      <th>Reward</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% archive.leaderboard.forEach(entry => { %>
+      <tr class="<%= entry.user && entry.user.toString() === currentUserId ? 'table-warning' : '' %>">
+        <td>
+          <span class="leaderboard-rank rank-<%= entry.position %>"><%= entry.position %></span>
+        </td>
+        <td>
+          <%= entry.username %>
+          <% if (entry.user && entry.user.toString() === currentUserId) { %>
+            <span class="badge bg-primary">You</span>
+          <% } %>
+        </td>
+        <td><strong><%= entry.points %></strong></td>
+        <td>
+          <% if (entry.reward) { %>
+            <span class="badge bg-success"><%= entry.reward.prizeDescription || entry.reward.name %></span>
+          <% } else { %>
+            <span class="text-muted">-</span>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+  </tbody>
+</table>
