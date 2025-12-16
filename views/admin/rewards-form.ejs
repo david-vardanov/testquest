@@ -1,43 +1,43 @@
 <% layout('layouts/boilerplate') %>
 
-<h2><%= reward ? 'Edit' : 'Add' %> Reward Tier</h2>
+<h2><%= reward ? 'Editar' : 'Agregar' %> Nivel de Recompensa</h2>
 
 <div class="card" style="max-width: 500px;">
   <div class="card-body">
     <form method="POST" action="/admin/rewards<%= reward ? '/' + reward._id : '' %>">
       <div class="mb-3">
-        <label class="form-label">Name</label>
-        <input type="text" name="name" class="form-control" value="<%= reward ? reward.name : '' %>" required placeholder="e.g., Gold Prize">
+        <label class="form-label">Nombre</label>
+        <input type="text" name="name" class="form-control" value="<%= reward ? reward.name : '' %>" required placeholder="ej., Premio Oro">
       </div>
       <div class="mb-3">
-        <label class="form-label">Description</label>
-        <textarea name="description" class="form-control" rows="2" placeholder="Internal notes..."><%= reward ? reward.description : '' %></textarea>
+        <label class="form-label">Descripcion</label>
+        <textarea name="description" class="form-control" rows="2" placeholder="Notas internas..."><%= reward ? reward.description : '' %></textarea>
       </div>
       <div class="row mb-3">
         <div class="col-6">
-          <label class="form-label">Position From</label>
+          <label class="form-label">Posicion Desde</label>
           <input type="number" name="positionFrom" class="form-control" value="<%= reward ? reward.positionFrom : 1 %>" min="1" required>
         </div>
         <div class="col-6">
-          <label class="form-label">Position To</label>
+          <label class="form-label">Posicion Hasta</label>
           <input type="number" name="positionTo" class="form-control" value="<%= reward ? reward.positionTo : 1 %>" min="1" required>
         </div>
       </div>
-      <small class="text-muted d-block mb-3">e.g., From 1 To 3 = positions #1, #2, #3 get this reward</small>
+      <small class="text-muted d-block mb-3">ej., Desde 1 Hasta 3 = posiciones #1, #2, #3 obtienen esta recompensa</small>
       <div class="mb-3">
-        <label class="form-label">Prize Description</label>
-        <input type="text" name="prizeDescription" class="form-control" value="<%= reward ? reward.prizeDescription : '' %>" placeholder="e.g., $100 Amazon Gift Card">
+        <label class="form-label">Descripcion del Premio</label>
+        <input type="text" name="prizeDescription" class="form-control" value="<%= reward ? reward.prizeDescription : '' %>" placeholder="ej., Tarjeta de Regalo Amazon de $100">
       </div>
       <div class="mb-3">
-        <label class="form-label">Prize Amount ($)</label>
+        <label class="form-label">Monto del Premio ($)</label>
         <input type="number" name="prizeAmount" class="form-control" value="<%= reward ? reward.prizeAmount : 0 %>" min="0">
       </div>
       <div class="mb-3 form-check">
         <input type="checkbox" name="isActive" class="form-check-input" <%= (!reward || reward.isActive) ? 'checked' : '' %>>
-        <label class="form-check-label">Active</label>
+        <label class="form-check-label">Activo</label>
       </div>
-      <button type="submit" class="btn btn-primary">Save</button>
-      <a href="/admin/rewards" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <a href="/admin/rewards" class="btn btn-secondary">Cancelar</a>
     </form>
   </div>
 </div>

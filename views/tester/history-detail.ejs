@@ -4,20 +4,20 @@
   <div>
     <h2><%= archive.name %></h2>
     <p class="text-muted mb-0">
-      Closed: <%= archive.closedAt ? new Date(archive.closedAt).toLocaleDateString() : 'N/A' %> |
-      <%= archive.leaderboard ? archive.leaderboard.length : 0 %> participants
+      Cerrada: <%= archive.closedAt ? new Date(archive.closedAt).toLocaleDateString() : 'N/A' %> |
+      <%= archive.leaderboard ? archive.leaderboard.length : 0 %> participantes
     </p>
   </div>
-  <a href="/tester/history" class="btn btn-outline-secondary btn-sm">Back to History</a>
+  <a href="/tester/history" class="btn btn-outline-secondary btn-sm">Volver al Historial</a>
 </div>
 
 <table class="table">
   <thead>
     <tr>
-      <th>Rank</th>
-      <th>Username</th>
-      <th>Points</th>
-      <th>Reward</th>
+      <th>Posicion</th>
+      <th>Usuario</th>
+      <th>Puntos</th>
+      <th>Recompensa</th>
     </tr>
   </thead>
   <tbody>
@@ -29,7 +29,7 @@
         <td>
           <%= entry.username %>
           <% if (entry.user && entry.user.toString() === currentUserId) { %>
-            <span class="badge bg-primary">You</span>
+            <span class="badge bg-primary">Tu</span>
           <% } %>
         </td>
         <td><strong><%= entry.points %></strong></td>

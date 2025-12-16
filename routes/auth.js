@@ -12,7 +12,7 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ username, isActive: true });
 
     if (!user || !(await user.comparePassword(password))) {
-      return res.render('auth/login', { error: 'Invalid credentials' });
+      return res.render('auth/login', { error: 'Credenciales invalidas' });
     }
 
     req.session.user = {
@@ -22,12 +22,18 @@ router.post('/login', async (req, res) => {
       points: user.points
     };
 
-    if (user.role === 'superadmin') {
-      return res.redirect('/admin');
-    }
-    res.redirect('/tester');
+    // Explicitly save session before redirect to ensure it persists
+    req.session.save((err) => {
+      if (err) {
+        return res.render('auth/login', { error: 'Error al iniciar sesion' });
+      }
+      if (user.role === 'superadmin') {
+        return res.redirect('/admin');
+      }
+      res.redirect('/tester');
+    });
   } catch (err) {
-    res.render('auth/login', { error: 'Login failed' });
+    res.render('auth/login', { error: 'Error al iniciar sesion' });
   }
 });
 
@@ -42,7 +48,7 @@ router.post('/register', async (req, res) => {
     await user.save();
     res.redirect('/login');
   } catch (err) {
-    res.render('auth/register', { error: 'Registration failed. Username or email may already exist.' });
+    res.render('auth/register', { error: 'Error en el registro. El usuario o correo ya existe.' });
   }
 });
 

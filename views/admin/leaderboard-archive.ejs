@@ -7,20 +7,20 @@
       <% if (archive.startDate && archive.endDate) { %>
         <%= new Date(archive.startDate).toLocaleDateString() %> - <%= new Date(archive.endDate).toLocaleDateString() %>
       <% } %>
-      | Closed: <%= archive.closedAt ? new Date(archive.closedAt).toLocaleDateString() : 'N/A' %>
-      | <%= archive.leaderboard ? archive.leaderboard.length : 0 %> participants
+      | Cerrada: <%= archive.closedAt ? new Date(archive.closedAt).toLocaleDateString() : 'N/A' %>
+      | <%= archive.leaderboard ? archive.leaderboard.length : 0 %> participantes
     </p>
   </div>
-  <a href="/admin/leaderboard" class="btn btn-outline-secondary btn-sm">Back to Leaderboard</a>
+  <a href="/admin/leaderboard" class="btn btn-outline-secondary btn-sm">Volver a Clasificacion</a>
 </div>
 
 <table class="table table-sm">
   <thead>
     <tr>
       <th>#</th>
-      <th>User</th>
-      <th>Points</th>
-      <th>Reward</th>
+      <th>Usuario</th>
+      <th>Puntos</th>
+      <th>Recompensa</th>
     </tr>
   </thead>
   <tbody>

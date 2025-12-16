@@ -1,14 +1,14 @@
 <% layout('layouts/boilerplate') %>
 
-<h2>Leaderboard</h2>
+<h2>Clasificacion</h2>
 
 <table class="table">
   <thead>
     <tr>
-      <th>Rank</th>
-      <th>Username</th>
-      <th>Points</th>
-      <th>Reward</th>
+      <th>Posicion</th>
+      <th>Usuario</th>
+      <th>Puntos</th>
+      <th>Recompensa</th>
     </tr>
   </thead>
   <tbody>
@@ -23,7 +23,7 @@
         <td>
           <%= user.username %>
           <% if (user._id.toString() === currentUser._id.toString()) { %>
-            <span class="badge bg-primary">You</span>
+            <span class="badge bg-primary">Tu</span>
           <% } %>
         </td>
         <td><strong><%= user.points %></strong></td>

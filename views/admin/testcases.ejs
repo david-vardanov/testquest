@@ -1,17 +1,17 @@
 <% layout('layouts/boilerplate') %>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>Manage Test Cases</h2>
-  <a href="/admin/testcases/new" class="btn btn-primary">Add Test Case</a>
+  <h2>Administrar Casos de Prueba</h2>
+  <a href="/admin/testcases/new" class="btn btn-primary">Agregar Caso de Prueba</a>
 </div>
 
 <table class="table table-striped">
   <thead>
     <tr>
-      <th>Title</th>
-      <th>Points</th>
-      <th>Status</th>
-      <th>Actions</th>
+      <th>Titulo</th>
+      <th>Puntos</th>
+      <th>Estado</th>
+      <th>Acciones</th>
     </tr>
   </thead>
   <tbody>
@@ -19,11 +19,11 @@
       <tr>
         <td><%= tc.title %></td>
         <td><%= tc.points %></td>
-        <td><%= tc.isActive ? 'Active' : 'Inactive' %></td>
+        <td><%= tc.isActive ? 'Activo' : 'Inactivo' %></td>
         <td>
-          <a href="/admin/testcases/<%= tc._id %>/edit" class="btn btn-sm btn-warning">Edit</a>
+          <a href="/admin/testcases/<%= tc._id %>/edit" class="btn btn-sm btn-warning">Editar</a>
           <form method="POST" action="/admin/testcases/<%= tc._id %>/delete" class="d-inline">
-            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Delete</button>
+            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Eliminar?')">Eliminar</button>
           </form>
         </td>
       </tr>

@@ -88,50 +88,50 @@
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 class="mb-0">Submissions Review</h2>
+  <h2 class="mb-0">Revision de Envios</h2>
   <a href="/admin/submissions/export?<%= Object.entries(filters).filter(([k,v]) => v).map(([k,v]) => `${k}=${v}`).join('&') %>" class="btn btn-outline-secondary">
-    Export CSV
+    Exportar CSV
   </a>
 </div>
 
 <div class="filter-card">
   <form method="GET" class="row g-3 align-items-end">
     <div class="col-md-3">
-      <label class="form-label">Flow</label>
+      <label class="form-label">Flujo</label>
       <select name="flow" class="form-select">
-        <option value="">All Flows</option>
+        <option value="">Todos los Flujos</option>
         <% flows.forEach(f => { %>
           <option value="<%= f._id %>" <%= filters.flow === f._id.toString() ? 'selected' : '' %>><%= f.name %></option>
         <% }) %>
       </select>
     </div>
     <div class="col-md-2">
-      <label class="form-label">Status</label>
+      <label class="form-label">Estado</label>
       <select name="status" class="form-select">
-        <option value="">All</option>
-        <option value="passed" <%= filters.status === 'passed' ? 'selected' : '' %>>Passed</option>
-        <option value="failed" <%= filters.status === 'failed' ? 'selected' : '' %>>Failed</option>
+        <option value="">Todos</option>
+        <option value="passed" <%= filters.status === 'passed' ? 'selected' : '' %>>Aprobado</option>
+        <option value="failed" <%= filters.status === 'failed' ? 'selected' : '' %>>Fallido</option>
       </select>
     </div>
     <div class="col-md-3">
-      <label class="form-label">User</label>
+      <label class="form-label">Usuario</label>
       <select name="user" class="form-select">
-        <option value="">All Users</option>
+        <option value="">Todos los Usuarios</option>
         <% users.forEach(u => { %>
           <option value="<%= u._id %>" <%= filters.user === u._id.toString() ? 'selected' : '' %>><%= u.username %></option>
         <% }) %>
       </select>
     </div>
     <div class="col-md-2">
-      <label class="form-label">Approval</label>
+      <label class="form-label">Aprobacion</label>
       <select name="approved" class="form-select">
-        <option value="">All</option>
-        <option value="pending" <%= filters.approved === 'pending' ? 'selected' : '' %>>Pending</option>
-        <option value="approved" <%= filters.approved === 'approved' ? 'selected' : '' %>>Approved</option>
+        <option value="">Todos</option>
+        <option value="pending" <%= filters.approved === 'pending' ? 'selected' : '' %>>Pendiente</option>
+        <option value="approved" <%= filters.approved === 'approved' ? 'selected' : '' %>>Aprobado</option>
       </select>
     </div>
     <div class="col-md-2">
-      <button type="submit" class="btn btn-primary w-100">Filter</button>
+      <button type="submit" class="btn btn-primary w-100">Filtrar</button>
     </div>
   </form>
 </div>
@@ -139,8 +139,8 @@
 <% if (submissions.length === 0) { %>
   <div class="text-center py-5">
     <div style="font-size: 3rem;">📋</div>
-    <h5 class="mt-3">No submissions found</h5>
-    <p class="text-muted">Try adjusting your filters</p>
+    <h5 class="mt-3">No se encontraron envios</h5>
+    <p class="text-muted">Intenta ajustando tus filtros</p>
   </div>
 <% } %>
 
@@ -155,7 +155,7 @@
             <strong><%= sub.user ? sub.user.username : 'N/A' %></strong>
             <span class="text-muted">· <%= sub.createdAt.toLocaleDateString() %></span>
             <% if (!sub.pointsAwarded) { %>
-              <span class="badge bg-warning text-dark ms-2">Pending</span>
+              <span class="badge bg-warning text-dark ms-2">Pendiente</span>
             <% } %>
           </div>
           <div>
@@ -167,16 +167,16 @@
             <%= sub.flow ? sub.flow.name : 'N/A' %> → <%= sub.testCase ? sub.testCase.title : 'N/A' %>
           </small>
           <% if (sub.testCase) { %>
-            <a class="ms-2" style="font-size: 0.7rem; cursor: pointer;" data-bs-toggle="collapse" href="#testcase-<%= sub._id %>">Show test details</a>
+            <a class="ms-2" style="font-size: 0.7rem; cursor: pointer;" data-bs-toggle="collapse" href="#testcase-<%= sub._id %>">Mostrar detalles de prueba</a>
           <% } %>
         </div>
         <% if (sub.testCase) { %>
           <div class="collapse mt-2" id="testcase-<%= sub._id %>">
             <div style="background: #f0f0f0; padding: 0.5rem; border-radius: 4px; font-size: 0.75rem;">
-              <div><strong>Objective:</strong> <%= sub.testCase.description %></div>
-              <div class="mt-1"><strong>Steps:</strong></div>
+              <div><strong>Objetivo:</strong> <%= sub.testCase.description %></div>
+              <div class="mt-1"><strong>Pasos:</strong></div>
               <pre style="font-size: 0.7rem; margin: 0; white-space: pre-wrap;"><%= sub.testCase.scenario %></pre>
-              <div class="mt-1"><strong>Expected:</strong> <%= sub.testCase.expectedResult %></div>
+              <div class="mt-1"><strong>Esperado:</strong> <%= sub.testCase.expectedResult %></div>
             </div>
           </div>
         <% } %>
@@ -186,22 +186,22 @@
         <div class="row">
           <div class="col-8">
             <% if (sub.feedback) { %>
-              <h6>Feedback</h6>
+              <h6>Comentarios</h6>
               <div class="feedback-box"><%= sub.feedback %></div>
             <% } else { %>
-              <div class="text-muted mb-3"><em>No feedback provided</em></div>
+              <div class="text-muted mb-3"><em>Sin comentarios proporcionados</em></div>
             <% } %>
 
             <% if (sub.screenshot) { %>
-              <h6>Screenshot</h6>
+              <h6>Captura de Pantalla</h6>
               <a href="/uploads/<%= sub.screenshot %>" target="_blank">
-                <img src="/uploads/<%= sub.screenshot %>" alt="Screenshot" class="screenshot-preview">
+                <img src="/uploads/<%= sub.screenshot %>" alt="Captura" class="screenshot-preview">
               </a>
             <% } %>
           </div>
 
         <div class="col-4">
-          <h6>Points</h6>
+          <h6>Puntos</h6>
           <div class="points-breakdown">
             <div class="points-item">
               <span>Base</span>
@@ -209,7 +209,7 @@
             </div>
             <% if (sub.status === 'failed') { %>
               <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.bug ? 'rejected' : '' %>">
-                <span>Bug</span>
+                <span>Error</span>
                 <span class="d-flex align-items-center gap-1">
                   +3
                   <% if (!sub.pointsAwarded) { %>
@@ -224,7 +224,7 @@
             <% } %>
             <% if (sub.feedback && sub.feedback.trim()) { %>
               <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? 'rejected' : '' %>">
-                <span>Feedback</span>
+                <span>Comentarios</span>
                 <span class="d-flex align-items-center gap-1">
                   +1
                   <% if (!sub.pointsAwarded) { %>
@@ -239,7 +239,7 @@
             <% } %>
             <% if (sub.screenshot) { %>
               <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? 'rejected' : '' %>">
-                <span>Screenshot</span>
+                <span>Captura</span>
                 <span class="d-flex align-items-center gap-1">
                   +1
                   <% if (!sub.pointsAwarded) { %>
@@ -254,7 +254,7 @@
             <% } %>
             <% if (sub.isUsefulFeedback) { %>
               <div class="points-item">
-                <span>Useful</span>
+                <span>Util</span>
                 <span>+1</span>
               </div>
             <% } %>
@@ -267,19 +267,19 @@
           <div class="action-buttons">
             <% if (!sub.pointsAwarded) { %>
               <form method="POST" action="/admin/submissions/<%= sub._id %>/approve" class="d-inline">
-                <button type="submit" class="btn btn-dark btn-sm">Approve</button>
+                <button type="submit" class="btn btn-dark btn-sm">Aprobar</button>
               </form>
             <% } %>
             <% if (sub.feedback && !sub.isUsefulFeedback && sub.pointsAwarded) { %>
               <form method="POST" action="/admin/submissions/<%= sub._id %>/useful" class="d-inline">
-                <button type="submit" class="btn btn-outline-dark btn-sm">+1 Useful</button>
+                <button type="submit" class="btn btn-outline-dark btn-sm">+1 Util</button>
               </form>
             <% } %>
             <form method="POST" action="/admin/submissions/<%= sub._id %>/rerun" class="d-inline">
-              <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Allow retake?')">Rerun</button>
+              <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Permitir repetir?')">Repetir</button>
             </form>
             <form method="POST" action="/admin/submissions/<%= sub._id %>/reset" class="d-inline">
-              <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Delete and deduct points?')">Reset</button>
+              <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Eliminar y descontar puntos?')">Reiniciar</button>
             </form>
           </div>
         </div>

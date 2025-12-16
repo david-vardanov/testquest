@@ -1,36 +1,36 @@
 <% layout('layouts/boilerplate') %>
 
-<h2><%= testCase ? 'Edit' : 'Add' %> Test Case</h2>
+<h2><%= testCase ? 'Editar' : 'Agregar' %> Caso de Prueba</h2>
 
 <div class="card">
   <div class="card-body">
     <form method="POST" action="/admin/testcases<%= testCase ? '/' + testCase._id : '' %>">
       <div class="mb-3">
-        <label class="form-label">Title</label>
+        <label class="form-label">Titulo</label>
         <input type="text" name="title" class="form-control" value="<%= testCase ? testCase.title : '' %>" required>
       </div>
       <div class="mb-3">
-        <label class="form-label">Description</label>
+        <label class="form-label">Descripcion</label>
         <textarea name="description" class="form-control" rows="2" required><%= testCase ? testCase.description : '' %></textarea>
       </div>
       <div class="mb-3">
-        <label class="form-label">Scenario (Steps to perform)</label>
+        <label class="form-label">Escenario (Pasos a realizar)</label>
         <textarea name="scenario" class="form-control" rows="4" required><%= testCase ? testCase.scenario : '' %></textarea>
       </div>
       <div class="mb-3">
-        <label class="form-label">Expected Result</label>
+        <label class="form-label">Resultado Esperado</label>
         <textarea name="expectedResult" class="form-control" rows="3" required><%= testCase ? testCase.expectedResult : '' %></textarea>
       </div>
       <div class="mb-3">
-        <label class="form-label">Base Points</label>
+        <label class="form-label">Puntos Base</label>
         <input type="number" name="points" class="form-control" value="<%= testCase ? testCase.points : 1 %>" min="1">
       </div>
       <div class="mb-3 form-check">
         <input type="checkbox" name="isActive" class="form-check-input" <%= (!testCase || testCase.isActive) ? 'checked' : '' %>>
-        <label class="form-check-label">Active</label>
+        <label class="form-check-label">Activo</label>
       </div>
-      <button type="submit" class="btn btn-primary">Save</button>
-      <a href="/admin/testcases" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <a href="/admin/testcases" class="btn btn-secondary">Cancelar</a>
     </form>
   </div>
 </div>

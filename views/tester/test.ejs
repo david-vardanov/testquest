@@ -38,7 +38,7 @@
 
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="/tester">Flows</a></li>
+    <li class="breadcrumb-item"><a href="/tester">Flujos</a></li>
     <li class="breadcrumb-item active"><%= flow.name %></li>
   </ol>
 </nav>
@@ -46,10 +46,10 @@
 <div class="card">
   <div class="card-header">
     <h4><%= testCase.title %></h4>
-    <small class="text-muted">Progress: <%= progress.completedTestCases.length + 1 %> of <%= flow.testCases.length %></small>
+    <small class="text-muted">Progreso: <%= progress.completedTestCases.length + 1 %> de <%= flow.testCases.length %></small>
   </div>
   <div class="card-body">
-    <p><strong>Description:</strong> <%= testCase.description %></p>
+    <p><strong>Descripcion:</strong> <%= testCase.description %></p>
 
     <%
       // Parse scenario steps (split by newlines, filter empty)
@@ -60,7 +60,7 @@
     %>
 
     <div class="checklist-box mb-3">
-      <h6>Scenario / Steps: <span class="badge bg-secondary" id="steps-counter">0/<%= scenarioSteps.length %></span></h6>
+      <h6>Escenario / Pasos: <span class="badge bg-secondary" id="steps-counter">0/<%= scenarioSteps.length %></span></h6>
       <% scenarioSteps.forEach((step, idx) => { %>
         <div class="step-checkbox">
           <input type="checkbox" class="form-check-input step-check" id="step-<%= idx %>" data-type="step">
@@ -70,7 +70,7 @@
     </div>
 
     <div class="checklist-box mb-4">
-      <h6>Expected Result: <span class="badge bg-secondary" id="expected-counter">0/<%= expectedSteps.length %></span></h6>
+      <h6>Resultado Esperado: <span class="badge bg-secondary" id="expected-counter">0/<%= expectedSteps.length %></span></h6>
       <% expectedSteps.forEach((step, idx) => { %>
         <div class="step-checkbox">
           <input type="checkbox" class="form-check-input expected-check" id="expected-<%= idx %>" data-type="expected">
@@ -83,43 +83,43 @@
 
     <form method="POST" action="/tester/flow/<%= flow._id %>/submit/<%= testCase._id %>" enctype="multipart/form-data" id="test-form">
       <div class="mb-3">
-        <label class="form-label"><strong>Test Result:</strong></label>
+        <label class="form-label"><strong>Resultado de la Prueba:</strong></label>
         <div>
           <div class="form-check form-check-inline">
             <input class="form-check-input passed-radio" type="radio" name="status" id="status-passed" value="passed" disabled required>
-            <label class="form-check-label text-success" for="status-passed">Passed</label>
+            <label class="form-check-label text-success" for="status-passed">Aprobado</label>
           </div>
           <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="status" id="status-failed" value="failed" required>
-            <label class="form-check-label text-danger" for="status-failed">Failed (+3 pts for finding bug)</label>
+            <label class="form-check-label text-danger" for="status-failed">Fallido (+3 pts por encontrar error)</label>
           </div>
         </div>
         <div class="unlock-hint" id="unlock-hint">
-          Check all steps and expected results above to unlock "Passed"
+          Marca todos los pasos y resultados esperados para desbloquear "Aprobado"
         </div>
       </div>
 
       <div class="mb-3">
-        <label class="form-label">Feedback (+1 pt)</label>
-        <textarea name="feedback" class="form-control" rows="3" placeholder="Describe what you observed, any issues found, or suggestions..."></textarea>
+        <label class="form-label">Comentarios (+1 pt)</label>
+        <textarea name="feedback" class="form-control" rows="3" placeholder="Describe lo que observaste, problemas encontrados o sugerencias..."></textarea>
       </div>
 
       <div class="mb-3">
-        <label class="form-label">Screenshot (+1 pt)</label>
+        <label class="form-label">Captura de Pantalla (+1 pt)</label>
         <input type="file" name="screenshot" class="form-control" accept="image/*">
       </div>
 
       <div class="alert alert-info">
-        <strong>Points breakdown:</strong>
+        <strong>Desglose de Puntos:</strong>
         <ul class="mb-0">
           <li>Base: 1 pt</li>
-          <li>Failed status (bug found): +3 pts</li>
-          <li>Feedback: +1 pt</li>
-          <li>Screenshot: +1 pt</li>
+          <li>Estado Fallido (error encontrado): +3 pts</li>
+          <li>Comentarios: +1 pt</li>
+          <li>Captura de Pantalla: +1 pt</li>
         </ul>
       </div>
 
-      <button type="submit" class="btn btn-primary btn-lg">Submit Result</button>
+      <button type="submit" class="btn btn-primary btn-lg">Enviar Resultado</button>
     </form>
   </div>
 </div>

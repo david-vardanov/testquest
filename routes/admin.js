@@ -122,17 +122,20 @@ router.post('/testcases/:id/delete', async (req, res) => {
 
 // Flows CRUD
 router.get('/flows', async (req, res) => {
-  const flows = await Flow.find().populate('testCases').sort('-createdAt');
+  const flows = await Flow.find().populate('testCases').sort('order');
   res.render('admin/flows', { flows });
 });
 
 router.get('/flows/new', async (req, res) => {
-  const allTestCases = await TestCase.find({ isActive: true }).sort('-createdAt');
-  res.render('admin/flows-form', { flow: null, allTestCases });
+  const [allTestCases, allFlows] = await Promise.all([
+    TestCase.find({ isActive: true }).sort('-createdAt'),
+    Flow.find({ isActive: true }).sort('name')
+  ]);
+  res.render('admin/flows-form', { flow: null, allTestCases, allFlows });
 });
 
 router.post('/flows', async (req, res) => {
-  const { name, description, testCases, points, completionBonus, isActive } = req.body;
+  const { name, description, testCases, points, completionBonus, isActive, prerequisiteFlows, order } = req.body;
 
   // Create or reuse test cases
   const testCaseIds = [];
@@ -156,9 +159,17 @@ router.post('/flows', async (req, res) => {
     }
   }
 
+  // Handle prerequisite flows (can be string, array, or undefined)
+  let prereqIds = [];
+  if (prerequisiteFlows) {
+    prereqIds = Array.isArray(prerequisiteFlows) ? prerequisiteFlows : [prerequisiteFlows];
+  }
+
   await Flow.create({
     name, description,
     testCases: testCaseIds,
+    prerequisiteFlows: prereqIds,
+    order: order || 0,
     points: points || 0,
     completionBonus,
     isActive: isActive === 'on'
@@ -167,15 +178,16 @@ router.post('/flows', async (req, res) => {
 });
 
 router.get('/flows/:id/edit', async (req, res) => {
-  const [flow, allTestCases] = await Promise.all([
-    Flow.findById(req.params.id).populate('testCases'),
-    TestCase.find({ isActive: true }).sort('-createdAt')
+  const [flow, allTestCases, allFlows] = await Promise.all([
+    Flow.findById(req.params.id).populate('testCases').populate('prerequisiteFlows'),
+    TestCase.find({ isActive: true }).sort('-createdAt'),
+    Flow.find({ isActive: true, _id: { $ne: req.params.id } }).sort('name') // Exclude self
   ]);
-  res.render('admin/flows-form', { flow, allTestCases });
+  res.render('admin/flows-form', { flow, allTestCases, allFlows });
 });
 
 router.post('/flows/:id', async (req, res) => {
-  const { name, description, testCases, points, completionBonus, isActive } = req.body;
+  const { name, description, testCases, points, completionBonus, isActive, prerequisiteFlows, order } = req.body;
 
   const flow = await Flow.findById(req.params.id);
   const newTestCaseIds = [];
@@ -215,9 +227,17 @@ router.post('/flows/:id', async (req, res) => {
     }
   }
 
+  // Handle prerequisite flows (can be string, array, or undefined)
+  let prereqIds = [];
+  if (prerequisiteFlows) {
+    prereqIds = Array.isArray(prerequisiteFlows) ? prerequisiteFlows : [prerequisiteFlows];
+  }
+
   await Flow.findByIdAndUpdate(req.params.id, {
     name, description,
     testCases: newTestCaseIds,
+    prerequisiteFlows: prereqIds,
+    order: order || 0,
     points: points || 0,
     completionBonus,
     isActive: isActive === 'on'
@@ -246,7 +266,7 @@ router.post('/leaderboard/settings', async (req, res) => {
   } else {
     await LeaderboardSettings.create({ name, endDate, startDate: new Date() });
   }
-  res.redirect('/admin/rankings?success=Settings saved');
+  res.redirect('/admin/rankings?success=Configuracion guardada');
 });
 
 // Close season - archive leaderboard and reset points
@@ -257,7 +277,7 @@ router.post('/leaderboard/close', async (req, res) => {
     const rewards = await Reward.find({ isActive: true }).sort('positionFrom');
 
     if (users.length === 0) {
-      return res.redirect('/admin/rankings?error=No users to archive');
+      return res.redirect('/admin/rankings?error=No hay usuarios para archivar');
     }
 
     // Build leaderboard snapshot with rewards
@@ -291,18 +311,18 @@ router.post('/leaderboard/close', async (req, res) => {
 
     // Reset or create new season settings
     if (settings) {
-      settings.name = 'New Season';
+      settings.name = 'Nueva Temporada';
       settings.startDate = new Date();
       settings.endDate = null;
       await settings.save();
     } else {
-      await LeaderboardSettings.create({ name: 'New Season', startDate: new Date() });
+      await LeaderboardSettings.create({ name: 'Nueva Temporada', startDate: new Date() });
     }
 
-    res.redirect('/admin/rankings?success=Season closed and archived. All points have been reset.');
+    res.redirect('/admin/rankings?success=Temporada cerrada y archivada. Todos los puntos han sido reiniciados.');
   } catch (err) {
     console.error('Close season error:', err);
-    res.redirect('/admin/rankings?error=' + encodeURIComponent('Failed to close season: ' + err.message));
+    res.redirect('/admin/rankings?error=' + encodeURIComponent('Error al cerrar temporada: ' + err.message));
   }
 });
 
@@ -310,7 +330,7 @@ router.post('/leaderboard/close', async (req, res) => {
 router.get('/leaderboard/archive/:id', async (req, res) => {
   const archive = await SeasonArchive.findById(req.params.id);
   if (!archive) {
-    return res.redirect('/admin/rankings?error=Archive not found');
+    return res.redirect('/admin/rankings?error=Archivo no encontrado');
   }
   res.render('admin/leaderboard-archive', { archive });
 });
@@ -707,7 +727,7 @@ router.get('/backups', async (req, res) => {
       success: req.query.success || null
     });
   } catch (err) {
-    res.render('admin/backups', { backups: [], error: 'Failed to list backups', success: null });
+    res.render('admin/backups', { backups: [], error: 'Error al listar respaldos', success: null });
   }
 });
 
@@ -750,7 +770,7 @@ router.post('/backups', async (req, res) => {
     const stats = fs.statSync(filePath);
     if (stats.size < 100) {
       fs.unlinkSync(filePath);
-      throw new Error('Backup file is too small, may be corrupted');
+      throw new Error('El archivo de respaldo es muy pequeno, puede estar corrupto');
     }
 
     // Keep only last 10 backups
@@ -763,10 +783,10 @@ router.post('/backups', async (req, res) => {
       files.slice(10).forEach(f => fs.unlinkSync(path.join(BACKUPS_DIR, f.name)));
     }
 
-    res.redirect('/admin/backups?success=Backup created successfully');
+    res.redirect('/admin/backups?success=Respaldo creado exitosamente');
   } catch (err) {
     console.error('Backup error:', err);
-    res.redirect('/admin/backups?error=' + encodeURIComponent('Backup failed: ' + err.message));
+    res.redirect('/admin/backups?error=' + encodeURIComponent('Error en respaldo: ' + err.message));
   }
 });
 
@@ -778,7 +798,7 @@ const backupUpload = multer({
     if (file.originalname.endsWith('.gz')) {
       cb(null, true);
     } else {
-      cb(new Error('Only .gz files are allowed'));
+      cb(new Error('Solo se permiten archivos .gz'));
     }
   }
 });
@@ -786,7 +806,7 @@ const backupUpload = multer({
 router.post('/backups/restore', backupUpload.single('backup'), async (req, res) => {
   try {
     if (!req.file) {
-      throw new Error('No backup file uploaded');
+      throw new Error('No se subio ningun archivo de respaldo');
     }
 
     const uploadedPath = req.file.path;
@@ -823,14 +843,14 @@ router.post('/backups/restore', backupUpload.single('backup'), async (req, res) 
     const newFilename = `restored-${Date.now()}-${req.file.originalname}`;
     fs.renameSync(uploadedPath, path.join(BACKUPS_DIR, newFilename));
 
-    res.redirect('/admin/backups?success=Backup restored successfully');
+    res.redirect('/admin/backups?success=Respaldo restaurado exitosamente');
   } catch (err) {
     console.error('Restore error:', err);
     // Clean up uploaded file on error
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
-    res.redirect('/admin/backups?error=' + encodeURIComponent('Restore failed: ' + err.message));
+    res.redirect('/admin/backups?error=' + encodeURIComponent('Error en restauracion: ' + err.message));
   }
 });
 
@@ -839,17 +859,17 @@ router.get('/backups/:filename/download', async (req, res) => {
     const filename = req.params.filename;
     // Security: prevent directory traversal
     if (filename.includes('..') || filename.includes('/')) {
-      return res.status(400).send('Invalid filename');
+      return res.status(400).send('Nombre de archivo invalido');
     }
 
     const filePath = path.join(BACKUPS_DIR, filename);
     if (!fs.existsSync(filePath)) {
-      return res.status(404).send('Backup not found');
+      return res.status(404).send('Respaldo no encontrado');
     }
 
     res.download(filePath, filename);
   } catch (err) {
-    res.status(500).send('Download failed');
+    res.status(500).send('Error en descarga');
   }
 });
 
@@ -858,7 +878,7 @@ router.post('/backups/:filename/delete', async (req, res) => {
     const filename = req.params.filename;
     // Security: prevent directory traversal
     if (filename.includes('..') || filename.includes('/')) {
-      return res.status(400).send('Invalid filename');
+      return res.status(400).send('Nombre de archivo invalido');
     }
 
     const filePath = path.join(BACKUPS_DIR, filename);
@@ -866,9 +886,9 @@ router.post('/backups/:filename/delete', async (req, res) => {
       fs.unlinkSync(filePath);
     }
 
-    res.redirect('/admin/backups?success=Backup deleted');
+    res.redirect('/admin/backups?success=Respaldo eliminado');
   } catch (err) {
-    res.redirect('/admin/backups?error=' + encodeURIComponent('Delete failed: ' + err.message));
+    res.redirect('/admin/backups?error=' + encodeURIComponent('Error al eliminar: ' + err.message));
   }
 });
 

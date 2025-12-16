@@ -37,25 +37,25 @@
 
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="/tester">Dashboard</a></li>
-    <li class="breadcrumb-item active">Practice Flow</li>
+    <li class="breadcrumb-item"><a href="/tester">Panel de Control</a></li>
+    <li class="breadcrumb-item active">Flujo de Practica</li>
   </ol>
 </nav>
 
 <div class="tutorial-hint">
-  <strong>Practice Mode:</strong> This is a practice flow to help you learn how TestQuest works.
-  No points will be awarded - just follow along and learn the interface!
+  <strong>Modo Practica:</strong> Este es un flujo de practica para ayudarte a aprender como funciona TestQuest.
+  No se otorgaran puntos - solo sigue y aprende la interfaz!
 </div>
 
 <div class="card">
   <div class="practice-header">
     <div class="d-flex justify-content-between align-items-center">
       <h4 class="mb-0"><%= testCase.title %></h4>
-      <span class="badge bg-light text-dark">Practice <%= currentStep + 1 %> of <%= totalSteps %></span>
+      <span class="badge bg-light text-dark">Practica <%= currentStep + 1 %> de <%= totalSteps %></span>
     </div>
   </div>
   <div class="card-body">
-    <p><strong>Description:</strong> <%= testCase.description %></p>
+    <p><strong>Descripcion:</strong> <%= testCase.description %></p>
 
     <%
       // Parse scenario steps
@@ -65,7 +65,7 @@
     %>
 
     <div class="checklist-box mb-3">
-      <h6>Scenario / Steps: <span class="badge bg-secondary" id="steps-counter">0/<%= scenarioSteps.length %></span></h6>
+      <h6>Escenario / Pasos: <span class="badge bg-secondary" id="steps-counter">0/<%= scenarioSteps.length %></span></h6>
       <% scenarioSteps.forEach((step, idx) => { %>
         <div class="step-checkbox">
           <input type="checkbox" class="form-check-input step-check" id="step-<%= idx %>" data-type="step">
@@ -75,7 +75,7 @@
     </div>
 
     <div class="checklist-box mb-4">
-      <h6>Expected Result: <span class="badge bg-secondary" id="expected-counter">0/<%= expectedSteps.length %></span></h6>
+      <h6>Resultado Esperado: <span class="badge bg-secondary" id="expected-counter">0/<%= expectedSteps.length %></span></h6>
       <% expectedSteps.forEach((step, idx) => { %>
         <div class="step-checkbox">
           <input type="checkbox" class="form-check-input expected-check" id="expected-<%= idx %>" data-type="expected">
@@ -88,64 +88,64 @@
 
     <form method="POST" action="/tester/practice-flow/submit" id="practice-form">
       <div class="mb-3">
-        <label class="form-label"><strong>Test Result:</strong></label>
+        <label class="form-label"><strong>Resultado de la Prueba:</strong></label>
         <div class="tutorial-hint mb-2">
-          <strong>Tip:</strong>
+          <strong>Consejo:</strong>
           <% if (currentStep === 0) { %>
-            Check all the boxes above to unlock "Passed". In real tests, you only select "Passed" after verifying all steps work correctly.
+            Marca todas las casillas de arriba para desbloquear "Aprobado". En pruebas reales, solo seleccionas "Aprobado" despues de verificar que todos los pasos funcionan correctamente.
           <% } else if (currentStep === 1) { %>
-            Select "Failed" to practice reporting a bug. When you find a real bug, this earns you +3 bonus points!
+            Selecciona "Fallido" para practicar reportar un error. Cuando encuentras un error real, esto te otorga +3 puntos extra!
           <% } else { %>
-            You can select either - this teaches you about screenshots and feedback.
+            Puedes seleccionar cualquiera - esto te ensena sobre capturas de pantalla y comentarios.
           <% } %>
         </div>
         <div>
           <div class="form-check form-check-inline">
             <input class="form-check-input passed-radio" type="radio" name="status" id="status-passed" value="passed" disabled>
-            <label class="form-check-label text-success" for="status-passed">Passed</label>
+            <label class="form-check-label text-success" for="status-passed">Aprobado</label>
           </div>
           <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="status" id="status-failed" value="failed">
-            <label class="form-check-label text-danger" for="status-failed">Failed (+3 pts for finding bug)</label>
+            <label class="form-check-label text-danger" for="status-failed">Fallido (+3 pts por encontrar error)</label>
           </div>
         </div>
         <div class="text-muted small mt-1" id="unlock-hint">
-          Check all steps above to unlock "Passed"
+          Marca todos los pasos de arriba para desbloquear "Aprobado"
         </div>
       </div>
 
       <div class="mb-3">
-        <label class="form-label">Feedback (+1 pt)</label>
+        <label class="form-label">Comentarios (+1 pt)</label>
         <div class="tutorial-hint mb-2">
-          <strong>Tip:</strong> Adding detailed feedback helps developers understand issues. In real tests, always describe what you observed!
+          <strong>Consejo:</strong> Agregar comentarios detallados ayuda a los desarrolladores a entender los problemas. En pruebas reales, siempre describe lo que observaste!
         </div>
-        <textarea name="feedback" class="form-control" rows="3" placeholder="Describe what you observed, any issues found, or suggestions..."></textarea>
+        <textarea name="feedback" class="form-control" rows="3" placeholder="Describe lo que observaste, problemas encontrados o sugerencias..."></textarea>
       </div>
 
       <div class="mb-3">
-        <label class="form-label">Screenshot (+1 pt)</label>
+        <label class="form-label">Captura de Pantalla (+1 pt)</label>
         <div class="tutorial-hint mb-2">
-          <strong>Tip:</strong> Screenshots provide visual proof. Try uploading any image to see how it works!
+          <strong>Consejo:</strong> Las capturas de pantalla proporcionan prueba visual. Intenta subir cualquier imagen para ver como funciona!
         </div>
         <input type="file" name="screenshot" class="form-control" accept="image/*">
       </div>
 
       <div class="alert alert-secondary">
-        <strong>Points reminder (for real tests):</strong>
+        <strong>Recordatorio de puntos (para pruebas reales):</strong>
         <ul class="mb-0">
-          <li>Base: varies by test difficulty</li>
-          <li>Failed status (bug found): +3 pts</li>
-          <li>Feedback: +1 pt</li>
-          <li>Screenshot: +1 pt</li>
-          <li>Admin useful feedback bonus: +1 pt</li>
-          <li>Flow completion bonus: awarded when all tests approved</li>
+          <li>Base: varia segun dificultad de la prueba</li>
+          <li>Estado Fallido (error encontrado): +3 pts</li>
+          <li>Comentarios: +1 pt</li>
+          <li>Captura de Pantalla: +1 pt</li>
+          <li>Bonus por comentarios utiles del admin: +1 pt</li>
+          <li>Bonus por completar flujo: se otorga cuando todas las pruebas son aprobadas</li>
         </ul>
       </div>
 
       <button type="submit" class="btn btn-primary btn-lg">
-        <%= currentStep < totalSteps - 1 ? 'Continue to Next Practice' : 'Complete Practice' %>
+        <%= currentStep < totalSteps - 1 ? 'Continuar a la Siguiente Practica' : 'Completar Practica' %>
       </button>
-      <a href="/tester" class="btn btn-outline-secondary btn-lg ms-2">Exit Practice</a>
+      <a href="/tester" class="btn btn-outline-secondary btn-lg ms-2">Salir de Practica</a>
     </form>
   </div>
 </div>

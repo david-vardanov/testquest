@@ -8,70 +8,510 @@
   .progress-fill { height: 100%; background: #667eea; }
   .claim-history { font-size: 0.8125rem; }
   .claim-item { padding: 0.5rem; border-bottom: 1px solid #eee; }
+
+  /* Quest Path Styles */
+  .quest-journey {
+    position: relative;
+    padding: 1rem 0;
+  }
+  .quest-path-line {
+    position: absolute;
+    left: 40px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(to bottom, #e9ecef 0%, #dee2e6 100%);
+    border-radius: 2px;
+    z-index: 0;
+  }
+  .quest-node {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    z-index: 1;
+  }
+  .quest-node:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Quest Icon/Status Circle */
+  .quest-status {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+  }
+  .quest-status.locked {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+  }
+  .quest-status.available {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  .quest-status.in-progress {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 4px 20px rgba(245, 87, 108, 0.4);
+    animation: pulse-glow 1.5s ease-in-out infinite;
+  }
+  .quest-status.completed {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    box-shadow: 0 4px 15px rgba(56, 239, 125, 0.3);
+  }
+  @keyframes pulse-glow {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  /* Progress Ring */
+  .progress-ring {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    width: 88px;
+    height: 88px;
+  }
+  .progress-ring circle {
+    fill: none;
+    stroke-width: 4;
+  }
+  .progress-ring .bg {
+    stroke: rgba(255,255,255,0.2);
+  }
+  .progress-ring .progress {
+    stroke: #fff;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 0.5s ease;
+  }
+
+  /* Quest Card */
+  .quest-card {
+    flex: 1;
+    margin-left: 1.5rem;
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .quest-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .quest-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  }
+  .quest-card:hover::before {
+    opacity: 1;
+  }
+  .quest-card.locked {
+    background: #f8f9fa;
+    opacity: 0.7;
+  }
+  .quest-card.locked:hover {
+    transform: none;
+  }
+  .quest-card.completed {
+    border-color: #38ef7d;
+    background: linear-gradient(135deg, #f8fff9 0%, #e8f5e9 100%);
+  }
+  .quest-card.completed::before {
+    background: linear-gradient(90deg, #11998e, #38ef7d);
+    opacity: 1;
+  }
+
+  /* Quest Header */
+  .quest-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+  .quest-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+  }
+  .quest-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .quest-badge {
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-bonus {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+  }
+  .badge-tests {
+    background: #e9ecef;
+    color: #495057;
+  }
+
+  /* Difficulty Stars */
+  .difficulty {
+    display: flex;
+    gap: 2px;
+    margin-top: 0.25rem;
+  }
+  .difficulty-star {
+    color: #ffc107;
+    font-size: 0.75rem;
+  }
+  .difficulty-star.empty {
+    color: #dee2e6;
+  }
+
+  /* Quest Description */
+  .quest-description {
+    color: #718096;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+  }
+
+  /* Quest Footer */
+  .quest-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .quest-progress-text {
+    font-size: 0.75rem;
+    color: #a0aec0;
+  }
+  .quest-progress-text strong {
+    color: #4a5568;
+  }
+
+  /* Quest Buttons */
+  .quest-btn {
+    padding: 0.6rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .quest-btn-start {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  }
+  .quest-btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    color: white;
+  }
+  .quest-btn-continue {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+  }
+  .quest-btn-continue:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 87, 108, 0.5);
+    color: white;
+  }
+  .quest-btn-locked {
+    background: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+  }
+  .quest-btn-completed {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    cursor: default;
+  }
+
+  /* Locked Overlay */
+  .locked-info {
+    background: rgba(108, 117, 125, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-left: 3px solid #6c757d;
+  }
+  .locked-info-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+  }
+  .locked-prereq {
+    font-size: 0.8rem;
+    color: #495057;
+  }
+
+  /* Connector dots */
+  .connector-dot {
+    position: absolute;
+    left: 38px;
+    width: 8px;
+    height: 8px;
+    background: #dee2e6;
+    border-radius: 50%;
+    z-index: 1;
+  }
+  .quest-node .connector-dot.top {
+    top: -12px;
+  }
+  .quest-node .connector-dot.bottom {
+    bottom: -12px;
+  }
+
+  /* Section Header */
+  .quest-section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+  }
+  .quest-section-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+  .quest-section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+  }
+  .quest-section-subtitle {
+    font-size: 0.85rem;
+    color: #718096;
+    margin: 0;
+  }
+
+  /* Practice Card Special */
+  .practice-quest-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .practice-quest-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  }
+  .practice-quest-card h5 {
+    position: relative;
+    z-index: 1;
+  }
+  .practice-quest-card p {
+    position: relative;
+    z-index: 1;
+    opacity: 0.9;
+  }
+  .practice-btn {
+    background: white;
+    color: #667eea;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 25px;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+  }
+  .practice-btn:hover {
+    transform: scale(1.05);
+    color: #764ba2;
+  }
 </style>
 
 <div class="row">
   <div class="col-md-8" id="flows-section">
-    <h4 class="mb-3">Available Test Flows</h4>
+    <div class="quest-section-header">
+      <div class="quest-section-icon">🗺️</div>
+      <div>
+        <h4 class="quest-section-title">Tu Aventura de Pruebas</h4>
+        <p class="quest-section-subtitle">Completa las misiones para ganar puntos y subir en la clasificacion</p>
+      </div>
+    </div>
 
     <% if (showTutorial) { %>
       <!-- Practice Flow Card - pinned at top for new users -->
-      <div class="row mb-3">
-        <div class="col-12">
-          <div class="card practice-flow-card" id="practice-flow-card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <h5 class="card-title mb-1">Practice Flow - Learn TestQuest</h5>
-                  <p class="mb-2" style="opacity: 0.9; font-size: 0.9rem;">Complete this practice flow to learn how TestQuest works. No points awarded - just for learning!</p>
-                  <span class="badge">3 practice tests</span>
-                </div>
-                <a href="/tester/practice-flow" class="btn btn-light btn-lg">Start Practice</a>
-              </div>
+      <div class="practice-quest-card" id="practice-flow-card">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-2">🎓 Mision de Entrenamiento</h5>
+            <p class="mb-2">Completa este flujo de practica para aprender como funciona TestQuest. No se otorgan puntos - solo para aprender!</p>
+            <div class="d-flex gap-2">
+              <span class="quest-badge badge-tests">3 pruebas</span>
+              <span class="quest-badge" style="background: rgba(255,255,255,0.2); color: white;">Tutorial</span>
             </div>
           </div>
+          <a href="/tester/practice-flow" class="practice-btn">Iniciar Entrenamiento</a>
         </div>
       </div>
     <% } %>
 
-    <div class="row">
-      <% let firstFlowRendered = false; %>
-      <% flows.forEach(flow => {
-        const progress = progressMap[flow._id.toString()];
-        const completed = progress ? progress.completedTestCases.length : 0;
-        const total = flow.testCases.length;
-        const isComplete = progress && progress.isCompleted;
-      %>
-        <div class="col-md-6 mb-3">
-          <div class="card h-100 flow-card <%= !firstFlowRendered ? 'flow-card-example' : '' %>">
-            <% firstFlowRendered = true; %>
-            <div class="card-body">
-              <h6 class="card-title"><%= flow.name %></h6>
-              <p class="card-text text-muted" style="font-size: 0.8rem;"><%= flow.description || 'No description' %></p>
-              <div class="d-flex justify-content-between" style="font-size: 0.75rem;">
-                <span><%= total %> tests</span>
-                <span><%= flow.points || 0 %> pts</span>
+    <% if (flows.length === 0) { %>
+      <div class="text-center py-5">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🏰</div>
+        <h5>No hay misiones disponibles</h5>
+        <p class="text-muted">Las misiones de prueba apareceran aqui cuando esten listas</p>
+      </div>
+    <% } else { %>
+      <div class="quest-journey">
+        <div class="quest-path-line"></div>
+
+        <% flows.forEach((flow, index) => {
+          const progress = progressMap[flow._id.toString()];
+          const completed = progress ? progress.completedTestCases.length : 0;
+          const total = flow.testCases.length;
+          const isComplete = progress && progress.isCompleted;
+          const inProgress = completed > 0 && !isComplete;
+          const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
+          const circumference = 2 * Math.PI * 40;
+          const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
+
+          // Determine quest status
+          let status = 'available';
+          if (flow.isLocked) status = 'locked';
+          else if (isComplete) status = 'completed';
+          else if (inProgress) status = 'in-progress';
+
+          // Calculate difficulty (1-5 stars based on test count)
+          const difficulty = Math.min(5, Math.max(1, Math.ceil(total / 2)));
+
+          // Quest icons based on index/status
+          const questIcons = ['⚔️', '🛡️', '🏹', '🔮', '👑', '💎', '🗡️', '🎯', '🔱', '⭐'];
+          const questIcon = isComplete ? '✅' : (flow.isLocked ? '🔒' : questIcons[index % questIcons.length]);
+        %>
+          <div class="quest-node">
+            <!-- Status Circle with Progress Ring -->
+            <div class="quest-status <%= status %>">
+              <% if (!flow.isLocked && !isComplete && total > 0) { %>
+                <svg class="progress-ring" viewBox="0 0 88 88">
+                  <circle class="bg" cx="44" cy="44" r="40"/>
+                  <circle class="progress" cx="44" cy="44" r="40"
+                    stroke-dasharray="<%= circumference %>"
+                    stroke-dashoffset="<%= strokeDashoffset %>"/>
+                </svg>
+              <% } %>
+              <span style="position: relative; z-index: 2;"><%= questIcon %></span>
+            </div>
+
+            <!-- Quest Card -->
+            <div class="quest-card <%= status %> <%= index === 0 ? 'flow-card-example' : '' %>">
+              <div class="quest-header">
+                <div>
+                  <h5 class="quest-title"><%= flow.name %></h5>
+                  <div class="difficulty">
+                    <% for (let i = 1; i <= 5; i++) { %>
+                      <span class="difficulty-star <%= i <= difficulty ? '' : 'empty' %>">★</span>
+                    <% } %>
+                  </div>
+                </div>
+                <div class="quest-badges">
+                  <% if (flow.completionBonus > 0) { %>
+                    <span class="quest-badge badge-bonus">+<%= flow.completionBonus %> Bonus</span>
+                  <% } %>
+                  <span class="quest-badge badge-tests"><%= total %> pruebas</span>
+                </div>
               </div>
-              <div class="progress mt-2" style="height: 6px;">
-                <div class="progress-bar" style="width: <%= total > 0 ? (completed/total*100) : 0 %>%"></div>
-              </div>
-              <div class="mt-2">
-                <% if (isComplete) { %>
-                  <span class="badge bg-success">Completed</span>
+
+              <p class="quest-description"><%= flow.description || 'Completa esta mision para ganar puntos y avanzar en tu aventura.' %></p>
+
+              <% if (flow.isLocked && flow.missingPrereqs && flow.missingPrereqs.length > 0) { %>
+                <div class="locked-info">
+                  <div class="locked-info-title">🔐 Mision Bloqueada</div>
+                  <div class="locked-prereq">Completa primero:
+                    <% flow.missingPrereqs.forEach((p, i) => { %>
+                      <strong><%= p.name %></strong><%= i < flow.missingPrereqs.length - 1 ? ', ' : '' %>
+                    <% }) %>
+                  </div>
+                </div>
+              <% } %>
+
+              <div class="quest-footer">
+                <div class="quest-progress-text">
+                  <% if (isComplete) { %>
+                    <strong style="color: #38ef7d;">✓ Mision Completada</strong>
+                  <% } else if (flow.isLocked) { %>
+                    <span>Desbloquea esta mision</span>
+                  <% } else { %>
+                    <strong><%= completed %></strong> de <strong><%= total %></strong> pruebas completadas
+                  <% } %>
+                </div>
+
+                <% if (flow.isLocked) { %>
+                  <button class="quest-btn quest-btn-locked" disabled>
+                    🔒 Bloqueada
+                  </button>
+                <% } else if (isComplete) { %>
+                  <span class="quest-btn quest-btn-completed">
+                    ✅ Completada
+                  </span>
+                <% } else if (inProgress) { %>
+                  <a href="/tester/flow/<%= flow._id %>" class="quest-btn quest-btn-continue">
+                    ⚡ Continuar
+                  </a>
                 <% } else { %>
-                  <a href="/tester/flow/<%= flow._id %>" class="btn btn-sm btn-dark">
-                    <%= completed > 0 ? 'Continue' : 'Start' %>
+                  <a href="/tester/flow/<%= flow._id %>" class="quest-btn quest-btn-start">
+                    🚀 Iniciar
                   </a>
                 <% } %>
               </div>
             </div>
           </div>
-        </div>
-      <% }) %>
-    </div>
-
-    <% if (flows.length === 0) { %>
-      <div class="alert alert-info">No test flows available yet.</div>
+        <% }) %>
+      </div>
     <% } %>
   </div>
 
@@ -81,23 +521,23 @@
         <div class="mb-2" style="font-size: 0.8rem; opacity: 0.9;">
           <strong><%= seasonSettings.name %></strong>
           <% if (seasonSettings.endDate) { %>
-            <span style="opacity: 0.7;"> - Ends <%= new Date(seasonSettings.endDate).toLocaleDateString() %></span>
+            <span style="opacity: 0.7;"> - Termina <%= new Date(seasonSettings.endDate).toLocaleDateString() %></span>
           <% } %>
         </div>
       <% } %>
       <div class="d-flex justify-content-between align-items-start">
         <div>
-          <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.8;">Your Rank</div>
+          <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.8;">Tu Posicion</div>
           <div class="rank-number">#<%= rank %></div>
         </div>
         <div class="text-end">
-          <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.8;">Points</div>
+          <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.8;">Puntos</div>
           <div style="font-size: 1.5rem; font-weight: bold;"><%= user.points %></div>
         </div>
       </div>
       <% if (currentReward) { %>
         <div class="mt-3 p-2" style="background: rgba(255,255,255,0.2); border-radius: 6px;">
-          <small>Current Prize:</small>
+          <small>Premio Actual:</small>
           <div><strong><%= currentReward.prizeDescription || currentReward.name %></strong></div>
         </div>
       <% } %>
@@ -106,8 +546,8 @@
     <% if (nextReward && pointsToNext) { %>
       <div class="reward-progress">
         <div class="d-flex justify-content-between" style="font-size: 0.75rem;">
-          <span>Next tier: <%= nextReward.prizeDescription || nextReward.name %></span>
-          <span><%= pointsToNext %> pts needed</span>
+          <span>Siguiente nivel: <%= nextReward.prizeDescription || nextReward.name %></span>
+          <span><%= pointsToNext %> pts necesarios</span>
         </div>
         <div class="progress-bar-custom mt-2">
           <div class="progress-fill" style="width: <%= Math.max(0, 100 - (pointsToNext / 10)) %>%"></div>
@@ -115,20 +555,20 @@
       </div>
     <% } %>
 
-    <h6>Season History</h6>
+    <h6>Historial de Temporadas</h6>
     <p class="text-muted" style="font-size: 0.8rem;">
-      <a href="/tester/history">View past seasons</a> to see your previous results and rewards.
+      <a href="/tester/history">Ver temporadas pasadas</a> para ver tus resultados y recompensas anteriores.
     </p>
 
-    <h6 class="mt-3">Leaderboard</h6>
+    <h6 class="mt-3">Clasificacion</h6>
     <div id="leaderboard-section">
       <table class="table table-sm" style="font-size: 0.8rem;">
         <thead>
           <tr>
             <th>#</th>
-            <th>User</th>
+            <th>Usuario</th>
             <th>Pts</th>
-            <th>Reward</th>
+            <th>Recompensa</th>
           </tr>
         </thead>
         <tbody>
@@ -138,7 +578,7 @@
             <% } %>
             <tr class="<%= entry.isCurrentUser ? 'table-warning' : '' %>">
               <td><%= entry.position %></td>
-              <td><%= entry.username %> <% if (entry.isCurrentUser) { %><span class="badge bg-primary" style="font-size: 0.6rem;">You</span><% } %></td>
+              <td><%= entry.username %> <% if (entry.isCurrentUser) { %><span class="badge bg-primary" style="font-size: 0.6rem;">Tu</span><% } %></td>
               <td><%= entry.points %></td>
               <td style="font-size: 0.7rem;"><%= entry.reward %></td>
             </tr>

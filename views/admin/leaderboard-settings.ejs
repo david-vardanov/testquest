@@ -2,7 +2,7 @@
 
 <div class="row">
   <div class="col-md-8">
-    <h4>Current Leaderboard</h4>
+    <h4>Clasificacion Actual</h4>
 
     <% if (error) { %>
       <div class="alert alert-danger"><%= error %></div>
@@ -15,9 +15,9 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>User</th>
-          <th>Points</th>
-          <th>Reward</th>
+          <th>Usuario</th>
+          <th>Puntos</th>
+          <th>Recompensa</th>
         </tr>
       </thead>
       <tbody>
@@ -42,7 +42,7 @@
           </tr>
         <% } %>
         <% if (users.length === 0) { %>
-          <tr><td colspan="4" class="text-muted text-center">No users yet</td></tr>
+          <tr><td colspan="4" class="text-muted text-center">Aun no hay usuarios</td></tr>
         <% } %>
       </tbody>
     </table>
@@ -51,47 +51,47 @@
   <div class="col-md-4">
     <div class="card mb-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
       <div class="card-body">
-        <h5>Season Settings</h5>
+        <h5>Configuracion de Temporada</h5>
         <form method="POST" action="/admin/leaderboard/settings">
           <div class="mb-3">
-            <label class="form-label" style="font-size: 0.85rem;">Season Name</label>
-            <input type="text" name="name" class="form-control form-control-sm" value="<%= settings ? settings.name : 'Current Season' %>" required>
+            <label class="form-label" style="font-size: 0.85rem;">Nombre de Temporada</label>
+            <input type="text" name="name" class="form-control form-control-sm" value="<%= settings ? settings.name : 'Temporada Actual' %>" required>
           </div>
           <div class="mb-3">
-            <label class="form-label" style="font-size: 0.85rem;">End Date</label>
+            <label class="form-label" style="font-size: 0.85rem;">Fecha de Fin</label>
             <input type="date" name="endDate" class="form-control form-control-sm">
           </div>
-          <button type="submit" class="btn btn-light btn-sm w-100">Save Settings</button>
+          <button type="submit" class="btn btn-light btn-sm w-100">Guardar Configuracion</button>
         </form>
       </div>
     </div>
 
     <div class="card mb-3">
       <div class="card-body">
-        <h6>Close Season</h6>
+        <h6>Cerrar Temporada</h6>
         <p class="text-muted" style="font-size: 0.8rem;">
-          This will archive the current leaderboard and reset all user points to 0.
+          Esto archivara la clasificacion actual y reiniciara todos los puntos de usuarios a 0.
         </p>
-        <form method="POST" action="/admin/leaderboard/close" onsubmit="return confirm('Are you sure? All points will be reset to 0.');">
-          <button type="submit" class="btn btn-danger btn-sm w-100">Close Season & Reset Points</button>
+        <form method="POST" action="/admin/leaderboard/close" onsubmit="return confirm('Estas seguro? Todos los puntos se reiniciaran a 0.');">
+          <button type="submit" class="btn btn-danger btn-sm w-100">Cerrar Temporada y Reiniciar Puntos</button>
         </form>
       </div>
     </div>
 
-    <h6>Past Seasons</h6>
+    <h6>Temporadas Pasadas</h6>
     <% if (archives.length > 0) { %>
       <% for (var k = 0; k < archives.length; k++) { %>
         <% var archive = archives[k]; %>
         <div class="mb-2 p-2 border-start border-primary border-3">
           <strong><%= archive.name %></strong>
           <div class="text-muted" style="font-size: 0.75rem;">
-            <%= archive.leaderboard ? archive.leaderboard.length : 0 %> participants
+            <%= archive.leaderboard ? archive.leaderboard.length : 0 %> participantes
           </div>
-          <a href="/admin/leaderboard/archive/<%= archive._id %>" class="btn btn-outline-primary btn-sm mt-1">View</a>
+          <a href="/admin/leaderboard/archive/<%= archive._id %>" class="btn btn-outline-primary btn-sm mt-1">Ver</a>
         </div>
       <% } %>
     <% } else { %>
-      <p class="text-muted" style="font-size: 0.85rem;">No archived seasons yet.</p>
+      <p class="text-muted" style="font-size: 0.85rem;">Aun no hay temporadas archivadas.</p>
     <% } %>
   </div>
 </div>

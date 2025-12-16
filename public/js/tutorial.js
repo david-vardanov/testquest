@@ -10,50 +10,50 @@
   const tutorialSteps = [
     {
       target: null, // No target - welcome modal
-      title: 'Welcome to TestQuest!',
-      content: 'This quick tour will show you how to use the testing platform and earn points. Let\'s get started!',
+      title: 'Bienvenido a TestQuest!',
+      content: 'Este tour rapido te mostrara como usar la plataforma de pruebas y ganar puntos. Comencemos!',
       position: 'center'
     },
     {
       target: '#flows-section',
-      title: 'Test Flows',
-      content: 'These are your available test flows. Each flow contains multiple test cases that you need to complete. Click on a flow to start testing!',
+      title: 'Flujos de Prueba',
+      content: 'Estos son tus flujos de prueba disponibles. Cada flujo contiene multiples casos de prueba que debes completar. Haz clic en un flujo para comenzar!',
       position: 'right'
     },
     {
       target: '.flow-card-example',
-      title: 'Understanding Flow Cards',
-      content: 'Each card shows the flow name, number of tests, and total points available. Your progress bar shows how many tests you\'ve completed.',
+      title: 'Entendiendo las Tarjetas de Flujo',
+      content: 'Cada tarjeta muestra el nombre del flujo, numero de pruebas y puntos totales disponibles. Tu barra de progreso muestra cuantas pruebas has completado.',
       position: 'bottom'
     },
     {
       target: '#rank-card',
-      title: 'Your Rank & Points',
-      content: 'Here you can see your current rank on the leaderboard and total points earned. Complete more tests and find bugs to climb higher!',
+      title: 'Tu Posicion y Puntos',
+      content: 'Aqui puedes ver tu posicion actual en la clasificacion y puntos totales ganados. Completa mas pruebas y encuentra errores para subir!',
       position: 'left'
     },
     {
       target: '#leaderboard-section',
-      title: 'Leaderboard & Rewards',
-      content: 'See how you compare to other testers! The "Reward" column shows what prize each position will receive at the end of the season.',
+      title: 'Clasificacion y Recompensas',
+      content: 'Mira como te comparas con otros testers! La columna "Recompensa" muestra que premio recibira cada posicion al final de la temporada.',
       position: 'left'
     },
     {
       target: '#practice-flow-card',
-      title: 'Start with Practice!',
-      content: 'We recommend starting with the Practice Flow to learn how testing works. It won\'t affect your points - it\'s just for learning!',
+      title: 'Comienza con Practica!',
+      content: 'Recomendamos comenzar con el Flujo de Practica para aprender como funcionan las pruebas. No afectara tus puntos - es solo para aprender!',
       position: 'bottom'
     },
     {
       target: null,
-      title: 'Points System',
-      content: '<strong>How to earn points:</strong><br>Base completion: varies by test difficulty<br>Finding a bug: +3 pts<br>Adding feedback: +1 pt<br>Uploading screenshot: +1 pt<br>Flow completion bonus: +3 pts (when all tests approved)<br><br>Harder tests = more base points. Maximize on every test!',
+      title: 'Sistema de Puntos',
+      content: '<strong>Como ganar puntos:</strong><br>Completar prueba: varia segun dificultad<br>Encontrar un error: +3 pts<br>Agregar comentarios: +1 pt<br>Subir captura de pantalla: +1 pt<br>Bonus por completar flujo: +3 pts (cuando todas las pruebas estan aprobadas)<br><br>Pruebas mas dificiles = mas puntos base. Maximiza en cada prueba!',
       position: 'center'
     },
     {
       target: null,
-      title: 'You\'re Ready!',
-      content: 'That\'s it! Start with the Practice Flow to get hands-on experience, then tackle the real test flows. Good luck!',
+      title: 'Estas Listo!',
+      content: 'Eso es todo! Comienza con el Flujo de Practica para obtener experiencia practica, luego enfrenta los flujos de prueba reales. Buena suerte!',
       position: 'center'
     }
   ];
@@ -124,10 +124,10 @@
       <div class="tutorial-tooltip-content">${step.content}</div>
       <div class="tutorial-tooltip-buttons">
         <button class="tutorial-btn tutorial-btn-skip" onclick="TutorialTour.skip()">
-          ${isLastStep ? '' : 'Skip Tour'}
+          ${isLastStep ? '' : 'Saltar Tour'}
         </button>
         <button class="tutorial-btn tutorial-btn-next" onclick="TutorialTour.${isLastStep ? 'complete' : 'next'}()">
-          ${isLastStep ? 'Get Started!' : 'Next'}
+          ${isLastStep ? 'Comenzar!' : 'Siguiente'}
         </button>
       </div>
       ${getArrowClass(step.position)}

@@ -229,7 +229,7 @@
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 class="mb-0">Flow Analytics</h2>
+  <h2 class="mb-0">Estadisticas de Flujos</h2>
 </div>
 
 <!-- Overall Statistics -->
@@ -237,13 +237,13 @@
   <div class="col-md-2">
     <div class="stat-card">
       <div class="stat-number"><%= overallStats.totalFlows %></div>
-      <div class="stat-label">Flows</div>
+      <div class="stat-label">Flujos</div>
     </div>
   </div>
   <div class="col-md-2">
     <div class="stat-card">
       <div class="stat-number"><%= overallStats.totalTestCases %></div>
-      <div class="stat-label">Test Cases</div>
+      <div class="stat-label">Casos de Prueba</div>
     </div>
   </div>
   <div class="col-md-2">
@@ -255,19 +255,19 @@
   <div class="col-md-2">
     <div class="stat-card">
       <div class="stat-number"><%= overallStats.totalSubmissions %></div>
-      <div class="stat-label">Submissions</div>
+      <div class="stat-label">Envios</div>
     </div>
   </div>
   <div class="col-md-2">
     <div class="stat-card">
       <div class="stat-number"><%= overallStats.pendingSubmissions %></div>
-      <div class="stat-label">Pending</div>
+      <div class="stat-label">Pendientes</div>
     </div>
   </div>
   <div class="col-md-2">
     <div class="stat-card">
       <div class="stat-number"><%= overallStats.passRate %>%</div>
-      <div class="stat-label">Pass Rate</div>
+      <div class="stat-label">Tasa de Aprobacion</div>
     </div>
   </div>
 </div>
@@ -275,8 +275,8 @@
 <% if (flowAnalytics.length === 0) { %>
   <div class="text-center py-5">
     <div style="font-size: 3rem;">📊</div>
-    <h5 class="mt-3">No flows found</h5>
-    <p class="text-muted">Create flows to see analytics</p>
+    <h5 class="mt-3">No se encontraron flujos</h5>
+    <p class="text-muted">Crea flujos para ver estadisticas</p>
   </div>
 <% } %>
 
@@ -287,11 +287,11 @@
     <div class="d-flex justify-content-between align-items-center">
       <div>
         <h5 class="mb-1"><%= flow.name %></h5>
-        <small class="text-muted"><%= flow.description || 'No description' %></small>
+        <small class="text-muted"><%= flow.description || 'Sin descripcion' %></small>
       </div>
       <div class="d-flex align-items-center gap-2">
         <span class="completion-badge bg-primary text-white">
-          <%= flow.completionRate %>% completion
+          <%= flow.completionRate %>% completado
         </span>
         <span class="completion-badge bg-secondary text-white">
           +<%= flow.completionBonus %> bonus
@@ -307,9 +307,9 @@
         <!-- Start Node -->
         <div class="tree-node">
           <div class="tree-node-box flow-start">
-            <div class="tree-node-title">Start</div>
+            <div class="tree-node-title">Inicio</div>
             <div class="tree-node-count"><%= flow.usersStarted %></div>
-            <div class="tree-node-label">users</div>
+            <div class="tree-node-label">usuarios</div>
           </div>
         </div>
 
@@ -327,7 +327,7 @@
             <div class="tree-node-box test-case">
               <div class="tree-node-title" title="<%= tc.title %>"><%= tc.title %></div>
               <div class="tree-node-count"><%= tc.total %></div>
-              <div class="tree-node-label">submissions</div>
+              <div class="tree-node-label">envios</div>
               <div class="tree-node-stats">
                 <div class="mini-stat">
                   <span class="mini-dot passed"></span>
@@ -340,7 +340,7 @@
               </div>
             </div>
             <% if (dropOff > 0) { %>
-              <div class="drop-off-indicator">-<%= dropOff %> drop-off</div>
+              <div class="drop-off-indicator">-<%= dropOff %> abandono</div>
             <% } %>
           </div>
         <% }) %>
@@ -353,13 +353,13 @@
         <!-- End Node -->
         <div class="tree-node">
           <div class="tree-node-box flow-end">
-            <div class="tree-node-title">Complete</div>
+            <div class="tree-node-title">Completo</div>
             <div class="tree-node-count"><%= flow.usersCompleted %></div>
-            <div class="tree-node-label">users</div>
+            <div class="tree-node-label">usuarios</div>
           </div>
           <% if (flow.usersStarted - flow.usersCompleted > 0) { %>
             <div class="drop-off-indicator">
-              <%= Math.round((flow.usersCompleted / flow.usersStarted) * 100) || 0 %>% completion
+              <%= Math.round((flow.usersCompleted / flow.usersStarted) * 100) || 0 %>% completado
             </div>
           <% } %>
         </div>
@@ -370,29 +370,29 @@
     <div class="flow-metrics">
       <div class="flow-metric">
         <div class="metric-value"><%= flow.usersStarted %></div>
-        <div class="metric-label">Started</div>
+        <div class="metric-label">Iniciados</div>
       </div>
       <div class="flow-metric">
         <div class="metric-value"><%= flow.usersCompleted %></div>
-        <div class="metric-label">Completed</div>
+        <div class="metric-label">Completados</div>
       </div>
       <div class="flow-metric">
         <div class="metric-value"><%= flow.usersFullyApproved %></div>
-        <div class="metric-label">Fully Approved</div>
+        <div class="metric-label">Totalmente Aprobados</div>
       </div>
       <div class="flow-metric">
         <div class="metric-value"><%= flow.pendingSubmissions %></div>
-        <div class="metric-label">Pending Review</div>
+        <div class="metric-label">Pendientes de Revision</div>
       </div>
     </div>
 
     <!-- Progress Bar -->
     <div class="mb-3">
       <div class="d-flex justify-content-between mb-1">
-        <small class="text-muted">Pass/Fail Distribution</small>
+        <small class="text-muted">Distribucion Aprobado/Fallido</small>
         <small>
-          <span style="color: #4caf50;"><%= flow.passedSubmissions %> passed</span> /
-          <span style="color: #f44336;"><%= flow.failedSubmissions %> failed</span>
+          <span style="color: #4caf50;"><%= flow.passedSubmissions %> aprobados</span> /
+          <span style="color: #f44336;"><%= flow.failedSubmissions %> fallidos</span>
         </small>
       </div>
       <div class="progress-bar-custom">
@@ -403,7 +403,7 @@
 
     <!-- Test Case Details -->
     <h6 class="mb-3" style="font-size: 0.75rem; text-transform: uppercase; color: #757575;">
-      Test Case Details (<%= flow.totalTestCases %>)
+      Detalles de Casos de Prueba (<%= flow.totalTestCases %>)
     </h6>
 
     <% flow.testCaseStats.forEach((tc, idx) => {
@@ -443,7 +443,7 @@
 
     <% if (flow.testCaseStats.length === 0) { %>
       <div class="text-center py-3 text-muted">
-        <em>No test cases in this flow</em>
+        <em>No hay casos de prueba en este flujo</em>
       </div>
     <% } %>
   </div>
@@ -453,19 +453,19 @@
 <!-- Legend -->
 <div class="card mt-4">
   <div class="card-body">
-    <h6 class="mb-3" style="font-size: 0.75rem; text-transform: uppercase; color: #757575;">Legend</h6>
+    <h6 class="mb-3" style="font-size: 0.75rem; text-transform: uppercase; color: #757575;">Leyenda</h6>
     <div class="d-flex gap-4" style="font-size: 0.8rem;">
       <div class="d-flex align-items-center gap-1">
-        <span class="stat-dot passed"></span> Passed
+        <span class="stat-dot passed"></span> Aprobado
       </div>
       <div class="d-flex align-items-center gap-1">
-        <span class="stat-dot failed"></span> Failed
+        <span class="stat-dot failed"></span> Fallido
       </div>
       <div class="d-flex align-items-center gap-1">
-        <span class="stat-dot pending"></span> Pending Review
+        <span class="stat-dot pending"></span> Pendiente de Revision
       </div>
       <div class="d-flex align-items-center gap-1">
-        <span class="stat-dot approved"></span> Approved
+        <span class="stat-dot approved"></span> Aprobado
       </div>
     </div>
   </div>

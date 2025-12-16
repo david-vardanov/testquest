@@ -1,18 +1,18 @@
 <% layout('layouts/boilerplate') %>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>Manage Testers</h2>
-  <a href="/admin/users/new" class="btn btn-primary">Add Tester</a>
+  <h2>Administrar Testers</h2>
+  <a href="/admin/users/new" class="btn btn-primary">Agregar Tester</a>
 </div>
 
 <table class="table table-striped">
   <thead>
     <tr>
-      <th>Username</th>
-      <th>Email</th>
-      <th>Points</th>
-      <th>Status</th>
-      <th>Actions</th>
+      <th>Nombre de Usuario</th>
+      <th>Correo Electronico</th>
+      <th>Puntos</th>
+      <th>Estado</th>
+      <th>Acciones</th>
     </tr>
   </thead>
   <tbody>
@@ -21,11 +21,11 @@
         <td><%= user.username %></td>
         <td><%= user.email %></td>
         <td><%= user.points %></td>
-        <td><%= user.isActive ? 'Active' : 'Inactive' %></td>
+        <td><%= user.isActive ? 'Activo' : 'Inactivo' %></td>
         <td>
-          <a href="/admin/users/<%= user._id %>/edit" class="btn btn-sm btn-warning">Edit</a>
+          <a href="/admin/users/<%= user._id %>/edit" class="btn btn-sm btn-warning">Editar</a>
           <form method="POST" action="/admin/users/<%= user._id %>/delete" class="d-inline">
-            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this user?')">Delete</button>
+            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Eliminar este usuario?')">Eliminar</button>
           </form>
         </td>
       </tr>

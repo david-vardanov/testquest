@@ -26,7 +26,7 @@ router.use(isLoggedIn);
 // Dashboard - show available flows
 router.get('/', async (req, res) => {
   const [flows, user, progresses, allUsers, rewards, myClaims, seasonSettings] = await Promise.all([
-    Flow.find({ isActive: true }).populate('testCases'),
+    Flow.find({ isActive: true }).populate('testCases').populate('prerequisiteFlows').sort('order'),
     User.findById(req.session.user.id),
     FlowProgress.find({ user: req.session.user.id }),
     User.find({ role: 'tester' }).sort('-points'),
@@ -43,6 +43,26 @@ router.get('/', async (req, res) => {
 
   const progressMap = {};
   progresses.forEach(p => progressMap[p.flow.toString()] = p);
+
+  // Check prerequisite flows for each flow
+  const flowsWithLockStatus = flows.map(flow => {
+    const flowObj = flow.toObject();
+    flowObj.isLocked = false;
+    flowObj.missingPrereqs = [];
+
+    if (flow.prerequisiteFlows && flow.prerequisiteFlows.length > 0) {
+      for (const prereq of flow.prerequisiteFlows) {
+        const prereqProgress = progresses.find(p =>
+          p.flow.toString() === prereq._id.toString() && p.isCompleted
+        );
+        if (!prereqProgress) {
+          flowObj.isLocked = true;
+          flowObj.missingPrereqs.push(prereq);
+        }
+      }
+    }
+    return flowObj;
+  });
 
   // Calculate user's rank
   const rank = allUsers.findIndex(u => u._id.toString() === user._id.toString()) + 1;
@@ -84,13 +104,28 @@ router.get('/', async (req, res) => {
   // Check if user needs tutorial
   const showTutorial = !user.hasCompletedTutorial;
 
-  res.render('tester/dashboard', { flows, user, progressMap, rank, currentReward, nextReward, pointsToNext, myClaims, leaderboard, rewards, seasonSettings, showTutorial });
+  res.render('tester/dashboard', { flows: flowsWithLockStatus, user, progressMap, rank, currentReward, nextReward, pointsToNext, myClaims, leaderboard, rewards, seasonSettings, showTutorial });
 });
 
 // Start/Continue a flow
 router.get('/flow/:id', async (req, res) => {
-  const flow = await Flow.findById(req.params.id).populate('testCases');
+  const flow = await Flow.findById(req.params.id).populate('testCases').populate('prerequisiteFlows');
   if (!flow) return res.redirect('/tester');
+
+  // Check if user has completed all prerequisite flows
+  if (flow.prerequisiteFlows && flow.prerequisiteFlows.length > 0) {
+    for (const prereq of flow.prerequisiteFlows) {
+      const prereqProgress = await FlowProgress.findOne({
+        user: req.session.user.id,
+        flow: prereq._id,
+        isCompleted: true
+      });
+      if (!prereqProgress) {
+        // User hasn't completed prerequisite - redirect to dashboard
+        return res.redirect('/tester');
+      }
+    }
+  }
 
   let progress = await FlowProgress.findOne({ user: req.session.user.id, flow: flow._id });
   if (!progress) {
@@ -206,7 +241,7 @@ router.post('/tutorial/complete', async (req, res) => {
     await User.findByIdAndUpdate(req.session.user.id, { hasCompletedTutorial: true });
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to complete tutorial' });
+    res.status(500).json({ error: 'Error al completar el tutorial' });
   }
 });
 
@@ -214,24 +249,24 @@ router.post('/tutorial/complete', async (req, res) => {
 const practiceTestCases = [
   {
     id: 1,
-    title: 'Verify the Login Page',
-    description: 'This practice test teaches you how to complete a basic test case by following the checklist.',
-    scenario: 'Look at the checklist below - these are the steps you need to verify\nClick each checkbox as you complete that step\nOnce all steps are checked, you can select "Passed"',
-    expectedResult: 'You should see all checkboxes turn green\nThe "Passed" option becomes enabled\nYou understand how the checklist system works'
+    title: 'Verificar la Pagina de Inicio de Sesion',
+    description: 'Esta prueba de practica te ensena como completar un caso de prueba basico siguiendo la lista de verificacion.',
+    scenario: 'Mira la lista de verificacion abajo - estos son los pasos que debes verificar\nHaz clic en cada casilla mientras completas ese paso\nUna vez que todas las casillas esten marcadas, puedes seleccionar "Aprobado"',
+    expectedResult: 'Deberias ver todas las casillas en verde\nLa opcion "Aprobado" se habilita\nEntiendes como funciona el sistema de lista de verificacion'
   },
   {
     id: 2,
-    title: 'Practice Reporting a Bug',
-    description: 'Sometimes you\'ll find bugs! This teaches you how to report them for bonus points.',
-    scenario: 'Pretend you found a problem with the application\nSelect "Failed" in the test result section below\nWrite a description of the bug in the feedback box',
-    expectedResult: 'You selected Failed which awards +3 bonus points\nYou wrote feedback describing the issue\nYou understand how bug reporting earns extra points'
+    title: 'Practica Reportando un Error',
+    description: 'A veces encontraras errores! Esto te ensena como reportarlos para obtener puntos extra.',
+    scenario: 'Imagina que encontraste un problema con la aplicacion\nSelecciona "Fallido" en la seccion de resultado de prueba abajo\nEscribe una descripcion del error en el cuadro de comentarios',
+    expectedResult: 'Seleccionaste Fallido lo cual otorga +3 puntos extra\nEscribiste comentarios describiendo el problema\nEntiendes como reportar errores te da puntos extra'
   },
   {
     id: 3,
-    title: 'Submit with Evidence',
-    description: 'Screenshots provide visual proof. Learn how to attach them for extra points!',
-    scenario: 'Take a screenshot of this page (or any image)\nClick "Choose File" and upload your screenshot\nAdd some feedback text explaining what the screenshot shows',
-    expectedResult: 'Screenshot uploaded successfully (+1 point)\nFeedback provided (+1 point)\nYou understand how to maximize points on each submission'
+    title: 'Enviar con Evidencia',
+    description: 'Las capturas de pantalla proporcionan prueba visual. Aprende como adjuntarlas para obtener puntos extra!',
+    scenario: 'Toma una captura de pantalla de esta pagina (o cualquier imagen)\nHaz clic en "Elegir Archivo" y sube tu captura de pantalla\nAgrega texto de comentarios explicando que muestra la captura',
+    expectedResult: 'Captura de pantalla subida exitosamente (+1 punto)\nComentarios proporcionados (+1 punto)\nEntiendes como maximizar puntos en cada envio'
   }
 ];
 

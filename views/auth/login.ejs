@@ -4,7 +4,7 @@
   <div class="col-md-6">
     <div class="card">
       <div class="card-header">
-        <h4>Login</h4>
+        <h4>Iniciar Sesion</h4>
       </div>
       <div class="card-body">
         <% if (typeof error !== 'undefined') { %>
@@ -12,14 +12,14 @@
         <% } %>
         <form method="POST" action="/login">
           <div class="mb-3">
-            <label class="form-label">Username</label>
+            <label class="form-label">Nombre de Usuario</label>
             <input type="text" name="username" class="form-control" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Password</label>
+            <label class="form-label">Contrasena</label>
             <input type="password" name="password" class="form-control" required>
           </div>
-          <button type="submit" class="btn btn-primary">Login</button>
+          <button type="submit" class="btn btn-primary">Iniciar Sesion</button>
         </form>
       </div>
     </div>
