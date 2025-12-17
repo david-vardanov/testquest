@@ -222,3 +222,58 @@ body {
 .tutorial-hint strong {
   color: #856404;
 }
+
+/* Practice Tutorial Blocking Overlay */
+.tutorial-overlay.blocking {
+  pointer-events: auto;
+}
+
+.tutorial-highlight {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 9999;
+}
+
+/* Ensure highlighted form elements are clickable */
+.tutorial-highlight input,
+.tutorial-highlight textarea,
+.tutorial-highlight button,
+.tutorial-highlight label {
+  pointer-events: auto !important;
+}
+
+/* Next button disabled state */
+.tutorial-btn-next.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #ccc !important;
+  box-shadow: none !important;
+}
+
+/* Force action indicator */
+.tutorial-action-required {
+  color: #f5576c;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  background: rgba(245, 87, 108, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #f5576c;
+}
+
+/* Shake animation for blocked actions */
+@keyframes tutorial-shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.tutorial-shake {
+  animation: tutorial-shake 0.5s ease-in-out;
+}
+
+/* Centered tooltip transform fix */
+.tutorial-tooltip[style*="translate"] {
+  transform: translate(-50%, -50%) !important;
+}

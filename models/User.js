@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['superadmin', 'tester'], default: 'tester' },
   points: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
-  hasCompletedTutorial: { type: Boolean, default: false }
+  hasCompletedTutorial: { type: Boolean, default: false },
+  testerGroup: { type: mongoose.Schema.Types.ObjectId, ref: 'TesterGroup' }
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {

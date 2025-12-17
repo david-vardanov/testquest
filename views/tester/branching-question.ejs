@@ -1,0 +1,109 @@
+<% layout('layouts/boilerplate') %>
+
+<style>
+  .branch-card {
+    max-width: 600px;
+    margin: 2rem auto;
+  }
+  .branch-option {
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .branch-option:hover {
+    border-color: #0d6efd;
+    background: #f8f9fa;
+  }
+  .branch-option.selected {
+    border-color: #0d6efd;
+    background: #e7f1ff;
+  }
+  .branch-option input[type="radio"] {
+    display: none;
+  }
+  .branch-option .option-label {
+    font-weight: 500;
+    font-size: 1.1rem;
+  }
+  .branch-option .option-action {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+  }
+  .branch-option .reassign-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+  }
+</style>
+
+<div class="branch-card">
+  <div class="card">
+    <div class="card-header text-center">
+      <h4 class="mb-1">Pregunta de Seguimiento</h4>
+      <small class="text-muted"><%= flow.name %> - <%= testCase.title %></small>
+    </div>
+    <div class="card-body">
+      <p class="lead text-center mb-4"><%= testCase.branchingQuestion.question %></p>
+
+      <form method="POST" action="/tester/flow/<%= flow._id %>/branch/<%= testCase._id %>" id="branch-form">
+        <% testCase.branchingQuestion.options.forEach((option, idx) => { %>
+          <label class="branch-option d-block" for="option-<%= idx %>">
+            <input type="radio" name="optionIndex" id="option-<%= idx %>" value="<%= idx %>" required>
+            <span class="option-label"><%= option.label %></span>
+            <% if (option.action === 'reassign' && option.targetGroup) { %>
+              <span class="reassign-badge" style="background-color: <%= option.targetGroup.color %>20; color: <%= option.targetGroup.color %>;">
+                Cambia a grupo <%= option.targetGroup.code %>
+              </span>
+            <% } %>
+            <div class="option-action">
+              <% if (option.action === 'continue') { %>
+                Continuar con las siguientes pruebas normalmente
+              <% } else if (option.action === 'reassign' && option.targetGroup) { %>
+                Se te asignaran las pruebas del grupo <%= option.targetGroup.name %>
+              <% } %>
+            </div>
+          </label>
+        <% }) %>
+
+        <div class="text-center mt-4">
+          <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" disabled>
+            Continuar
+          </button>
+        </div>
+      </form>
+
+      <div class="alert alert-info mt-4">
+        <small>
+          <strong>Nota:</strong> Esta pregunta nos ayuda a asignarte las pruebas correctas basadas en tu experiencia actual.
+          Tu respuesta no afecta tus puntos.
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const options = document.querySelectorAll('.branch-option');
+    const submitBtn = document.getElementById('submit-btn');
+
+    options.forEach(option => {
+      option.addEventListener('click', function() {
+        // Remove selected from all
+        options.forEach(o => o.classList.remove('selected'));
+        // Add selected to clicked
+        this.classList.add('selected');
+        // Check the radio
+        this.querySelector('input[type="radio"]').checked = true;
+        // Enable submit
+        submitBtn.disabled = false;
+      });
+    });
+  })();
+</script>

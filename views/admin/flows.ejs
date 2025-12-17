@@ -1,8 +1,58 @@
 <% layout('layouts/boilerplate') %>
 
+<% if (typeof success !== 'undefined' && success) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2>Administrar Flujos</h2>
-  <a href="/admin/flows/new" class="btn btn-primary">Agregar Flujo</a>
+  <div class="d-flex gap-2">
+    <a href="/admin/flows/export" class="btn btn-outline-secondary">
+      <i class="bi bi-download"></i> Descargar JSON
+    </a>
+    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+      <i class="bi bi-upload"></i> Importar JSON
+    </button>
+    <a href="/admin/flows/new" class="btn btn-primary">Agregar Flujo</a>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="/admin/flows/import" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title">Importar Flujos desde JSON</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning">
+            <strong>Atencion:</strong> Los flujos y casos de prueba existentes con IDs coincidentes seran actualizados con los datos del archivo JSON.
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Archivo JSON</label>
+            <input type="file" name="jsonFile" class="form-control" accept=".json,application/json" required>
+            <small class="text-muted">Usa el boton "Descargar JSON" para obtener el formato correcto.</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Importar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <table class="table table-striped">

@@ -1,0 +1,63 @@
+<% layout('layouts/boilerplate') %>
+
+<% if (success) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<% if (error) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Grupos de Testers</h2>
+  <a href="/admin/groups/new" class="btn btn-primary">Agregar Grupo</a>
+</div>
+
+<div class="alert alert-info">
+  <strong>Uso:</strong> Los grupos permiten asignar diferentes casos de prueba a diferentes testers.
+  Por ejemplo, Grupo A prueba el camino "exito", Grupo B prueba el camino "error".
+</div>
+
+<% if (groups.length === 0) { %>
+  <div class="alert alert-secondary">
+    No hay grupos creados. Crea un grupo para comenzar a segmentar tus testers.
+  </div>
+<% } else { %>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th style="width: 80px;">Codigo</th>
+        <th>Nombre</th>
+        <th>Descripcion</th>
+        <th style="width: 100px;">Usuarios</th>
+        <th style="width: 150px;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% groups.forEach(group => { %>
+        <tr>
+          <td>
+            <span class="badge" style="background-color: <%= group.color %>;">
+              <%= group.code %>
+            </span>
+          </td>
+          <td><%= group.name %></td>
+          <td><%= group.description || '-' %></td>
+          <td><%= countMap[group._id.toString()] || 0 %></td>
+          <td>
+            <a href="/admin/groups/<%= group._id %>/edit" class="btn btn-sm btn-warning">Editar</a>
+            <form method="POST" action="/admin/groups/<%= group._id %>/delete" class="d-inline">
+              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Eliminar este grupo?')">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+<% } %>

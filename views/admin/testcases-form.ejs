@@ -21,16 +21,170 @@
         <label class="form-label">Resultado Esperado</label>
         <textarea name="expectedResult" class="form-control" rows="3" required><%= testCase ? testCase.expectedResult : '' %></textarea>
       </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Puntos Base</label>
+            <input type="number" name="points" class="form-control" value="<%= testCase ? testCase.points : 1 %>" min="1">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3 form-check mt-4">
+            <input type="checkbox" name="isActive" class="form-check-input" <%= (!testCase || testCase.isActive) ? 'checked' : '' %>>
+            <label class="form-check-label">Activo</label>
+          </div>
+        </div>
+      </div>
+
+      <% if (groups && groups.length > 0) { %>
+      <hr>
+      <h5>Visible para Grupos</h5>
       <div class="mb-3">
-        <label class="form-label">Puntos Base</label>
-        <input type="number" name="points" class="form-control" value="<%= testCase ? testCase.points : 1 %>" min="1">
+        <% groups.forEach(group => {
+          const isSelected = testCase && testCase.visibleToGroups &&
+            testCase.visibleToGroups.some(g => (g._id || g).toString() === group._id.toString());
+          const userCount = groupCountMap && groupCountMap[group._id.toString()] || 0;
+        %>
+          <div class="form-check">
+            <input type="checkbox" name="visibleToGroups" value="<%= group._id %>"
+                   class="form-check-input" id="group-<%= group._id %>"
+                   <%= isSelected ? 'checked' : '' %>>
+            <label class="form-check-label" for="group-<%= group._id %>">
+              <span class="badge" style="background-color: <%= group.color %>;"><%= group.code %></span>
+              <%= group.name %>
+              <small class="text-muted">(<%= userCount %> usuarios)</small>
+            </label>
+          </div>
+        <% }) %>
+        <small class="text-muted mt-2 d-block">Sin seleccion = visible para todos</small>
       </div>
+
+      <hr>
+      <h5>Pregunta de Bifurcacion (Opcional)</h5>
+      <div class="alert alert-warning small">
+        Usa esto cuando el resultado del caso de prueba puede variar y necesitas reasignar al tester a otro grupo basado en lo que realmente sucedio.
+      </div>
+
       <div class="mb-3 form-check">
-        <input type="checkbox" name="isActive" class="form-check-input" <%= (!testCase || testCase.isActive) ? 'checked' : '' %>>
-        <label class="form-check-label">Activo</label>
+        <input type="checkbox" name="branchingQuestion.enabled" class="form-check-input" id="branchingEnabled"
+               <%= (testCase && testCase.branchingQuestion && testCase.branchingQuestion.enabled) ? 'checked' : '' %>
+               onchange="toggleBranchingSection()">
+        <label class="form-check-label" for="branchingEnabled">Habilitar pregunta de bifurcacion</label>
       </div>
+
+      <div id="branchingSection" style="display: none;">
+        <div class="mb-3">
+          <label class="form-label">Pregunta</label>
+          <input type="text" name="branchingQuestion.question" class="form-control"
+                 value="<%= (testCase && testCase.branchingQuestion) ? testCase.branchingQuestion.question || '' : '' %>"
+                 placeholder="Que sucedio realmente?">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Opciones de Respuesta</label>
+          <div id="branchingOptions">
+            <%
+              const existingOptions = (testCase && testCase.branchingQuestion && testCase.branchingQuestion.options) || [];
+              const optionsToShow = existingOptions.length > 0 ? existingOptions : [{label: '', action: 'continue', targetGroup: null}];
+            %>
+            <% optionsToShow.forEach((option, idx) => { %>
+              <div class="branching-option card card-body mb-2">
+                <div class="row g-2 align-items-center">
+                  <div class="col-md-4">
+                    <input type="text" name="branchingQuestion.options.label" class="form-control"
+                           value="<%= option.label || '' %>" placeholder="Texto de opcion">
+                  </div>
+                  <div class="col-md-3">
+                    <select name="branchingQuestion.options.action" class="form-select action-select"
+                            onchange="toggleTargetGroup(this)">
+                      <option value="continue" <%= option.action === 'continue' ? 'selected' : '' %>>Continuar</option>
+                      <option value="reassign" <%= option.action === 'reassign' ? 'selected' : '' %>>Reasignar a grupo</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4 target-group-col" style="<%= option.action !== 'reassign' ? 'display:none;' : '' %>">
+                    <select name="branchingQuestion.options.targetGroup" class="form-select">
+                      <option value="">-- Seleccionar grupo --</option>
+                      <% groups.forEach(g => { %>
+                        <option value="<%= g._id %>"
+                          <%= (option.targetGroup && (option.targetGroup._id || option.targetGroup).toString() === g._id.toString()) ? 'selected' : '' %>>
+                          [<%= g.code %>] <%= g.name %>
+                        </option>
+                      <% }) %>
+                    </select>
+                  </div>
+                  <div class="col-md-1">
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeOption(this)">X</button>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addBranchingOption()">+ Agregar opcion</button>
+        </div>
+      </div>
+      <% } %>
+
+      <hr>
       <button type="submit" class="btn btn-primary">Guardar</button>
       <a href="/admin/testcases" class="btn btn-secondary">Cancelar</a>
     </form>
   </div>
 </div>
+
+<template id="branchingOptionTemplate">
+  <div class="branching-option card card-body mb-2">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <input type="text" name="branchingQuestion.options.label" class="form-control" placeholder="Texto de opcion">
+      </div>
+      <div class="col-md-3">
+        <select name="branchingQuestion.options.action" class="form-select action-select" onchange="toggleTargetGroup(this)">
+          <option value="continue">Continuar</option>
+          <option value="reassign">Reasignar a grupo</option>
+        </select>
+      </div>
+      <div class="col-md-4 target-group-col" style="display:none;">
+        <select name="branchingQuestion.options.targetGroup" class="form-select">
+          <option value="">-- Seleccionar grupo --</option>
+          <% if (groups) { groups.forEach(g => { %>
+            <option value="<%= g._id %>">[<%= g.code %>] <%= g.name %></option>
+          <% }) } %>
+        </select>
+      </div>
+      <div class="col-md-1">
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeOption(this)">X</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+function toggleBranchingSection() {
+  const enabled = document.getElementById('branchingEnabled').checked;
+  document.getElementById('branchingSection').style.display = enabled ? 'block' : 'none';
+}
+
+function toggleTargetGroup(selectEl) {
+  const targetCol = selectEl.closest('.branching-option').querySelector('.target-group-col');
+  targetCol.style.display = selectEl.value === 'reassign' ? 'block' : 'none';
+}
+
+function addBranchingOption() {
+  const template = document.getElementById('branchingOptionTemplate');
+  const container = document.getElementById('branchingOptions');
+  const clone = template.content.cloneNode(true);
+  container.appendChild(clone);
+}
+
+function removeOption(btn) {
+  const options = document.querySelectorAll('.branching-option');
+  if (options.length > 1) {
+    btn.closest('.branching-option').remove();
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  toggleBranchingSection();
+});
+</script>

@@ -96,7 +96,7 @@
 
 <div class="filter-card">
   <form method="GET" class="row g-3 align-items-end">
-    <div class="col-md-3">
+    <div class="col-md-2">
       <label class="form-label">Flujo</label>
       <select name="flow" class="form-select">
         <option value="">Todos los Flujos</option>
@@ -113,12 +113,21 @@
         <option value="failed" <%= filters.status === 'failed' ? 'selected' : '' %>>Fallido</option>
       </select>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
       <label class="form-label">Usuario</label>
       <select name="user" class="form-select">
-        <option value="">Todos los Usuarios</option>
+        <option value="">Todos</option>
         <% users.forEach(u => { %>
           <option value="<%= u._id %>" <%= filters.user === u._id.toString() ? 'selected' : '' %>><%= u.username %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Grupo</label>
+      <select name="group" class="form-select">
+        <option value="">Todos</option>
+        <% groups.forEach(g => { %>
+          <option value="<%= g._id %>" <%= filters.group === g._id.toString() ? 'selected' : '' %>><%= g.code %> - <%= g.name %></option>
         <% }) %>
       </select>
     </div>
@@ -153,9 +162,17 @@
           <div>
             <span class="status-dot <%= sub.status %>"></span>
             <strong><%= sub.user ? sub.user.username : 'N/A' %></strong>
+            <% if (sub.userGroupAtSubmission) { %>
+              <span class="badge ms-1" style="background-color: <%= sub.userGroupAtSubmission.color %>; font-size: 0.65rem;">
+                <%= sub.userGroupAtSubmission.code %>
+              </span>
+            <% } %>
             <span class="text-muted">· <%= sub.createdAt.toLocaleDateString() %></span>
             <% if (!sub.pointsAwarded) { %>
               <span class="badge bg-warning text-dark ms-2">Pendiente</span>
+            <% } %>
+            <% if (sub.wasReassigned) { %>
+              <span class="badge bg-info text-dark ms-1" title="Reasignado desde <%= sub.reassignedFrom ? sub.reassignedFrom.code : 'N/A' %>">Reasignado</span>
             <% } %>
           </div>
           <div>
@@ -170,6 +187,11 @@
             <a class="ms-2" style="font-size: 0.7rem; cursor: pointer;" data-bs-toggle="collapse" href="#testcase-<%= sub._id %>">Mostrar detalles de prueba</a>
           <% } %>
         </div>
+        <% if (sub.wasReassigned && sub.reassignmentReason) { %>
+          <div class="mt-1">
+            <small class="text-info"><strong>Razon de reasignacion:</strong> <%= sub.reassignmentReason %></small>
+          </div>
+        <% } %>
         <% if (sub.testCase) { %>
           <div class="collapse mt-2" id="testcase-<%= sub._id %>">
             <div style="background: #f0f0f0; padding: 0.5rem; border-radius: 4px; font-size: 0.75rem;">

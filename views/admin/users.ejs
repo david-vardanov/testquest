@@ -10,6 +10,7 @@
     <tr>
       <th>Nombre de Usuario</th>
       <th>Correo Electronico</th>
+      <th>Grupo</th>
       <th>Puntos</th>
       <th>Estado</th>
       <th>Acciones</th>
@@ -20,6 +21,16 @@
       <tr>
         <td><%= user.username %></td>
         <td><%= user.email %></td>
+        <td>
+          <% if (user.testerGroup) { %>
+            <span class="badge" style="background-color: <%= user.testerGroup.color %>;">
+              <%= user.testerGroup.code %>
+            </span>
+            <small><%= user.testerGroup.name %></small>
+          <% } else { %>
+            <span class="text-muted">-</span>
+          <% } %>
+        </td>
         <td><%= user.points %></td>
         <td><%= user.isActive ? 'Activo' : 'Inactivo' %></td>
         <td>

@@ -16,7 +16,12 @@ const submissionSchema = new mongoose.Schema({
     bug: { type: Boolean, default: false }
   },
   isUsefulFeedback: { type: Boolean, default: false },
-  adminNotes: { type: String }
+  adminNotes: { type: String },
+  // Group tracking for A/B testing audit trail
+  userGroupAtSubmission: { type: mongoose.Schema.Types.ObjectId, ref: 'TesterGroup' },
+  wasReassigned: { type: Boolean, default: false },
+  reassignedFrom: { type: mongoose.Schema.Types.ObjectId, ref: 'TesterGroup' },
+  reassignmentReason: { type: String }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Submission', submissionSchema);

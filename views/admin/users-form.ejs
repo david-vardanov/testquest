@@ -17,6 +17,19 @@
         <label class="form-label">Contrasena <%= user ? '(dejar vacio para mantener actual)' : '' %></label>
         <input type="password" name="password" class="form-control" <%= user ? '' : 'required' %>>
       </div>
+      <div class="mb-3">
+        <label class="form-label">Grupo de Tester</label>
+        <select name="testerGroup" class="form-select">
+          <option value="">-- Sin grupo --</option>
+          <% groups.forEach(group => { %>
+            <option value="<%= group._id %>"
+                    <%= (user && user.testerGroup && user.testerGroup.toString() === group._id.toString()) ? 'selected' : '' %>>
+              [<%= group.code %>] <%= group.name %>
+            </option>
+          <% }) %>
+        </select>
+        <small class="text-muted">El grupo determina que casos de prueba vera este tester</small>
+      </div>
       <div class="mb-3 form-check">
         <input type="checkbox" name="isActive" class="form-check-input" <%= (!user || user.isActive) ? 'checked' : '' %>>
         <label class="form-check-label">Activo</label>

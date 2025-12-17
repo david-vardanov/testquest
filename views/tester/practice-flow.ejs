@@ -42,11 +42,6 @@
   </ol>
 </nav>
 
-<div class="tutorial-hint">
-  <strong>Modo Practica:</strong> Este es un flujo de practica para ayudarte a aprender como funciona TestQuest.
-  No se otorgaran puntos - solo sigue y aprende la interfaz!
-</div>
-
 <div class="card">
   <div class="practice-header">
     <div class="d-flex justify-content-between align-items-center">
@@ -89,16 +84,6 @@
     <form method="POST" action="/tester/practice-flow/submit" id="practice-form">
       <div class="mb-3">
         <label class="form-label"><strong>Resultado de la Prueba:</strong></label>
-        <div class="tutorial-hint mb-2">
-          <strong>Consejo:</strong>
-          <% if (currentStep === 0) { %>
-            Marca todas las casillas de arriba para desbloquear "Aprobado". En pruebas reales, solo seleccionas "Aprobado" despues de verificar que todos los pasos funcionan correctamente.
-          <% } else if (currentStep === 1) { %>
-            Selecciona "Fallido" para practicar reportar un error. Cuando encuentras un error real, esto te otorga +3 puntos extra!
-          <% } else { %>
-            Puedes seleccionar cualquiera - esto te ensena sobre capturas de pantalla y comentarios.
-          <% } %>
-        </div>
         <div>
           <div class="form-check form-check-inline">
             <input class="form-check-input passed-radio" type="radio" name="status" id="status-passed" value="passed" disabled>
@@ -116,17 +101,11 @@
 
       <div class="mb-3">
         <label class="form-label">Comentarios (+1 pt)</label>
-        <div class="tutorial-hint mb-2">
-          <strong>Consejo:</strong> Agregar comentarios detallados ayuda a los desarrolladores a entender los problemas. En pruebas reales, siempre describe lo que observaste!
-        </div>
         <textarea name="feedback" class="form-control" rows="3" placeholder="Describe lo que observaste, problemas encontrados o sugerencias..."></textarea>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Captura de Pantalla (+1 pt)</label>
-        <div class="tutorial-hint mb-2">
-          <strong>Consejo:</strong> Las capturas de pantalla proporcionan prueba visual. Intenta subir cualquier imagen para ver como funciona!
-        </div>
         <input type="file" name="screenshot" class="form-control" accept="image/*">
       </div>
 
@@ -193,3 +172,8 @@
     updateState();
   })();
 </script>
+
+<script>
+  window.practiceStep = <%= currentStep %>;
+</script>
+<script src="/js/practice-tutorial.js"></script>

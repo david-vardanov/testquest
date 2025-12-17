@@ -13,6 +13,7 @@ const Reward = require('../models/Reward');
 const RewardClaim = require('../models/RewardClaim');
 const LeaderboardSettings = require('../models/LeaderboardSettings');
 const SeasonArchive = require('../models/SeasonArchive');
+const TesterGroup = require('../models/TesterGroup');
 
 // Ensure backups directory exists
 const BACKUPS_DIR = path.join(__dirname, '..', 'backups');
@@ -54,28 +55,44 @@ router.get('/', async (req, res) => {
 
 // Users CRUD
 router.get('/users', async (req, res) => {
-  const users = await User.find({ role: 'tester' }).sort('-createdAt');
+  const users = await User.find({ role: 'tester' }).populate('testerGroup').sort('-createdAt');
   res.render('admin/users', { users });
 });
 
-router.get('/users/new', (req, res) => {
-  res.render('admin/users-form', { user: null });
+router.get('/users/new', async (req, res) => {
+  const groups = await TesterGroup.find().sort('code');
+  res.render('admin/users-form', { user: null, groups });
 });
 
 router.post('/users', async (req, res) => {
-  const { username, email, password, isActive } = req.body;
-  await User.create({ username, email, password, role: 'tester', isActive: isActive === 'on' });
+  const { username, email, password, isActive, testerGroup } = req.body;
+  await User.create({
+    username,
+    email,
+    password,
+    role: 'tester',
+    isActive: isActive === 'on',
+    testerGroup: testerGroup || null
+  });
   res.redirect('/admin/users');
 });
 
 router.get('/users/:id/edit', async (req, res) => {
-  const user = await User.findById(req.params.id);
-  res.render('admin/users-form', { user });
+  const [user, groups] = await Promise.all([
+    User.findById(req.params.id),
+    TesterGroup.find().sort('code')
+  ]);
+  res.render('admin/users-form', { user, groups });
 });
 
 router.post('/users/:id', async (req, res) => {
-  const { username, email, password, isActive } = req.body;
-  const update = { username, email, isActive: isActive === 'on' };
+  const { username, email, password, isActive, testerGroup } = req.body;
+  const update = {
+    username,
+    email,
+    isActive: isActive === 'on',
+    testerGroup: testerGroup || null
+  };
   if (password) update.password = password;
   const user = await User.findById(req.params.id);
   Object.assign(user, update);
@@ -88,30 +105,188 @@ router.post('/users/:id/delete', async (req, res) => {
   res.redirect('/admin/users');
 });
 
+// Tester Groups CRUD
+router.get('/groups', async (req, res) => {
+  const groups = await TesterGroup.find().sort('code');
+  // Count users per group
+  const groupCounts = await User.aggregate([
+    { $match: { role: 'tester', testerGroup: { $ne: null } } },
+    { $group: { _id: '$testerGroup', count: { $sum: 1 } } }
+  ]);
+  const countMap = {};
+  groupCounts.forEach(g => { countMap[g._id.toString()] = g.count; });
+  res.render('admin/groups', {
+    groups,
+    countMap,
+    success: req.query.success || null,
+    error: req.query.error || null
+  });
+});
+
+router.get('/groups/new', (req, res) => {
+  res.render('admin/groups-form', { group: null });
+});
+
+router.post('/groups', async (req, res) => {
+  const { name, code, description, color } = req.body;
+  try {
+    await TesterGroup.create({ name, code: code.toUpperCase(), description, color });
+    res.redirect('/admin/groups?success=' + encodeURIComponent('Grupo creado exitosamente'));
+  } catch (err) {
+    if (err.code === 11000) {
+      res.redirect('/admin/groups?error=' + encodeURIComponent('El codigo de grupo ya existe'));
+    } else {
+      res.redirect('/admin/groups?error=' + encodeURIComponent(err.message));
+    }
+  }
+});
+
+router.get('/groups/:id/edit', async (req, res) => {
+  const group = await TesterGroup.findById(req.params.id);
+  res.render('admin/groups-form', { group });
+});
+
+router.post('/groups/:id', async (req, res) => {
+  const { name, code, description, color } = req.body;
+  try {
+    await TesterGroup.findByIdAndUpdate(req.params.id, {
+      name,
+      code: code.toUpperCase(),
+      description,
+      color
+    });
+    res.redirect('/admin/groups?success=' + encodeURIComponent('Grupo actualizado'));
+  } catch (err) {
+    res.redirect('/admin/groups?error=' + encodeURIComponent(err.message));
+  }
+});
+
+router.post('/groups/:id/delete', async (req, res) => {
+  // Check if any users are in this group
+  const usersInGroup = await User.countDocuments({ testerGroup: req.params.id });
+  if (usersInGroup > 0) {
+    return res.redirect('/admin/groups?error=' + encodeURIComponent('No se puede eliminar: hay ' + usersInGroup + ' usuarios en este grupo'));
+  }
+  await TesterGroup.findByIdAndDelete(req.params.id);
+  res.redirect('/admin/groups?success=' + encodeURIComponent('Grupo eliminado'));
+});
+
 // Test Cases CRUD
 router.get('/testcases', async (req, res) => {
   const testCases = await TestCase.find().sort('-createdAt');
   res.render('admin/testcases', { testCases });
 });
 
-router.get('/testcases/new', (req, res) => {
-  res.render('admin/testcases-form', { testCase: null });
+router.get('/testcases/new', async (req, res) => {
+  const [groups, groupCounts] = await Promise.all([
+    TesterGroup.find().sort('code'),
+    User.aggregate([
+      { $match: { role: 'tester', testerGroup: { $ne: null } } },
+      { $group: { _id: '$testerGroup', count: { $sum: 1 } } }
+    ])
+  ]);
+  const countMap = {};
+  groupCounts.forEach(g => { countMap[g._id.toString()] = g.count; });
+  res.render('admin/testcases-form', { testCase: null, groups, groupCountMap: countMap });
 });
 
 router.post('/testcases', async (req, res) => {
   const { title, description, scenario, expectedResult, points, isActive } = req.body;
-  await TestCase.create({ title, description, scenario, expectedResult, points, isActive: isActive === 'on' });
+  // Handle visibleToGroups as array
+  let visibleToGroups = req.body.visibleToGroups || [];
+  if (!Array.isArray(visibleToGroups)) visibleToGroups = [visibleToGroups];
+  visibleToGroups = visibleToGroups.filter(g => g); // Remove empty values
+
+  // Handle branching question
+  const branchingQuestion = {
+    enabled: req.body['branchingQuestion.enabled'] === 'on',
+    question: req.body['branchingQuestion.question'] || '',
+    options: []
+  };
+
+  // Parse branching options
+  if (req.body['branchingQuestion.options']) {
+    const optionLabels = req.body['branchingQuestion.options.label'] || [];
+    const optionActions = req.body['branchingQuestion.options.action'] || [];
+    const optionTargets = req.body['branchingQuestion.options.targetGroup'] || [];
+
+    const labels = Array.isArray(optionLabels) ? optionLabels : [optionLabels];
+    const actions = Array.isArray(optionActions) ? optionActions : [optionActions];
+    const targets = Array.isArray(optionTargets) ? optionTargets : [optionTargets];
+
+    for (let i = 0; i < labels.length; i++) {
+      if (labels[i]) {
+        branchingQuestion.options.push({
+          label: labels[i],
+          action: actions[i] || 'continue',
+          targetGroup: (actions[i] === 'reassign' && targets[i]) ? targets[i] : null
+        });
+      }
+    }
+  }
+
+  await TestCase.create({
+    title, description, scenario, expectedResult, points,
+    isActive: isActive === 'on',
+    visibleToGroups,
+    branchingQuestion
+  });
   res.redirect('/admin/testcases');
 });
 
 router.get('/testcases/:id/edit', async (req, res) => {
-  const testCase = await TestCase.findById(req.params.id);
-  res.render('admin/testcases-form', { testCase });
+  const [testCase, groups, groupCounts] = await Promise.all([
+    TestCase.findById(req.params.id).populate('visibleToGroups').populate('branchingQuestion.options.targetGroup'),
+    TesterGroup.find().sort('code'),
+    User.aggregate([
+      { $match: { role: 'tester', testerGroup: { $ne: null } } },
+      { $group: { _id: '$testerGroup', count: { $sum: 1 } } }
+    ])
+  ]);
+  const countMap = {};
+  groupCounts.forEach(g => { countMap[g._id.toString()] = g.count; });
+  res.render('admin/testcases-form', { testCase, groups, groupCountMap: countMap });
 });
 
 router.post('/testcases/:id', async (req, res) => {
   const { title, description, scenario, expectedResult, points, isActive } = req.body;
-  await TestCase.findByIdAndUpdate(req.params.id, { title, description, scenario, expectedResult, points, isActive: isActive === 'on' });
+  // Handle visibleToGroups as array
+  let visibleToGroups = req.body.visibleToGroups || [];
+  if (!Array.isArray(visibleToGroups)) visibleToGroups = [visibleToGroups];
+  visibleToGroups = visibleToGroups.filter(g => g);
+
+  // Handle branching question
+  const branchingQuestion = {
+    enabled: req.body['branchingQuestion.enabled'] === 'on',
+    question: req.body['branchingQuestion.question'] || '',
+    options: []
+  };
+
+  // Parse branching options
+  const optionLabels = req.body['branchingQuestion.options.label'] || [];
+  const optionActions = req.body['branchingQuestion.options.action'] || [];
+  const optionTargets = req.body['branchingQuestion.options.targetGroup'] || [];
+
+  const labels = Array.isArray(optionLabels) ? optionLabels : [optionLabels];
+  const actions = Array.isArray(optionActions) ? optionActions : [optionActions];
+  const targets = Array.isArray(optionTargets) ? optionTargets : [optionTargets];
+
+  for (let i = 0; i < labels.length; i++) {
+    if (labels[i]) {
+      branchingQuestion.options.push({
+        label: labels[i],
+        action: actions[i] || 'continue',
+        targetGroup: (actions[i] === 'reassign' && targets[i]) ? targets[i] : null
+      });
+    }
+  }
+
+  await TestCase.findByIdAndUpdate(req.params.id, {
+    title, description, scenario, expectedResult, points,
+    isActive: isActive === 'on',
+    visibleToGroups,
+    branchingQuestion
+  });
   res.redirect('/admin/testcases');
 });
 
@@ -123,15 +298,26 @@ router.post('/testcases/:id/delete', async (req, res) => {
 // Flows CRUD
 router.get('/flows', async (req, res) => {
   const flows = await Flow.find().populate('testCases').sort('order');
-  res.render('admin/flows', { flows });
+  res.render('admin/flows', {
+    flows,
+    success: req.query.success || null,
+    error: req.query.error || null
+  });
 });
 
 router.get('/flows/new', async (req, res) => {
-  const [allTestCases, allFlows] = await Promise.all([
+  const [allTestCases, allFlows, groups, groupCounts] = await Promise.all([
     TestCase.find({ isActive: true }).sort('-createdAt'),
-    Flow.find({ isActive: true }).sort('name')
+    Flow.find({ isActive: true }).sort('name'),
+    TesterGroup.find().sort('code'),
+    User.aggregate([
+      { $match: { role: 'tester', testerGroup: { $ne: null } } },
+      { $group: { _id: '$testerGroup', count: { $sum: 1 } } }
+    ])
   ]);
-  res.render('admin/flows-form', { flow: null, allTestCases, allFlows });
+  const countMap = {};
+  groupCounts.forEach(g => { countMap[g._id.toString()] = g.count; });
+  res.render('admin/flows-form', { flow: null, allTestCases, allFlows, groups, groupCountMap: countMap });
 });
 
 router.post('/flows', async (req, res) => {
@@ -141,8 +327,35 @@ router.post('/flows', async (req, res) => {
   const testCaseIds = [];
   if (testCases && Array.isArray(testCases)) {
     for (const tc of testCases) {
+      // Parse visibleToGroups
+      let visibleToGroups = tc.visibleToGroups || [];
+      if (!Array.isArray(visibleToGroups)) visibleToGroups = [visibleToGroups];
+      visibleToGroups = visibleToGroups.filter(g => g);
+
+      // Parse branchingQuestion
+      let branchingQuestion = { enabled: false, question: '', options: [] };
+      if (tc.branchingQuestion) {
+        const bq = tc.branchingQuestion;
+        branchingQuestion.enabled = bq.enabled === 'on' || bq.enabled === true;
+        branchingQuestion.question = bq.question || '';
+        if (bq.options && typeof bq.options === 'object') {
+          const optKeys = Object.keys(bq.options).sort((a, b) => parseInt(a) - parseInt(b));
+          for (const key of optKeys) {
+            const opt = bq.options[key];
+            if (opt && opt.label) {
+              branchingQuestion.options.push({
+                label: opt.label,
+                action: opt.action || 'continue',
+                targetGroup: (opt.action === 'reassign' && opt.targetGroup) ? opt.targetGroup : null
+              });
+            }
+          }
+        }
+      }
+
       if (tc.isReused === 'true' && tc.reusedId) {
-        // Reuse existing test case
+        // Reuse existing test case - update visibleToGroups and branchingQuestion
+        await TestCase.findByIdAndUpdate(tc.reusedId, { visibleToGroups, branchingQuestion });
         testCaseIds.push(tc.reusedId);
       } else if (tc.title && tc.scenario) {
         // Create new test case
@@ -152,7 +365,9 @@ router.post('/flows', async (req, res) => {
           scenario: tc.scenario,
           expectedResult: tc.expectedResult,
           points: tc.points || 1,
-          isActive: true
+          isActive: true,
+          visibleToGroups,
+          branchingQuestion
         });
         testCaseIds.push(created._id);
       }
@@ -177,13 +392,296 @@ router.post('/flows', async (req, res) => {
   res.redirect('/admin/flows');
 });
 
+// Export flows and test cases as JSON (must be before :id routes)
+router.get('/flows/export', async (req, res) => {
+  try {
+    const [flows, groups] = await Promise.all([
+      Flow.find().populate({
+        path: 'testCases',
+        populate: [
+          { path: 'visibleToGroups' },
+          { path: 'branchingQuestion.options.targetGroup' }
+        ]
+      }).sort('order'),
+      TesterGroup.find().sort('code')
+    ]);
+
+    const exportData = {
+      version: '1.1',
+      exportDate: new Date().toISOString(),
+      groups: groups.map(g => ({
+        _id: g._id.toString(),
+        name: g.name,
+        code: g.code,
+        description: g.description || '',
+        color: g.color || '#6c757d'
+      })),
+      flows: flows.map(flow => ({
+        _id: flow._id.toString(),
+        name: flow.name,
+        description: flow.description || '',
+        order: flow.order || 0,
+        points: flow.points || 0,
+        completionBonus: flow.completionBonus || 3,
+        isActive: flow.isActive,
+        prerequisiteFlowIds: (flow.prerequisiteFlows || []).map(id => id.toString()),
+        testCases: (flow.testCases || []).map(tc => ({
+          _id: tc._id.toString(),
+          title: tc.title,
+          description: tc.description,
+          scenario: tc.scenario,
+          expectedResult: tc.expectedResult,
+          points: tc.points || 1,
+          isActive: tc.isActive,
+          visibleToGroupCodes: (tc.visibleToGroups || []).map(g => g.code || g.toString()),
+          branchingQuestion: tc.branchingQuestion && tc.branchingQuestion.enabled ? {
+            enabled: true,
+            question: tc.branchingQuestion.question || '',
+            options: (tc.branchingQuestion.options || []).map(opt => ({
+              label: opt.label,
+              action: opt.action,
+              targetGroupCode: opt.targetGroup ? (opt.targetGroup.code || null) : null
+            }))
+          } : null
+        }))
+      }))
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename=flows-export.json');
+    res.send(JSON.stringify(exportData, null, 2));
+  } catch (err) {
+    console.error('Export error:', err);
+    res.status(500).send('Error exporting flows');
+  }
+});
+
+// Import flows and test cases from JSON
+const jsonUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/json' || file.originalname.endsWith('.json')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten archivos JSON'));
+    }
+  }
+});
+
+router.post('/flows/import', jsonUpload.single('jsonFile'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.redirect('/admin/flows?error=' + encodeURIComponent('No se subio ningun archivo'));
+    }
+
+    const fileContent = req.file.buffer.toString('utf8');
+    const importData = JSON.parse(fileContent);
+
+    // Validate structure
+    if (!importData.flows || !Array.isArray(importData.flows)) {
+      throw new Error('Estructura JSON invalida: falta el array "flows"');
+    }
+
+    let updatedFlows = 0;
+    let createdFlows = 0;
+    let updatedTestCases = 0;
+    let createdTestCases = 0;
+    let updatedGroups = 0;
+    let createdGroups = 0;
+
+    // First: Import/update groups if present (v1.1+)
+    const groupCodeToId = {};
+    if (importData.groups && Array.isArray(importData.groups)) {
+      for (const groupData of importData.groups) {
+        let group = await TesterGroup.findOne({ code: groupData.code });
+        if (group) {
+          // Update existing group
+          group.name = groupData.name;
+          group.description = groupData.description;
+          group.color = groupData.color;
+          await group.save();
+          updatedGroups++;
+        } else {
+          // Create new group
+          group = await TesterGroup.create({
+            name: groupData.name,
+            code: groupData.code,
+            description: groupData.description,
+            color: groupData.color
+          });
+          createdGroups++;
+        }
+        groupCodeToId[groupData.code] = group._id;
+      }
+    }
+
+    // Also load existing groups for reference
+    const existingGroups = await TesterGroup.find();
+    existingGroups.forEach(g => {
+      if (!groupCodeToId[g.code]) {
+        groupCodeToId[g.code] = g._id;
+      }
+    });
+
+    // Map old IDs to new IDs for prerequisite handling
+    const flowIdMap = {};
+
+    for (const flowData of importData.flows) {
+      let flow;
+
+      // Try to find existing flow by ID
+      if (flowData._id) {
+        try {
+          flow = await Flow.findById(flowData._id);
+        } catch (e) {
+          // Invalid ID format, will create new
+        }
+      }
+
+      if (flow) {
+        // UPDATE existing flow
+        flow.name = flowData.name;
+        flow.description = flowData.description;
+        flow.order = flowData.order;
+        flow.points = flowData.points;
+        flow.completionBonus = flowData.completionBonus;
+        flow.isActive = flowData.isActive;
+        updatedFlows++;
+      } else {
+        // CREATE new flow
+        flow = new Flow({
+          name: flowData.name,
+          description: flowData.description,
+          order: flowData.order,
+          points: flowData.points,
+          completionBonus: flowData.completionBonus,
+          isActive: flowData.isActive,
+          testCases: []
+        });
+        createdFlows++;
+      }
+
+      // Handle test cases
+      const testCaseIds = [];
+      for (const tcData of flowData.testCases || []) {
+        let testCase;
+
+        if (tcData._id) {
+          try {
+            testCase = await TestCase.findById(tcData._id);
+          } catch (e) {
+            // Invalid ID format, will create new
+          }
+        }
+
+        // Map group codes to IDs for visibleToGroups
+        const visibleToGroups = (tcData.visibleToGroupCodes || [])
+          .map(code => groupCodeToId[code])
+          .filter(id => id);
+
+        // Map branching question with group references
+        let branchingQuestion = { enabled: false, question: '', options: [] };
+        if (tcData.branchingQuestion && tcData.branchingQuestion.enabled) {
+          branchingQuestion = {
+            enabled: true,
+            question: tcData.branchingQuestion.question || '',
+            options: (tcData.branchingQuestion.options || []).map(opt => ({
+              label: opt.label,
+              action: opt.action,
+              targetGroup: opt.targetGroupCode ? groupCodeToId[opt.targetGroupCode] : null
+            }))
+          };
+        }
+
+        if (testCase) {
+          // UPDATE existing test case
+          testCase.title = tcData.title;
+          testCase.description = tcData.description;
+          testCase.scenario = tcData.scenario;
+          testCase.expectedResult = tcData.expectedResult;
+          testCase.points = tcData.points;
+          testCase.isActive = tcData.isActive;
+          testCase.visibleToGroups = visibleToGroups;
+          testCase.branchingQuestion = branchingQuestion;
+          await testCase.save();
+          updatedTestCases++;
+        } else {
+          // CREATE new test case
+          testCase = await TestCase.create({
+            title: tcData.title,
+            description: tcData.description,
+            scenario: tcData.scenario,
+            expectedResult: tcData.expectedResult,
+            points: tcData.points || 1,
+            isActive: tcData.isActive !== false,
+            visibleToGroups,
+            branchingQuestion
+          });
+          createdTestCases++;
+        }
+        testCaseIds.push(testCase._id);
+      }
+
+      flow.testCases = testCaseIds;
+      await flow.save();
+
+      // Store ID mapping for prerequisites
+      if (flowData._id) {
+        flowIdMap[flowData._id] = flow._id;
+      }
+    }
+
+    // Second pass: update prerequisite references
+    for (const flowData of importData.flows) {
+      if (flowData.prerequisiteFlowIds && flowData.prerequisiteFlowIds.length > 0) {
+        const flowId = flowIdMap[flowData._id] || flowData._id;
+        let flow;
+        try {
+          flow = await Flow.findById(flowId);
+        } catch (e) {
+          continue;
+        }
+        if (flow) {
+          flow.prerequisiteFlows = flowData.prerequisiteFlowIds
+            .map(oldId => flowIdMap[oldId] || oldId)
+            .filter(id => id);
+          await flow.save();
+        }
+      }
+    }
+
+    let message = `Importacion completada: ${updatedFlows} flujos actualizados, ${createdFlows} creados. ${updatedTestCases} casos actualizados, ${createdTestCases} creados.`;
+    if (updatedGroups > 0 || createdGroups > 0) {
+      message += ` ${updatedGroups} grupos actualizados, ${createdGroups} creados.`;
+    }
+    res.redirect('/admin/flows?success=' + encodeURIComponent(message));
+  } catch (err) {
+    console.error('Import error:', err);
+    res.redirect('/admin/flows?error=' + encodeURIComponent('Error en importacion: ' + err.message));
+  }
+});
+
 router.get('/flows/:id/edit', async (req, res) => {
-  const [flow, allTestCases, allFlows] = await Promise.all([
-    Flow.findById(req.params.id).populate('testCases').populate('prerequisiteFlows'),
+  const [flow, allTestCases, allFlows, groups, groupCounts] = await Promise.all([
+    Flow.findById(req.params.id).populate({
+      path: 'testCases',
+      populate: [
+        { path: 'visibleToGroups' },
+        { path: 'branchingQuestion.options.targetGroup' }
+      ]
+    }).populate('prerequisiteFlows'),
     TestCase.find({ isActive: true }).sort('-createdAt'),
-    Flow.find({ isActive: true, _id: { $ne: req.params.id } }).sort('name') // Exclude self
+    Flow.find({ isActive: true, _id: { $ne: req.params.id } }).sort('name'), // Exclude self
+    TesterGroup.find().sort('code'),
+    User.aggregate([
+      { $match: { role: 'tester', testerGroup: { $ne: null } } },
+      { $group: { _id: '$testerGroup', count: { $sum: 1 } } }
+    ])
   ]);
-  res.render('admin/flows-form', { flow, allTestCases, allFlows });
+  const countMap = {};
+  groupCounts.forEach(g => { countMap[g._id.toString()] = g.count; });
+  res.render('admin/flows-form', { flow, allTestCases, allFlows, groups, groupCountMap: countMap });
 });
 
 router.post('/flows/:id', async (req, res) => {
@@ -195,8 +693,36 @@ router.post('/flows/:id', async (req, res) => {
 
   if (testCases && Array.isArray(testCases)) {
     for (const tc of testCases) {
+      // Parse visibleToGroups for this test case
+      let visibleToGroups = tc.visibleToGroups || [];
+      if (!Array.isArray(visibleToGroups)) visibleToGroups = [visibleToGroups];
+      visibleToGroups = visibleToGroups.filter(g => g);
+
+      // Parse branchingQuestion for this test case
+      let branchingQuestion = { enabled: false, question: '', options: [] };
+      if (tc.branchingQuestion) {
+        const bq = tc.branchingQuestion;
+        branchingQuestion.enabled = bq.enabled === 'on' || bq.enabled === true;
+        branchingQuestion.question = bq.question || '';
+        if (bq.options && typeof bq.options === 'object') {
+          // Options come as object with numeric keys: {0: {...}, 1: {...}}
+          const optKeys = Object.keys(bq.options).sort((a, b) => parseInt(a) - parseInt(b));
+          for (const key of optKeys) {
+            const opt = bq.options[key];
+            if (opt && opt.label) {
+              branchingQuestion.options.push({
+                label: opt.label,
+                action: opt.action || 'continue',
+                targetGroup: (opt.action === 'reassign' && opt.targetGroup) ? opt.targetGroup : null
+              });
+            }
+          }
+        }
+      }
+
       if (tc.isReused === 'true' && tc.reusedId) {
-        // Reuse existing test case
+        // Reuse existing test case - update visibleToGroups and branchingQuestion
+        await TestCase.findByIdAndUpdate(tc.reusedId, { visibleToGroups, branchingQuestion });
         newTestCaseIds.push(tc.reusedId);
         keptIds.push(tc.reusedId);
       } else if (tc.title && tc.scenario) {
@@ -207,7 +733,9 @@ router.post('/flows/:id', async (req, res) => {
             description: tc.description,
             scenario: tc.scenario,
             expectedResult: tc.expectedResult,
-            points: tc.points || 1
+            points: tc.points || 1,
+            visibleToGroups,
+            branchingQuestion
           });
           newTestCaseIds.push(tc.id);
           keptIds.push(tc.id);
@@ -219,7 +747,9 @@ router.post('/flows/:id', async (req, res) => {
             scenario: tc.scenario,
             expectedResult: tc.expectedResult,
             points: tc.points || 1,
-            isActive: true
+            isActive: true,
+            visibleToGroups,
+            branchingQuestion
           });
           newTestCaseIds.push(created._id);
         }
@@ -406,20 +936,22 @@ router.post('/claims/:id/status', async (req, res) => {
 
 // Submissions / Feedback Review
 router.get('/submissions', async (req, res) => {
-  const { flow, status, user, approved } = req.query;
+  const { flow, status, user, approved, group } = req.query;
   const filter = {};
   if (flow) filter.flow = flow;
   if (status) filter.status = status;
   if (user) filter.user = user;
+  if (group) filter.userGroupAtSubmission = group;
   if (approved === 'pending') filter.pointsAwarded = false;
   if (approved === 'approved') filter.pointsAwarded = true;
 
-  const [submissions, flows, users] = await Promise.all([
-    Submission.find(filter).sort('-createdAt').populate('user testCase flow'),
+  const [submissions, flows, users, groups] = await Promise.all([
+    Submission.find(filter).sort('-createdAt').populate('user testCase flow userGroupAtSubmission reassignedFrom'),
     Flow.find(),
-    User.find({ role: 'tester' })
+    User.find({ role: 'tester' }),
+    TesterGroup.find().sort('code')
   ]);
-  res.render('admin/submissions', { submissions, flows, users, filters: { flow, status, user, approved } });
+  res.render('admin/submissions', { submissions, flows, users, groups, filters: { flow, status, user, approved, group } });
 });
 
 // Toggle individual point component
@@ -565,24 +1097,25 @@ router.get('/users/:userId/reset-flow/:flowId', async (req, res) => {
 
 // CSV Export for submissions
 router.get('/submissions/export', async (req, res) => {
-  const { flow, status, user, approved } = req.query;
+  const { flow, status, user, approved, group } = req.query;
   const filter = {};
   if (flow) filter.flow = flow;
   if (status) filter.status = status;
   if (user) filter.user = user;
+  if (group) filter.userGroupAtSubmission = group;
   if (approved === 'pending') filter.pointsAwarded = false;
   if (approved === 'approved') filter.pointsAwarded = true;
 
   const submissions = await Submission.find(filter)
     .sort('-createdAt')
-    .populate('user testCase flow');
+    .populate('user testCase flow userGroupAtSubmission reassignedFrom');
 
   // Build CSV
   const headers = [
-    'Date', 'Time', 'Username', 'Email', 'Flow', 'Test Case',
+    'Date', 'Time', 'Username', 'Email', 'Group', 'Flow', 'Test Case',
     'Status', 'Points Earned', 'Approved', 'Feedback',
     'Has Screenshot', 'Bug Points', 'Feedback Points', 'Screenshot Points',
-    'Useful Feedback', 'Admin Notes'
+    'Useful Feedback', 'Was Reassigned', 'Reassigned From', 'Reassignment Reason', 'Admin Notes'
   ];
 
   const rows = submissions.map(sub => [
@@ -590,6 +1123,7 @@ router.get('/submissions/export', async (req, res) => {
     sub.createdAt.toLocaleTimeString(),
     sub.user ? sub.user.username : 'N/A',
     sub.user ? sub.user.email : 'N/A',
+    sub.userGroupAtSubmission ? sub.userGroupAtSubmission.code : '',
     sub.flow ? sub.flow.name : 'N/A',
     sub.testCase ? sub.testCase.title : 'N/A',
     sub.status,
@@ -601,6 +1135,9 @@ router.get('/submissions/export', async (req, res) => {
     sub.feedback && (!sub.rejectedPoints || !sub.rejectedPoints.feedback) ? '1' : '0',
     sub.screenshot && (!sub.rejectedPoints || !sub.rejectedPoints.screenshot) ? '1' : '0',
     sub.isUsefulFeedback ? 'Yes' : 'No',
+    sub.wasReassigned ? 'Yes' : 'No',
+    sub.reassignedFrom ? sub.reassignedFrom.code : '',
+    sub.reassignmentReason ? sub.reassignmentReason.replace(/[\n\r,]/g, ' ') : '',
     sub.adminNotes ? sub.adminNotes.replace(/[\n\r,]/g, ' ') : ''
   ]);
 

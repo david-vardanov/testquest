@@ -18,7 +18,7 @@
       target: '#flows-section',
       title: 'Flujos de Prueba',
       content: 'Estos son tus flujos de prueba disponibles. Cada flujo contiene multiples casos de prueba que debes completar. Haz clic en un flujo para comenzar!',
-      position: 'right'
+      position: 'bottom'
     },
     {
       target: '.flow-card-example',
@@ -30,13 +30,13 @@
       target: '#rank-card',
       title: 'Tu Posicion y Puntos',
       content: 'Aqui puedes ver tu posicion actual en la clasificacion y puntos totales ganados. Completa mas pruebas y encuentra errores para subir!',
-      position: 'left'
+      position: 'bottom'
     },
     {
       target: '#leaderboard-section',
       title: 'Clasificacion y Recompensas',
       content: 'Mira como te comparas con otros testers! La columna "Recompensa" muestra que premio recibira cada posicion al final de la temporada.',
-      position: 'left'
+      position: 'top'
     },
     {
       target: '#practice-flow-card',
@@ -105,12 +105,7 @@
       targetEl = document.querySelector(step.target);
     }
 
-    if (targetEl) {
-      targetEl.classList.add('tutorial-highlight');
-      overlay.style.display = 'block';
-    } else {
-      overlay.style.display = 'block';
-    }
+    overlay.style.display = 'block';
 
     // Build tooltip content
     const isLastStep = stepIndex === tutorialSteps.length - 1;
@@ -133,11 +128,19 @@
       ${getArrowClass(step.position)}
     `;
 
-    // Position tooltip
-    positionTooltip(targetEl, step.position);
-
-    // Show tooltip
-    tooltip.style.display = 'block';
+    if (targetEl) {
+      // Scroll element into view first, then highlight and position
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        targetEl.classList.add('tutorial-highlight');
+        positionTooltip(targetEl, step.position);
+        tooltip.style.display = 'block';
+      }, 350);
+    } else {
+      // Center modal - no scrolling needed
+      positionTooltip(null, step.position);
+      tooltip.style.display = 'block';
+    }
   }
 
   /**
@@ -199,7 +202,10 @@
       tooltip.style.left = (window.innerWidth - tooltipRect.width - 10) + 'px';
     }
     if (finalRect.top < 10) {
-      tooltip.style.top = '10px';
+      tooltip.style.top = (10 + window.scrollY) + 'px';
+    }
+    if (finalRect.bottom > window.innerHeight - 10) {
+      tooltip.style.top = (window.innerHeight - tooltipRect.height - 10 + window.scrollY) + 'px';
     }
   }
 

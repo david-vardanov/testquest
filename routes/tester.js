@@ -5,12 +5,14 @@ const path = require('path');
 const { isLoggedIn } = require('../middleware/auth');
 const User = require('../models/User');
 const Flow = require('../models/Flow');
+const TestCase = require('../models/TestCase');
 const Submission = require('../models/Submission');
 const FlowProgress = require('../models/FlowProgress');
 const Reward = require('../models/Reward');
 const RewardClaim = require('../models/RewardClaim');
 const SeasonArchive = require('../models/SeasonArchive');
 const LeaderboardSettings = require('../models/LeaderboardSettings');
+const TesterGroup = require('../models/TesterGroup');
 
 // Multer config for screenshots
 const storage = multer.diskStorage({
@@ -26,8 +28,8 @@ router.use(isLoggedIn);
 // Dashboard - show available flows
 router.get('/', async (req, res) => {
   const [flows, user, progresses, allUsers, rewards, myClaims, seasonSettings] = await Promise.all([
-    Flow.find({ isActive: true }).populate('testCases').populate('prerequisiteFlows').sort('order'),
-    User.findById(req.session.user.id),
+    Flow.find({ isActive: true }).populate({ path: 'testCases', populate: { path: 'visibleToGroups' } }).populate('prerequisiteFlows').sort('order'),
+    User.findById(req.session.user.id).populate('testerGroup'),
     FlowProgress.find({ user: req.session.user.id }),
     User.find({ role: 'tester' }).sort('-points'),
     Reward.find({ isActive: true }).sort('positionFrom'),
@@ -44,11 +46,23 @@ router.get('/', async (req, res) => {
   const progressMap = {};
   progresses.forEach(p => progressMap[p.flow.toString()] = p);
 
-  // Check prerequisite flows for each flow
+  // Get user's group ID for filtering
+  const userGroupId = user.testerGroup?._id?.toString();
+
+  // Check prerequisite flows for each flow and calculate visible test cases
   const flowsWithLockStatus = flows.map(flow => {
     const flowObj = flow.toObject();
     flowObj.isLocked = false;
     flowObj.missingPrereqs = [];
+
+    // Calculate visible test cases for this user
+    const visibleTestCases = flow.testCases.filter(tc => {
+      if (!tc.visibleToGroups || tc.visibleToGroups.length === 0) return true;
+      if (!userGroupId) return false;
+      return tc.visibleToGroups.some(g => (g._id || g).toString() === userGroupId);
+    });
+    flowObj.visibleTestCasesCount = visibleTestCases.length;
+    flowObj.visibleTestCases = visibleTestCases;
 
     if (flow.prerequisiteFlows && flow.prerequisiteFlows.length > 0) {
       for (const prereq of flow.prerequisiteFlows) {
@@ -109,7 +123,10 @@ router.get('/', async (req, res) => {
 
 // Start/Continue a flow
 router.get('/flow/:id', async (req, res) => {
-  const flow = await Flow.findById(req.params.id).populate('testCases').populate('prerequisiteFlows');
+  const [flow, user] = await Promise.all([
+    Flow.findById(req.params.id).populate({ path: 'testCases', populate: { path: 'visibleToGroups' } }).populate('prerequisiteFlows'),
+    User.findById(req.session.user.id).populate('testerGroup')
+  ]);
   if (!flow) return res.redirect('/tester');
 
   // Check if user has completed all prerequisite flows
@@ -132,14 +149,37 @@ router.get('/flow/:id', async (req, res) => {
     progress = await FlowProgress.create({ user: req.session.user.id, flow: flow._id, completedTestCases: [] });
   }
 
-  // Find next incomplete test case
-  const nextTestCase = flow.testCases.find(tc => !progress.completedTestCases.includes(tc._id.toString()));
+  // Get user's group ID for filtering
+  const userGroupId = user.testerGroup?._id?.toString();
+
+  // Filter test cases by user's group visibility
+  const visibleTestCases = flow.testCases.filter(tc => {
+    // If no groups specified, visible to all
+    if (!tc.visibleToGroups || tc.visibleToGroups.length === 0) return true;
+    // If user has no group, only show test cases visible to all
+    if (!userGroupId) return false;
+    // Check if user's group is in the visibleToGroups array
+    return tc.visibleToGroups.some(g => (g._id || g).toString() === userGroupId);
+  });
+
+  // Find next incomplete test case from visible ones
+  const nextTestCase = visibleTestCases.find(tc => !progress.completedTestCases.includes(tc._id.toString()));
 
   if (!nextTestCase) {
+    // Check if flow is complete for this user (all VISIBLE test cases completed)
+    if (!progress.isCompleted && visibleTestCases.length > 0) {
+      const allVisibleCompleted = visibleTestCases.every(tc =>
+        progress.completedTestCases.includes(tc._id.toString())
+      );
+      if (allVisibleCompleted) {
+        progress.isCompleted = true;
+        await progress.save();
+      }
+    }
     return res.render('tester/flow-complete', { flow, progress });
   }
 
-  res.render('tester/test', { flow, testCase: nextTestCase, progress });
+  res.render('tester/test', { flow, testCase: nextTestCase, progress, visibleTestCasesCount: visibleTestCases.length });
 });
 
 // Submit test result
@@ -148,6 +188,12 @@ router.post('/flow/:flowId/submit/:testCaseId', upload.single('screenshot'), asy
   const { flowId, testCaseId } = req.params;
   const userId = req.session.user.id;
 
+  // Get user with group info and test case with branching question
+  const [user, testCase] = await Promise.all([
+    User.findById(userId).populate('testerGroup'),
+    TestCase.findById(testCaseId).populate('branchingQuestion.options.targetGroup')
+  ]);
+
   // Calculate potential points (not awarded yet)
   let points = 1; // base point for completing
   if (status === 'failed') points += 3; // extra for finding bugs
@@ -155,7 +201,7 @@ router.post('/flow/:flowId/submit/:testCaseId', upload.single('screenshot'), asy
   if (req.file) points += 1;
 
   // Create submission (points pending admin approval)
-  await Submission.create({
+  const submission = await Submission.create({
     user: userId,
     testCase: testCaseId,
     flow: flowId,
@@ -163,7 +209,8 @@ router.post('/flow/:flowId/submit/:testCaseId', upload.single('screenshot'), asy
     feedback,
     screenshot: req.file ? req.file.filename : null,
     pointsEarned: points,
-    pointsAwarded: false
+    pointsAwarded: false,
+    userGroupAtSubmission: user.testerGroup?._id || null
   });
 
   // Update flow progress (test case is completed, but points pending)
@@ -173,11 +220,107 @@ router.post('/flow/:flowId/submit/:testCaseId', upload.single('screenshot'), asy
     await progress.save();
   }
 
-  // Check if flow is complete (bonus also pending approval)
-  const flow = await Flow.findById(flowId);
-  if (progress.completedTestCases.length >= flow.testCases.length && !progress.isCompleted) {
+  // Check if flow is complete for this user (considering group-filtered test cases)
+  const flow = await Flow.findById(flowId).populate({ path: 'testCases', populate: { path: 'visibleToGroups' } });
+  const userGroupId = user.testerGroup?._id?.toString();
+
+  // Get visible test cases for this user
+  const visibleTestCases = flow.testCases.filter(tc => {
+    if (!tc.visibleToGroups || tc.visibleToGroups.length === 0) return true;
+    if (!userGroupId) return false;
+    return tc.visibleToGroups.some(g => (g._id || g).toString() === userGroupId);
+  });
+
+  // Check if all visible test cases are completed
+  const allVisibleCompleted = visibleTestCases.every(tc =>
+    progress.completedTestCases.includes(tc._id.toString())
+  );
+
+  if (allVisibleCompleted && !progress.isCompleted && visibleTestCases.length > 0) {
     progress.isCompleted = true;
     await progress.save();
+  }
+
+  // Check if this test case has a branching question enabled
+  if (testCase.branchingQuestion && testCase.branchingQuestion.enabled && testCase.branchingQuestion.options.length > 0) {
+    // Store submission ID in session and redirect to branching question
+    req.session.pendingBranchSubmission = submission._id.toString();
+    return res.redirect(`/tester/flow/${flowId}/branch/${testCaseId}`);
+  }
+
+  res.redirect(`/tester/flow/${flowId}`);
+});
+
+// Branching question page
+router.get('/flow/:flowId/branch/:testCaseId', async (req, res) => {
+  const { flowId, testCaseId } = req.params;
+
+  // Check if there's a pending branching submission
+  if (!req.session.pendingBranchSubmission) {
+    return res.redirect(`/tester/flow/${flowId}`);
+  }
+
+  const [flow, testCase, user] = await Promise.all([
+    Flow.findById(flowId),
+    TestCase.findById(testCaseId).populate('branchingQuestion.options.targetGroup'),
+    User.findById(req.session.user.id).populate('testerGroup')
+  ]);
+
+  if (!testCase || !testCase.branchingQuestion || !testCase.branchingQuestion.enabled) {
+    delete req.session.pendingBranchSubmission;
+    return res.redirect(`/tester/flow/${flowId}`);
+  }
+
+  res.render('tester/branching-question', { flow, testCase, user });
+});
+
+// Handle branching question answer
+router.post('/flow/:flowId/branch/:testCaseId', async (req, res) => {
+  const { flowId, testCaseId } = req.params;
+  const { optionIndex } = req.body;
+  const userId = req.session.user.id;
+
+  // Check if there's a pending branching submission
+  if (!req.session.pendingBranchSubmission) {
+    return res.redirect(`/tester/flow/${flowId}`);
+  }
+
+  const submissionId = req.session.pendingBranchSubmission;
+  delete req.session.pendingBranchSubmission;
+
+  const [testCase, user, submission] = await Promise.all([
+    TestCase.findById(testCaseId).populate('branchingQuestion.options.targetGroup'),
+    User.findById(userId).populate('testerGroup'),
+    Submission.findById(submissionId)
+  ]);
+
+  if (!testCase || !testCase.branchingQuestion || !testCase.branchingQuestion.enabled) {
+    return res.redirect(`/tester/flow/${flowId}`);
+  }
+
+  const selectedOption = testCase.branchingQuestion.options[parseInt(optionIndex)];
+  if (!selectedOption) {
+    return res.redirect(`/tester/flow/${flowId}`);
+  }
+
+  // Handle reassignment if action is 'reassign'
+  if (selectedOption.action === 'reassign' && selectedOption.targetGroup) {
+    const previousGroup = user.testerGroup?._id || null;
+    const newGroupId = selectedOption.targetGroup._id || selectedOption.targetGroup;
+
+    // Update user's group
+    await User.findByIdAndUpdate(userId, { testerGroup: newGroupId });
+
+    // Update submission with reassignment info
+    if (submission) {
+      submission.wasReassigned = true;
+      submission.reassignedFrom = previousGroup;
+      submission.reassignmentReason = selectedOption.label;
+      await submission.save();
+    }
+
+    // Update session user info
+    req.session.user.testerGroup = newGroupId;
   }
 
   res.redirect(`/tester/flow/${flowId}`);
