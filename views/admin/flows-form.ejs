@@ -294,6 +294,17 @@
                     <label class="form-label">Puntos</label>
                     <input type="number" name="testCases[<%= index %>][points]" class="form-control" value="<%= tc.points || 1 %>" min="1">
                   </div>
+                  <div class="col-md-8 d-flex align-items-end">
+                    <div class="form-check">
+                      <input type="checkbox" name="testCases[<%= index %>][isHidden]"
+                             class="form-check-input" id="hidden-<%= index %>"
+                             <%= tc.isHidden ? 'checked' : '' %>>
+                      <label class="form-check-label" for="hidden-<%= index %>">
+                        <strong>Caso oculto</strong>
+                        <small class="text-muted d-block">Solo visible si se desbloquea por fallo de otro caso</small>
+                      </label>
+                    </div>
+                  </div>
                   <% if (typeof groups !== 'undefined' && groups.length > 0) { %>
                   <div class="col-md-12 mt-2">
                     <label class="form-label">Visible para Grupos</label>
@@ -324,24 +335,29 @@
                                <%= (tc.reassignOnFail && tc.reassignOnFail.enabled) ? 'checked' : '' %>
                                onchange="toggleReassignSection(this, <%= index %>)">
                         <label class="form-check-label" for="reassign-<%= index %>">
-                          <strong>Reasignar en caso de fallo</strong>
-                          <small class="text-muted d-block">Si el tester marca como fallido, se reasigna automaticamente</small>
+                          <strong>Desbloquear caso en fallo</strong>
+                          <small class="text-muted d-block">Si el tester marca como fallido, se desbloquea otro caso de prueba</small>
                         </label>
                       </div>
                       <div class="reassign-section mt-2" id="reassignSection-<%= index %>"
                            style="<%= (tc.reassignOnFail && tc.reassignOnFail.enabled) ? '' : 'display:none;' %>">
-                        <label class="form-label small">Grupo destino</label>
-                        <select name="testCases[<%= index %>][reassignOnFail][targetGroup]" class="form-select form-select-sm">
-                          <option value="">-- Seleccionar grupo --</option>
-                          <% groups.forEach(g => {
-                            const isSelected = tc.reassignOnFail && tc.reassignOnFail.targetGroup &&
-                              (tc.reassignOnFail.targetGroup._id || tc.reassignOnFail.targetGroup).toString() === g._id.toString();
+                        <label class="form-label small">Caso de prueba a desbloquear</label>
+                        <select name="testCases[<%= index %>][reassignOnFail][targetTestCase]"
+                                class="form-select form-select-sm target-testcase-select"
+                                data-current-index="<%= index %>">
+                          <option value="">-- Seleccionar caso --</option>
+                          <% if (flow && flow.testCases) {
+                            flow.testCases.forEach((otherTc, otherIndex) => {
+                              if (otherIndex !== index) {
+                                const isSelected = tc.reassignOnFail && tc.reassignOnFail.targetTestCase &&
+                                  (tc.reassignOnFail.targetTestCase._id || tc.reassignOnFail.targetTestCase).toString() === otherTc._id.toString();
                           %>
-                            <option value="<%= g._id %>" <%= isSelected ? 'selected' : '' %>>
-                              [<%= g.code %>] <%= g.name %>
+                            <option value="<%= otherTc._id %>" <%= isSelected ? 'selected' : '' %>>
+                              <%= otherTc.title %>
                             </option>
-                          <% }) %>
+                          <% }}) } %>
                         </select>
+                        <small class="text-muted">El usuario tendra acceso a este caso si falla</small>
                       </div>
                     </div>
                   </div>
@@ -459,6 +475,16 @@
           <label class="form-label">Puntos</label>
           <input type="number" name="testCases[INDEX][points]" class="form-control" value="1" min="1" onchange="updateSummary()">
         </div>
+        <div class="col-md-8 d-flex align-items-end">
+          <div class="form-check">
+            <input type="checkbox" name="testCases[INDEX][isHidden]"
+                   class="form-check-input" id="hidden-INDEX">
+            <label class="form-check-label" for="hidden-INDEX">
+              <strong>Caso oculto</strong>
+              <small class="text-muted d-block">Solo visible si se desbloquea por fallo de otro caso</small>
+            </label>
+          </div>
+        </div>
         <% if (typeof groups !== 'undefined' && groups.length > 0) { %>
         <div class="col-md-12 mt-2">
           <label class="form-label">Visible para Grupos</label>
@@ -485,18 +511,18 @@
                      class="form-check-input reassign-toggle-new" id="reassign-INDEX"
                      onchange="toggleReassignSectionNew(this)">
               <label class="form-check-label" for="reassign-INDEX">
-                <strong>Reasignar en caso de fallo</strong>
-                <small class="text-muted d-block">Si el tester marca como fallido, se reasigna automaticamente</small>
+                <strong>Desbloquear caso en fallo</strong>
+                <small class="text-muted d-block">Si el tester marca como fallido, se desbloquea otro caso de prueba</small>
               </label>
             </div>
             <div class="reassign-section-new mt-2" style="display:none;">
-              <label class="form-label small">Grupo destino</label>
-              <select name="testCases[INDEX][reassignOnFail][targetGroup]" class="form-select form-select-sm">
-                <option value="">-- Seleccionar grupo --</option>
-                <% groups.forEach(g => { %>
-                  <option value="<%= g._id %>">[<%= g.code %>] <%= g.name %></option>
-                <% }) %>
+              <label class="form-label small">Caso de prueba a desbloquear</label>
+              <select name="testCases[INDEX][reassignOnFail][targetTestCase]"
+                      class="form-select form-select-sm target-testcase-select"
+                      data-current-index="INDEX">
+                <option value="">-- Seleccionar caso --</option>
               </select>
+              <small class="text-muted">El usuario tendra acceso a este caso si falla</small>
             </div>
           </div>
         </div>
@@ -529,6 +555,16 @@
       <input type="hidden" name="testCases[INDEX][scenario]" value="">
       <input type="hidden" name="testCases[INDEX][expectedResult]" value="">
       <input type="hidden" name="testCases[INDEX][points]" value="1">
+      <div class="mb-3">
+        <div class="form-check">
+          <input type="checkbox" name="testCases[INDEX][isHidden]"
+                 class="form-check-input" id="hidden-reused-INDEX">
+          <label class="form-check-label" for="hidden-reused-INDEX">
+            <strong>Caso oculto</strong>
+            <small class="text-muted d-block">Solo visible si se desbloquea por fallo de otro caso</small>
+          </label>
+        </div>
+      </div>
       <div class="mb-2"><strong>Objetivo:</strong> <span class="reused-description"></span></div>
       <div class="mb-2"><strong>Pasos:</strong></div>
       <pre class="bg-light p-2 rounded reused-scenario" style="white-space: pre-wrap; font-size: 0.85rem;"></pre>
@@ -641,6 +677,7 @@ function addNewTestCase() {
   testCaseIndex++;
   updateCaseNumbers();
   updateSummary();
+  updateTargetTestCaseDropdowns();
   document.getElementById('emptyState').style.display = 'none';
 }
 
@@ -692,6 +729,7 @@ function addSelectedCase() {
   testCaseIndex++;
   updateCaseNumbers();
   updateSummary();
+  updateTargetTestCaseDropdowns();
   document.getElementById('emptyState').style.display = 'none';
 
   bootstrap.Modal.getInstance(document.getElementById('reuseCaseModal')).hide();
@@ -709,6 +747,7 @@ function removeTestCase(btn) {
   btn.closest('.test-case-card').remove();
   updateCaseNumbers();
   updateSummary();
+  updateTargetTestCaseDropdowns();
   if (document.querySelectorAll('.test-case-card').length === 0) {
     document.getElementById('emptyState').style.display = '';
   }
@@ -722,6 +761,7 @@ function updateCardTitle(input) {
   const card = input.closest('.test-case-card');
   const titleEl = card.querySelector('.case-title');
   titleEl.textContent = input.value || 'Nuevo Caso de Prueba';
+  updateTargetTestCaseDropdowns();
 }
 
 function updateCaseNumbers() {
@@ -731,9 +771,15 @@ function updateCaseNumbers() {
     card.querySelectorAll('[name^="testCases["]').forEach(el => {
       el.name = el.name.replace(/testCases\[\d+\]/, `testCases[${idx}]`);
     });
+    // Update data-current-index on target test case dropdowns
+    const dropdown = card.querySelector('.target-testcase-select');
+    if (dropdown) {
+      dropdown.dataset.currentIndex = idx;
+    }
   });
   testCaseIndex = cards.length;
   document.getElementById('caseCount').textContent = cards.length + ' caso' + (cards.length !== 1 ? 's' : '');
+  updateTargetTestCaseDropdowns();
 }
 
 function updateSummary() {
@@ -767,7 +813,47 @@ function toggleReassignSectionNew(checkbox) {
   }
 }
 
+// Update target test case dropdowns dynamically
+function updateTargetTestCaseDropdowns() {
+  const cards = document.querySelectorAll('.test-case-card');
+  const dropdowns = document.querySelectorAll('.target-testcase-select');
+
+  // Build list of all test cases with their titles and IDs
+  const testCases = [];
+  cards.forEach((card, idx) => {
+    const titleInput = card.querySelector('.case-title-input');
+    const titleEl = card.querySelector('.case-title');
+    const idInput = card.querySelector('[name$="[id]"]');
+    const reusedIdInput = card.querySelector('[name$="[reusedId]"]');
+
+    testCases.push({
+      index: idx,
+      id: idInput ? idInput.value : (reusedIdInput ? reusedIdInput.value : null),
+      title: titleInput ? titleInput.value : (titleEl ? titleEl.textContent : `Caso ${idx + 1}`)
+    });
+  });
+
+  // Update each dropdown
+  dropdowns.forEach(dropdown => {
+    const currentIndex = parseInt(dropdown.dataset.currentIndex);
+    const currentValue = dropdown.value;
+
+    // Clear and rebuild options
+    dropdown.innerHTML = '<option value="">-- Seleccionar caso --</option>';
+    testCases.forEach((tc, idx) => {
+      if (idx !== currentIndex) {
+        const option = document.createElement('option');
+        option.value = tc.id || `temp-${idx}`;
+        option.textContent = tc.title || `Caso ${idx + 1}`;
+        if (tc.id && tc.id === currentValue) option.selected = true;
+        dropdown.appendChild(option);
+      }
+    });
+  });
+}
+
 // Initial summary update
 updateSummary();
 updateCaseNumbers();
+updateTargetTestCaseDropdowns();
 </script>

@@ -59,35 +59,12 @@
         <small class="text-muted mt-2 d-block">Sin seleccion = visible para todos</small>
       </div>
 
-      <hr>
-      <h5>Reasignar en Caso de Fallo (Opcional)</h5>
-      <div class="alert alert-info small">
-        Si el tester marca este caso como "Fallido", sera reasignado automaticamente al grupo seleccionado.
-      </div>
+      <% } %>
 
-      <div class="mb-3 form-check">
-        <input type="checkbox" name="reassignOnFail.enabled" class="form-check-input" id="reassignEnabled"
-               <%= (testCase && testCase.reassignOnFail && testCase.reassignOnFail.enabled) ? 'checked' : '' %>
-               onchange="toggleReassignSection()">
-        <label class="form-check-label" for="reassignEnabled">Reasignar en caso de fallo</label>
-      </div>
-
-      <div id="reassignSection" style="display: none;">
-        <div class="mb-3">
-          <label class="form-label">Grupo destino</label>
-          <select name="reassignOnFail.targetGroup" class="form-select">
-            <option value="">-- Seleccionar grupo --</option>
-            <% groups.forEach(g => {
-              const isSelected = testCase && testCase.reassignOnFail && testCase.reassignOnFail.targetGroup &&
-                (testCase.reassignOnFail.targetGroup._id || testCase.reassignOnFail.targetGroup).toString() === g._id.toString();
-            %>
-              <option value="<%= g._id %>" <%= isSelected ? 'selected' : '' %>>
-                [<%= g.code %>] <%= g.name %>
-              </option>
-            <% }) %>
-          </select>
-          <small class="text-muted">Cuando el tester marque como "Fallido", sera movido a este grupo.</small>
-        </div>
+      <% if (testCase && testCase.reassignOnFail && testCase.reassignOnFail.enabled) { %>
+      <div class="alert alert-info small mt-3">
+        <strong>Nota:</strong> Este caso tiene configurado "Desbloquear caso en fallo".
+        Esta configuracion se gestiona desde el formulario de flujos.
       </div>
       <% } %>
 
@@ -98,14 +75,3 @@
   </div>
 </div>
 
-<script>
-function toggleReassignSection() {
-  const enabled = document.getElementById('reassignEnabled').checked;
-  document.getElementById('reassignSection').style.display = enabled ? 'block' : 'none';
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-  toggleReassignSection();
-});
-</script>

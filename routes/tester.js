@@ -29,7 +29,7 @@ router.use(isLoggedIn);
 router.get('/', async (req, res) => {
   const [flows, user, progresses, allUsers, rewards, myClaims, seasonSettings] = await Promise.all([
     Flow.find({ isActive: true }).populate({ path: 'testCases', populate: { path: 'visibleToGroups' } }).populate('prerequisiteFlows').sort('order'),
-    User.findById(req.session.user.id).populate('testerGroup'),
+    User.findById(req.session.user.id).populate('testerGroup').populate('unlockedTestCases'),
     FlowProgress.find({ user: req.session.user.id }),
     User.find({ role: 'tester' }).sort('-points'),
     Reward.find({ isActive: true }).sort('positionFrom'),
@@ -56,7 +56,14 @@ router.get('/', async (req, res) => {
     flowObj.missingPrereqs = [];
 
     // Calculate visible test cases for this user
+    const userUnlockedIds = (user.unlockedTestCases || []).map(id => (id._id || id).toString());
     const visibleTestCases = flow.testCases.filter(tc => {
+      const tcId = tc._id.toString();
+      // Check if explicitly unlocked for this user (shows even if hidden)
+      if (userUnlockedIds.includes(tcId)) return true;
+      // Hidden cases only visible when unlocked
+      if (tc.isHidden) return false;
+      // Original group-based visibility
       if (!tc.visibleToGroups || tc.visibleToGroups.length === 0) return true;
       if (!userGroupId) return false;
       return tc.visibleToGroups.some(g => (g._id || g).toString() === userGroupId);
@@ -149,11 +156,17 @@ router.get('/flow/:id', async (req, res) => {
     progress = await FlowProgress.create({ user: req.session.user.id, flow: flow._id, completedTestCases: [] });
   }
 
-  // Get user's group ID for filtering
+  // Get user's group ID and unlocked test cases for filtering
   const userGroupId = user.testerGroup?._id?.toString();
+  const userUnlockedIds = (user.unlockedTestCases || []).map(id => (id._id || id).toString());
 
-  // Filter test cases by user's group visibility
+  // Filter test cases by user's group visibility or unlocked status
   const visibleTestCases = flow.testCases.filter(tc => {
+    const tcId = tc._id.toString();
+    // Check if explicitly unlocked for this user (shows even if hidden)
+    if (userUnlockedIds.includes(tcId)) return true;
+    // Hidden cases only visible when unlocked
+    if (tc.isHidden) return false;
     // If no groups specified, visible to all
     if (!tc.visibleToGroups || tc.visibleToGroups.length === 0) return true;
     // If user has no group, only show test cases visible to all
@@ -190,8 +203,8 @@ router.post('/flow/:flowId/submit/:testCaseId', upload.single('screenshot'), asy
 
   // Get user with group info and test case with reassignOnFail
   const [user, testCase] = await Promise.all([
-    User.findById(userId).populate('testerGroup'),
-    TestCase.findById(testCaseId).populate('reassignOnFail.targetGroup')
+    User.findById(userId).populate('testerGroup').populate('unlockedTestCases'),
+    TestCase.findById(testCaseId).populate('reassignOnFail.targetTestCase')
   ]);
 
   // Calculate potential points (not awarded yet)
@@ -213,21 +226,19 @@ router.post('/flow/:flowId/submit/:testCaseId', upload.single('screenshot'), asy
     userGroupAtSubmission: user.testerGroup?._id || null
   };
 
-  // Check if auto-reassignment on failure is enabled
-  if (status === 'failed' && testCase.reassignOnFail && testCase.reassignOnFail.enabled && testCase.reassignOnFail.targetGroup) {
-    const previousGroup = user.testerGroup?._id || null;
-    const newGroupId = testCase.reassignOnFail.targetGroup._id || testCase.reassignOnFail.targetGroup;
+  // Check if test case unlocking on failure is enabled
+  if (status === 'failed' && testCase.reassignOnFail && testCase.reassignOnFail.enabled && testCase.reassignOnFail.targetTestCase) {
+    const targetTestCaseId = testCase.reassignOnFail.targetTestCase._id || testCase.reassignOnFail.targetTestCase;
 
-    // Update user's group
-    await User.findByIdAndUpdate(userId, { testerGroup: newGroupId });
+    // Add target test case to user's unlocked list (avoid duplicates)
+    await User.findByIdAndUpdate(userId, {
+      $addToSet: { unlockedTestCases: targetTestCaseId }
+    });
 
-    // Add reassignment info to submission
+    // Add unlock info to submission
     submissionData.wasReassigned = true;
-    submissionData.reassignedFrom = previousGroup;
-    submissionData.reassignmentReason = 'Auto-reasignado por fallo en prueba';
-
-    // Update session user info
-    req.session.user.testerGroup = newGroupId;
+    submissionData.unlockedTestCase = targetTestCaseId;
+    submissionData.reassignmentReason = 'Caso de prueba desbloqueado por fallo';
   }
 
   // Create submission
@@ -240,14 +251,20 @@ router.post('/flow/:flowId/submit/:testCaseId', upload.single('screenshot'), asy
     await progress.save();
   }
 
-  // Check if flow is complete for this user (considering group-filtered test cases)
-  // Need to reload user in case group changed
-  const updatedUser = await User.findById(userId).populate('testerGroup');
+  // Check if flow is complete for this user (considering group-filtered and unlocked test cases)
+  // Need to reload user in case unlocked test cases changed
+  const updatedUser = await User.findById(userId).populate('testerGroup').populate('unlockedTestCases');
   const flow = await Flow.findById(flowId).populate({ path: 'testCases', populate: { path: 'visibleToGroups' } });
   const userGroupId = updatedUser.testerGroup?._id?.toString();
+  const userUnlockedIds = (updatedUser.unlockedTestCases || []).map(id => (id._id || id).toString());
 
-  // Get visible test cases for this user (with potentially new group)
+  // Get visible test cases for this user (including unlocked ones)
   const visibleTestCases = flow.testCases.filter(tc => {
+    const tcId = tc._id.toString();
+    // Check if explicitly unlocked for this user (shows even if hidden)
+    if (userUnlockedIds.includes(tcId)) return true;
+    // Hidden cases only visible when unlocked
+    if (tc.isHidden) return false;
     if (!tc.visibleToGroups || tc.visibleToGroups.length === 0) return true;
     if (!userGroupId) return false;
     return tc.visibleToGroups.some(g => (g._id || g).toString() === userGroupId);

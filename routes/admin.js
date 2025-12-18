@@ -197,10 +197,10 @@ router.post('/testcases', async (req, res) => {
   if (!Array.isArray(visibleToGroups)) visibleToGroups = [visibleToGroups];
   visibleToGroups = visibleToGroups.filter(g => g); // Remove empty values
 
-  // Handle reassign on fail
+  // Handle reassign on fail (unlock specific test case)
   const reassignOnFail = {
     enabled: req.body['reassignOnFail.enabled'] === 'on',
-    targetGroup: req.body['reassignOnFail.targetGroup'] || null
+    targetTestCase: req.body['reassignOnFail.targetTestCase'] || null
   };
 
   await TestCase.create({
@@ -213,17 +213,18 @@ router.post('/testcases', async (req, res) => {
 });
 
 router.get('/testcases/:id/edit', async (req, res) => {
-  const [testCase, groups, groupCounts] = await Promise.all([
-    TestCase.findById(req.params.id).populate('visibleToGroups').populate('reassignOnFail.targetGroup'),
+  const [testCase, groups, groupCounts, allTestCases] = await Promise.all([
+    TestCase.findById(req.params.id).populate('visibleToGroups').populate('reassignOnFail.targetTestCase'),
     TesterGroup.find().sort('code'),
     User.aggregate([
       { $match: { role: 'tester', testerGroup: { $ne: null } } },
       { $group: { _id: '$testerGroup', count: { $sum: 1 } } }
-    ])
+    ]),
+    TestCase.find({ _id: { $ne: req.params.id } }).select('title').sort('title')
   ]);
   const countMap = {};
   groupCounts.forEach(g => { countMap[g._id.toString()] = g.count; });
-  res.render('admin/testcases-form', { testCase, groups, groupCountMap: countMap });
+  res.render('admin/testcases-form', { testCase, groups, groupCountMap: countMap, allTestCases });
 });
 
 router.post('/testcases/:id', async (req, res) => {
@@ -233,10 +234,10 @@ router.post('/testcases/:id', async (req, res) => {
   if (!Array.isArray(visibleToGroups)) visibleToGroups = [visibleToGroups];
   visibleToGroups = visibleToGroups.filter(g => g);
 
-  // Handle reassign on fail
+  // Handle reassign on fail (unlock specific test case)
   const reassignOnFail = {
     enabled: req.body['reassignOnFail.enabled'] === 'on',
-    targetGroup: req.body['reassignOnFail.targetGroup'] || null
+    targetTestCase: req.body['reassignOnFail.targetTestCase'] || null
   };
 
   await TestCase.findByIdAndUpdate(req.params.id, {
@@ -290,17 +291,20 @@ router.post('/flows', async (req, res) => {
       if (!Array.isArray(visibleToGroups)) visibleToGroups = [visibleToGroups];
       visibleToGroups = visibleToGroups.filter(g => g);
 
-      // Parse reassignOnFail
-      let reassignOnFail = { enabled: false, targetGroup: null };
+      // Parse reassignOnFail (unlock specific test case)
+      let reassignOnFail = { enabled: false, targetTestCase: null };
       if (tc.reassignOnFail) {
         const rof = tc.reassignOnFail;
         reassignOnFail.enabled = rof.enabled === 'on' || rof.enabled === true;
-        reassignOnFail.targetGroup = rof.targetGroup || null;
+        reassignOnFail.targetTestCase = rof.targetTestCase || null;
       }
 
+      // Parse isHidden
+      const isHidden = tc.isHidden === 'on' || tc.isHidden === true;
+
       if (tc.isReused === 'true' && tc.reusedId) {
-        // Reuse existing test case - update visibleToGroups and reassignOnFail
-        await TestCase.findByIdAndUpdate(tc.reusedId, { visibleToGroups, reassignOnFail });
+        // Reuse existing test case - update visibleToGroups, reassignOnFail, and isHidden
+        await TestCase.findByIdAndUpdate(tc.reusedId, { visibleToGroups, reassignOnFail, isHidden });
         testCaseIds.push(tc.reusedId);
       } else if (tc.title && tc.scenario) {
         // Create new test case
@@ -311,6 +315,7 @@ router.post('/flows', async (req, res) => {
           expectedResult: tc.expectedResult,
           points: tc.points || 1,
           isActive: true,
+          isHidden,
           visibleToGroups,
           reassignOnFail
         });
@@ -345,14 +350,14 @@ router.get('/flows/export', async (req, res) => {
         path: 'testCases',
         populate: [
           { path: 'visibleToGroups' },
-          { path: 'reassignOnFail.targetGroup' }
+          { path: 'reassignOnFail.targetTestCase' }
         ]
       }).sort('order'),
       TesterGroup.find().sort('code')
     ]);
 
     const exportData = {
-      version: '1.2',
+      version: '1.3',
       exportDate: new Date().toISOString(),
       groups: groups.map(g => ({
         _id: g._id.toString(),
@@ -378,10 +383,11 @@ router.get('/flows/export', async (req, res) => {
           expectedResult: tc.expectedResult,
           points: tc.points || 1,
           isActive: tc.isActive,
+          isHidden: tc.isHidden || false,
           visibleToGroupCodes: (tc.visibleToGroups || []).map(g => g.code || g.toString()),
           reassignOnFail: tc.reassignOnFail && tc.reassignOnFail.enabled ? {
             enabled: true,
-            targetGroupCode: tc.reassignOnFail.targetGroup ? (tc.reassignOnFail.targetGroup.code || null) : null
+            targetTestCaseId: tc.reassignOnFail.targetTestCase ? tc.reassignOnFail.targetTestCase._id.toString() : null
           } : null
         }))
       }))
@@ -520,13 +526,12 @@ router.post('/flows/import', jsonUpload.single('jsonFile'), async (req, res) => 
           .map(code => groupCodeToId[code])
           .filter(id => id);
 
-        // Map reassignOnFail with group reference
-        let reassignOnFail = { enabled: false, targetGroup: null };
+        // reassignOnFail will be handled in second pass after all test cases created
+        let reassignOnFail = { enabled: false, targetTestCase: null };
         if (tcData.reassignOnFail && tcData.reassignOnFail.enabled) {
-          reassignOnFail = {
-            enabled: true,
-            targetGroup: tcData.reassignOnFail.targetGroupCode ? groupCodeToId[tcData.reassignOnFail.targetGroupCode] : null
-          };
+          reassignOnFail.enabled = true;
+          // Store original target ID for second pass mapping
+          reassignOnFail._pendingTargetId = tcData.reassignOnFail.targetTestCaseId || null;
         }
 
         if (testCase) {
@@ -537,6 +542,7 @@ router.post('/flows/import', jsonUpload.single('jsonFile'), async (req, res) => 
           testCase.expectedResult = tcData.expectedResult;
           testCase.points = tcData.points;
           testCase.isActive = tcData.isActive;
+          testCase.isHidden = tcData.isHidden || false;
           testCase.visibleToGroups = visibleToGroups;
           testCase.reassignOnFail = reassignOnFail;
           await testCase.save();
@@ -550,10 +556,16 @@ router.post('/flows/import', jsonUpload.single('jsonFile'), async (req, res) => 
             expectedResult: tcData.expectedResult,
             points: tcData.points || 1,
             isActive: tcData.isActive !== false,
+            isHidden: tcData.isHidden || false,
             visibleToGroups,
             reassignOnFail
           });
           createdTestCases++;
+        }
+
+        // Map old ID to new ID for reassignOnFail second pass
+        if (tcData._id) {
+          flowIdMap['tc_' + tcData._id] = testCase._id;
         }
         testCaseIds.push(testCase._id);
       }
@@ -586,6 +598,27 @@ router.post('/flows/import', jsonUpload.single('jsonFile'), async (req, res) => 
       }
     }
 
+    // Third pass: resolve reassignOnFail.targetTestCase references
+    for (const flowData of importData.flows) {
+      for (const tcData of flowData.testCases || []) {
+        if (tcData.reassignOnFail && tcData.reassignOnFail.enabled && tcData.reassignOnFail.targetTestCaseId) {
+          const testCaseId = flowIdMap['tc_' + tcData._id] || tcData._id;
+          const targetTestCaseId = flowIdMap['tc_' + tcData.reassignOnFail.targetTestCaseId] || tcData.reassignOnFail.targetTestCaseId;
+
+          if (testCaseId && targetTestCaseId) {
+            try {
+              await TestCase.findByIdAndUpdate(testCaseId, {
+                'reassignOnFail.targetTestCase': targetTestCaseId,
+                $unset: { 'reassignOnFail._pendingTargetId': 1 }
+              });
+            } catch (e) {
+              // Silently continue if mapping fails
+            }
+          }
+        }
+      }
+    }
+
     let message = `Importacion completada: ${updatedFlows} flujos actualizados, ${createdFlows} creados. ${updatedTestCases} casos actualizados, ${createdTestCases} creados.`;
     if (updatedGroups > 0 || createdGroups > 0) {
       message += ` ${updatedGroups} grupos actualizados, ${createdGroups} creados.`;
@@ -603,7 +636,7 @@ router.get('/flows/:id/edit', async (req, res) => {
       path: 'testCases',
       populate: [
         { path: 'visibleToGroups' },
-        { path: 'reassignOnFail.targetGroup' }
+        { path: 'reassignOnFail.targetTestCase' }
       ]
     }).populate('prerequisiteFlows'),
     TestCase.find({ isActive: true }).sort('-createdAt'),
@@ -633,17 +666,20 @@ router.post('/flows/:id', async (req, res) => {
       if (!Array.isArray(visibleToGroups)) visibleToGroups = [visibleToGroups];
       visibleToGroups = visibleToGroups.filter(g => g);
 
-      // Parse reassignOnFail for this test case
-      let reassignOnFail = { enabled: false, targetGroup: null };
+      // Parse reassignOnFail for this test case (unlock specific test case)
+      let reassignOnFail = { enabled: false, targetTestCase: null };
       if (tc.reassignOnFail) {
         const rof = tc.reassignOnFail;
         reassignOnFail.enabled = rof.enabled === 'on' || rof.enabled === true;
-        reassignOnFail.targetGroup = rof.targetGroup || null;
+        reassignOnFail.targetTestCase = rof.targetTestCase || null;
       }
 
+      // Parse isHidden
+      const isHidden = tc.isHidden === 'on' || tc.isHidden === true;
+
       if (tc.isReused === 'true' && tc.reusedId) {
-        // Reuse existing test case - update visibleToGroups and reassignOnFail
-        await TestCase.findByIdAndUpdate(tc.reusedId, { visibleToGroups, reassignOnFail });
+        // Reuse existing test case - update visibleToGroups, reassignOnFail, and isHidden
+        await TestCase.findByIdAndUpdate(tc.reusedId, { visibleToGroups, reassignOnFail, isHidden });
         newTestCaseIds.push(tc.reusedId);
         keptIds.push(tc.reusedId);
       } else if (tc.title && tc.scenario) {
@@ -655,6 +691,7 @@ router.post('/flows/:id', async (req, res) => {
             scenario: tc.scenario,
             expectedResult: tc.expectedResult,
             points: tc.points || 1,
+            isHidden,
             visibleToGroups,
             reassignOnFail
           });
@@ -669,6 +706,7 @@ router.post('/flows/:id', async (req, res) => {
             expectedResult: tc.expectedResult,
             points: tc.points || 1,
             isActive: true,
+            isHidden,
             visibleToGroups,
             reassignOnFail
           });

@@ -7,12 +7,14 @@ const testCaseSchema = new mongoose.Schema({
   expectedResult: { type: String, required: true },
   points: { type: Number, default: 1 },
   isActive: { type: Boolean, default: true },
+  // Hidden cases only appear when unlocked via reassignOnFail
+  isHidden: { type: Boolean, default: false },
   // Group visibility - empty array means visible to ALL groups
   visibleToGroups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'TesterGroup' }],
-  // Auto-reassign user to another group when they fail this test case
+  // Unlock a specific test case for the user when they fail this test case
   reassignOnFail: {
     enabled: { type: Boolean, default: false },
-    targetGroup: { type: mongoose.Schema.Types.ObjectId, ref: 'TesterGroup' }
+    targetTestCase: { type: mongoose.Schema.Types.ObjectId, ref: 'TestCase' }
   }
 }, { timestamps: true });
 
