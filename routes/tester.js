@@ -188,10 +188,10 @@ router.post('/flow/:flowId/submit/:testCaseId', upload.single('screenshot'), asy
   const { flowId, testCaseId } = req.params;
   const userId = req.session.user.id;
 
-  // Get user with group info and test case with branching question
+  // Get user with group info and test case with reassignOnFail
   const [user, testCase] = await Promise.all([
     User.findById(userId).populate('testerGroup'),
-    TestCase.findById(testCaseId).populate('branchingQuestion.options.targetGroup')
+    TestCase.findById(testCaseId).populate('reassignOnFail.targetGroup')
   ]);
 
   // Calculate potential points (not awarded yet)
@@ -200,8 +200,8 @@ router.post('/flow/:flowId/submit/:testCaseId', upload.single('screenshot'), asy
   if (feedback && feedback.trim()) points += 1;
   if (req.file) points += 1;
 
-  // Create submission (points pending admin approval)
-  const submission = await Submission.create({
+  // Prepare submission data
+  const submissionData = {
     user: userId,
     testCase: testCaseId,
     flow: flowId,
@@ -211,7 +211,27 @@ router.post('/flow/:flowId/submit/:testCaseId', upload.single('screenshot'), asy
     pointsEarned: points,
     pointsAwarded: false,
     userGroupAtSubmission: user.testerGroup?._id || null
-  });
+  };
+
+  // Check if auto-reassignment on failure is enabled
+  if (status === 'failed' && testCase.reassignOnFail && testCase.reassignOnFail.enabled && testCase.reassignOnFail.targetGroup) {
+    const previousGroup = user.testerGroup?._id || null;
+    const newGroupId = testCase.reassignOnFail.targetGroup._id || testCase.reassignOnFail.targetGroup;
+
+    // Update user's group
+    await User.findByIdAndUpdate(userId, { testerGroup: newGroupId });
+
+    // Add reassignment info to submission
+    submissionData.wasReassigned = true;
+    submissionData.reassignedFrom = previousGroup;
+    submissionData.reassignmentReason = 'Auto-reasignado por fallo en prueba';
+
+    // Update session user info
+    req.session.user.testerGroup = newGroupId;
+  }
+
+  // Create submission
+  await Submission.create(submissionData);
 
   // Update flow progress (test case is completed, but points pending)
   const progress = await FlowProgress.findOne({ user: userId, flow: flowId });
@@ -221,10 +241,12 @@ router.post('/flow/:flowId/submit/:testCaseId', upload.single('screenshot'), asy
   }
 
   // Check if flow is complete for this user (considering group-filtered test cases)
+  // Need to reload user in case group changed
+  const updatedUser = await User.findById(userId).populate('testerGroup');
   const flow = await Flow.findById(flowId).populate({ path: 'testCases', populate: { path: 'visibleToGroups' } });
-  const userGroupId = user.testerGroup?._id?.toString();
+  const userGroupId = updatedUser.testerGroup?._id?.toString();
 
-  // Get visible test cases for this user
+  // Get visible test cases for this user (with potentially new group)
   const visibleTestCases = flow.testCases.filter(tc => {
     if (!tc.visibleToGroups || tc.visibleToGroups.length === 0) return true;
     if (!userGroupId) return false;
@@ -239,88 +261,6 @@ router.post('/flow/:flowId/submit/:testCaseId', upload.single('screenshot'), asy
   if (allVisibleCompleted && !progress.isCompleted && visibleTestCases.length > 0) {
     progress.isCompleted = true;
     await progress.save();
-  }
-
-  // Check if this test case has a branching question enabled
-  if (testCase.branchingQuestion && testCase.branchingQuestion.enabled && testCase.branchingQuestion.options.length > 0) {
-    // Store submission ID in session and redirect to branching question
-    req.session.pendingBranchSubmission = submission._id.toString();
-    return res.redirect(`/tester/flow/${flowId}/branch/${testCaseId}`);
-  }
-
-  res.redirect(`/tester/flow/${flowId}`);
-});
-
-// Branching question page
-router.get('/flow/:flowId/branch/:testCaseId', async (req, res) => {
-  const { flowId, testCaseId } = req.params;
-
-  // Check if there's a pending branching submission
-  if (!req.session.pendingBranchSubmission) {
-    return res.redirect(`/tester/flow/${flowId}`);
-  }
-
-  const [flow, testCase, user] = await Promise.all([
-    Flow.findById(flowId),
-    TestCase.findById(testCaseId).populate('branchingQuestion.options.targetGroup'),
-    User.findById(req.session.user.id).populate('testerGroup')
-  ]);
-
-  if (!testCase || !testCase.branchingQuestion || !testCase.branchingQuestion.enabled) {
-    delete req.session.pendingBranchSubmission;
-    return res.redirect(`/tester/flow/${flowId}`);
-  }
-
-  res.render('tester/branching-question', { flow, testCase, user });
-});
-
-// Handle branching question answer
-router.post('/flow/:flowId/branch/:testCaseId', async (req, res) => {
-  const { flowId, testCaseId } = req.params;
-  const { optionIndex } = req.body;
-  const userId = req.session.user.id;
-
-  // Check if there's a pending branching submission
-  if (!req.session.pendingBranchSubmission) {
-    return res.redirect(`/tester/flow/${flowId}`);
-  }
-
-  const submissionId = req.session.pendingBranchSubmission;
-  delete req.session.pendingBranchSubmission;
-
-  const [testCase, user, submission] = await Promise.all([
-    TestCase.findById(testCaseId).populate('branchingQuestion.options.targetGroup'),
-    User.findById(userId).populate('testerGroup'),
-    Submission.findById(submissionId)
-  ]);
-
-  if (!testCase || !testCase.branchingQuestion || !testCase.branchingQuestion.enabled) {
-    return res.redirect(`/tester/flow/${flowId}`);
-  }
-
-  const selectedOption = testCase.branchingQuestion.options[parseInt(optionIndex)];
-  if (!selectedOption) {
-    return res.redirect(`/tester/flow/${flowId}`);
-  }
-
-  // Handle reassignment if action is 'reassign'
-  if (selectedOption.action === 'reassign' && selectedOption.targetGroup) {
-    const previousGroup = user.testerGroup?._id || null;
-    const newGroupId = selectedOption.targetGroup._id || selectedOption.targetGroup;
-
-    // Update user's group
-    await User.findByIdAndUpdate(userId, { testerGroup: newGroupId });
-
-    // Update submission with reassignment info
-    if (submission) {
-      submission.wasReassigned = true;
-      submission.reassignedFrom = previousGroup;
-      submission.reassignmentReason = selectedOption.label;
-      await submission.save();
-    }
-
-    // Update session user info
-    req.session.user.testerGroup = newGroupId;
   }
 
   res.redirect(`/tester/flow/${flowId}`);

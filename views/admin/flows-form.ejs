@@ -319,52 +319,29 @@
                   <div class="col-md-12 mt-3">
                     <div class="border rounded p-2 bg-light">
                       <div class="form-check">
-                        <input type="checkbox" name="testCases[<%= index %>][branchingQuestion][enabled]"
-                               class="form-check-input branching-toggle" id="branching-<%= index %>"
-                               <%= (tc.branchingQuestion && tc.branchingQuestion.enabled) ? 'checked' : '' %>
-                               onchange="toggleBranchingSection(this, <%= index %>)">
-                        <label class="form-check-label" for="branching-<%= index %>">
-                          <strong>Pregunta de Bifurcacion</strong>
-                          <small class="text-muted d-block">Reasignar tester a otro grupo segun resultado</small>
+                        <input type="checkbox" name="testCases[<%= index %>][reassignOnFail][enabled]"
+                               class="form-check-input" id="reassign-<%= index %>"
+                               <%= (tc.reassignOnFail && tc.reassignOnFail.enabled) ? 'checked' : '' %>
+                               onchange="toggleReassignSection(this, <%= index %>)">
+                        <label class="form-check-label" for="reassign-<%= index %>">
+                          <strong>Reasignar en caso de fallo</strong>
+                          <small class="text-muted d-block">Si el tester marca como fallido, se reasigna automaticamente</small>
                         </label>
                       </div>
-                      <div class="branching-section mt-2" id="branchingSection-<%= index %>"
-                           style="<%= (tc.branchingQuestion && tc.branchingQuestion.enabled) ? '' : 'display:none;' %>">
-                        <input type="text" name="testCases[<%= index %>][branchingQuestion][question]"
-                               class="form-control form-control-sm mb-2"
-                               value="<%= (tc.branchingQuestion && tc.branchingQuestion.question) || '' %>"
-                               placeholder="Pregunta: Que sucedio realmente?">
-                        <div class="branching-options" data-index="<%= index %>">
-                          <%
-                            const tcOptions = (tc.branchingQuestion && tc.branchingQuestion.options) || [];
-                            const showOptions = tcOptions.length > 0 ? tcOptions : [{label: '', action: 'continue', targetGroup: null}];
+                      <div class="reassign-section mt-2" id="reassignSection-<%= index %>"
+                           style="<%= (tc.reassignOnFail && tc.reassignOnFail.enabled) ? '' : 'display:none;' %>">
+                        <label class="form-label small">Grupo destino</label>
+                        <select name="testCases[<%= index %>][reassignOnFail][targetGroup]" class="form-select form-select-sm">
+                          <option value="">-- Seleccionar grupo --</option>
+                          <% groups.forEach(g => {
+                            const isSelected = tc.reassignOnFail && tc.reassignOnFail.targetGroup &&
+                              (tc.reassignOnFail.targetGroup._id || tc.reassignOnFail.targetGroup).toString() === g._id.toString();
                           %>
-                          <% showOptions.forEach((opt, optIdx) => { %>
-                            <div class="branching-option-row d-flex gap-2 mb-1 align-items-center">
-                              <input type="text" name="testCases[<%= index %>][branchingQuestion][options][<%= optIdx %>][label]"
-                                     class="form-control form-control-sm" style="flex:2;"
-                                     value="<%= opt.label || '' %>" placeholder="Opcion">
-                              <select name="testCases[<%= index %>][branchingQuestion][options][<%= optIdx %>][action]"
-                                      class="form-select form-select-sm" style="flex:1;"
-                                      onchange="toggleTargetGroupInFlow(this)">
-                                <option value="continue" <%= opt.action === 'continue' ? 'selected' : '' %>>Continuar</option>
-                                <option value="reassign" <%= opt.action === 'reassign' ? 'selected' : '' %>>Reasignar</option>
-                              </select>
-                              <select name="testCases[<%= index %>][branchingQuestion][options][<%= optIdx %>][targetGroup]"
-                                      class="form-select form-select-sm target-group-select" style="flex:1; <%= opt.action !== 'reassign' ? 'display:none;' : '' %>">
-                                <option value="">Grupo...</option>
-                                <% groups.forEach(g => { %>
-                                  <option value="<%= g._id %>" <%= (opt.targetGroup && (opt.targetGroup._id || opt.targetGroup).toString() === g._id.toString()) ? 'selected' : '' %>>
-                                    <%= g.code %>
-                                  </option>
-                                <% }) %>
-                              </select>
-                              <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.branching-option-row').remove()">x</button>
-                            </div>
+                            <option value="<%= g._id %>" <%= isSelected ? 'selected' : '' %>>
+                              [<%= g.code %>] <%= g.name %>
+                            </option>
                           <% }) %>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
-                                onclick="addBranchingOptionInFlow(this, <%= index %>)">+ Opcion</button>
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -504,39 +481,22 @@
         <div class="col-md-12 mt-3">
           <div class="border rounded p-2 bg-light">
             <div class="form-check">
-              <input type="checkbox" name="testCases[INDEX][branchingQuestion][enabled]"
-                     class="form-check-input branching-toggle-new" id="branching-INDEX"
-                     onchange="toggleBranchingSectionNew(this)">
-              <label class="form-check-label" for="branching-INDEX">
-                <strong>Pregunta de Bifurcacion</strong>
-                <small class="text-muted d-block">Reasignar tester a otro grupo segun resultado</small>
+              <input type="checkbox" name="testCases[INDEX][reassignOnFail][enabled]"
+                     class="form-check-input reassign-toggle-new" id="reassign-INDEX"
+                     onchange="toggleReassignSectionNew(this)">
+              <label class="form-check-label" for="reassign-INDEX">
+                <strong>Reasignar en caso de fallo</strong>
+                <small class="text-muted d-block">Si el tester marca como fallido, se reasigna automaticamente</small>
               </label>
             </div>
-            <div class="branching-section-new mt-2" style="display:none;">
-              <input type="text" name="testCases[INDEX][branchingQuestion][question]"
-                     class="form-control form-control-sm mb-2"
-                     placeholder="Pregunta: Que sucedio realmente?">
-              <div class="branching-options-new">
-                <div class="branching-option-row d-flex gap-2 mb-1 align-items-center">
-                  <input type="text" name="testCases[INDEX][branchingQuestion][options][0][label]"
-                         class="form-control form-control-sm" style="flex:2;" placeholder="Opcion">
-                  <select name="testCases[INDEX][branchingQuestion][options][0][action]"
-                          class="form-select form-select-sm" style="flex:1;" onchange="toggleTargetGroupInFlow(this)">
-                    <option value="continue">Continuar</option>
-                    <option value="reassign">Reasignar</option>
-                  </select>
-                  <select name="testCases[INDEX][branchingQuestion][options][0][targetGroup]"
-                          class="form-select form-select-sm target-group-select" style="flex:1; display:none;">
-                    <option value="">Grupo...</option>
-                    <% groups.forEach(g => { %>
-                      <option value="<%= g._id %>"><%= g.code %></option>
-                    <% }) %>
-                  </select>
-                  <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.branching-option-row').remove()">x</button>
-                </div>
-              </div>
-              <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
-                      onclick="addBranchingOptionNew(this)">+ Opcion</button>
+            <div class="reassign-section-new mt-2" style="display:none;">
+              <label class="form-label small">Grupo destino</label>
+              <select name="testCases[INDEX][reassignOnFail][targetGroup]" class="form-select form-select-sm">
+                <option value="">-- Seleccionar grupo --</option>
+                <% groups.forEach(g => { %>
+                  <option value="<%= g._id %>">[<%= g.code %>] <%= g.name %></option>
+                <% }) %>
+              </select>
             </div>
           </div>
         </div>
@@ -792,78 +752,19 @@ document.querySelector('[name="completionBonus"]')?.addEventListener('input', fu
   document.getElementById('summaryBonus').textContent = this.value;
 });
 
-// Branching question functions
-function toggleBranchingSection(checkbox, index) {
-  const section = document.getElementById('branchingSection-' + index);
+// Reassign on fail functions
+function toggleReassignSection(checkbox, index) {
+  const section = document.getElementById('reassignSection-' + index);
   if (section) {
     section.style.display = checkbox.checked ? '' : 'none';
   }
 }
 
-function toggleBranchingSectionNew(checkbox) {
-  const section = checkbox.closest('.border').querySelector('.branching-section-new');
+function toggleReassignSectionNew(checkbox) {
+  const section = checkbox.closest('.border').querySelector('.reassign-section-new');
   if (section) {
     section.style.display = checkbox.checked ? '' : 'none';
   }
-}
-
-function toggleTargetGroupInFlow(select) {
-  const targetSelect = select.closest('.branching-option-row').querySelector('.target-group-select');
-  if (targetSelect) {
-    targetSelect.style.display = select.value === 'reassign' ? '' : 'none';
-  }
-}
-
-function addBranchingOptionInFlow(btn, tcIndex) {
-  const container = btn.previousElementSibling;
-  const optionCount = container.querySelectorAll('.branching-option-row').length;
-  const groupOptions = `<% if (typeof groups !== 'undefined') { groups.forEach(g => { %><option value="<%= g._id %>"><%= g.code %></option><% }) } %>`;
-
-  const row = document.createElement('div');
-  row.className = 'branching-option-row d-flex gap-2 mb-1 align-items-center';
-  row.innerHTML = `
-    <input type="text" name="testCases[${tcIndex}][branchingQuestion][options][${optionCount}][label]"
-           class="form-control form-control-sm" style="flex:2;" placeholder="Opcion">
-    <select name="testCases[${tcIndex}][branchingQuestion][options][${optionCount}][action]"
-            class="form-select form-select-sm" style="flex:1;" onchange="toggleTargetGroupInFlow(this)">
-      <option value="continue">Continuar</option>
-      <option value="reassign">Reasignar</option>
-    </select>
-    <select name="testCases[${tcIndex}][branchingQuestion][options][${optionCount}][targetGroup]"
-            class="form-select form-select-sm target-group-select" style="flex:1; display:none;">
-      <option value="">Grupo...</option>
-      ${groupOptions}
-    </select>
-    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.branching-option-row').remove()">x</button>
-  `;
-  container.appendChild(row);
-}
-
-function addBranchingOptionNew(btn) {
-  const container = btn.previousElementSibling;
-  const card = btn.closest('.test-case-card');
-  const tcIndex = Array.from(document.querySelectorAll('.test-case-card')).indexOf(card);
-  const optionCount = container.querySelectorAll('.branching-option-row').length;
-  const groupOptions = `<% if (typeof groups !== 'undefined') { groups.forEach(g => { %><option value="<%= g._id %>"><%= g.code %></option><% }) } %>`;
-
-  const row = document.createElement('div');
-  row.className = 'branching-option-row d-flex gap-2 mb-1 align-items-center';
-  row.innerHTML = `
-    <input type="text" name="testCases[${tcIndex}][branchingQuestion][options][${optionCount}][label]"
-           class="form-control form-control-sm" style="flex:2;" placeholder="Opcion">
-    <select name="testCases[${tcIndex}][branchingQuestion][options][${optionCount}][action]"
-            class="form-select form-select-sm" style="flex:1;" onchange="toggleTargetGroupInFlow(this)">
-      <option value="continue">Continuar</option>
-      <option value="reassign">Reasignar</option>
-    </select>
-    <select name="testCases[${tcIndex}][branchingQuestion][options][${optionCount}][targetGroup]"
-            class="form-select form-select-sm target-group-select" style="flex:1; display:none;">
-      <option value="">Grupo...</option>
-      ${groupOptions}
-    </select>
-    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.branching-option-row').remove()">x</button>
-  `;
-  container.appendChild(row);
 }
 
 // Initial summary update

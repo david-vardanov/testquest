@@ -197,46 +197,24 @@ router.post('/testcases', async (req, res) => {
   if (!Array.isArray(visibleToGroups)) visibleToGroups = [visibleToGroups];
   visibleToGroups = visibleToGroups.filter(g => g); // Remove empty values
 
-  // Handle branching question
-  const branchingQuestion = {
-    enabled: req.body['branchingQuestion.enabled'] === 'on',
-    question: req.body['branchingQuestion.question'] || '',
-    options: []
+  // Handle reassign on fail
+  const reassignOnFail = {
+    enabled: req.body['reassignOnFail.enabled'] === 'on',
+    targetGroup: req.body['reassignOnFail.targetGroup'] || null
   };
-
-  // Parse branching options
-  if (req.body['branchingQuestion.options']) {
-    const optionLabels = req.body['branchingQuestion.options.label'] || [];
-    const optionActions = req.body['branchingQuestion.options.action'] || [];
-    const optionTargets = req.body['branchingQuestion.options.targetGroup'] || [];
-
-    const labels = Array.isArray(optionLabels) ? optionLabels : [optionLabels];
-    const actions = Array.isArray(optionActions) ? optionActions : [optionActions];
-    const targets = Array.isArray(optionTargets) ? optionTargets : [optionTargets];
-
-    for (let i = 0; i < labels.length; i++) {
-      if (labels[i]) {
-        branchingQuestion.options.push({
-          label: labels[i],
-          action: actions[i] || 'continue',
-          targetGroup: (actions[i] === 'reassign' && targets[i]) ? targets[i] : null
-        });
-      }
-    }
-  }
 
   await TestCase.create({
     title, description, scenario, expectedResult, points,
     isActive: isActive === 'on',
     visibleToGroups,
-    branchingQuestion
+    reassignOnFail
   });
   res.redirect('/admin/testcases');
 });
 
 router.get('/testcases/:id/edit', async (req, res) => {
   const [testCase, groups, groupCounts] = await Promise.all([
-    TestCase.findById(req.params.id).populate('visibleToGroups').populate('branchingQuestion.options.targetGroup'),
+    TestCase.findById(req.params.id).populate('visibleToGroups').populate('reassignOnFail.targetGroup'),
     TesterGroup.find().sort('code'),
     User.aggregate([
       { $match: { role: 'tester', testerGroup: { $ne: null } } },
@@ -255,37 +233,17 @@ router.post('/testcases/:id', async (req, res) => {
   if (!Array.isArray(visibleToGroups)) visibleToGroups = [visibleToGroups];
   visibleToGroups = visibleToGroups.filter(g => g);
 
-  // Handle branching question
-  const branchingQuestion = {
-    enabled: req.body['branchingQuestion.enabled'] === 'on',
-    question: req.body['branchingQuestion.question'] || '',
-    options: []
+  // Handle reassign on fail
+  const reassignOnFail = {
+    enabled: req.body['reassignOnFail.enabled'] === 'on',
+    targetGroup: req.body['reassignOnFail.targetGroup'] || null
   };
-
-  // Parse branching options
-  const optionLabels = req.body['branchingQuestion.options.label'] || [];
-  const optionActions = req.body['branchingQuestion.options.action'] || [];
-  const optionTargets = req.body['branchingQuestion.options.targetGroup'] || [];
-
-  const labels = Array.isArray(optionLabels) ? optionLabels : [optionLabels];
-  const actions = Array.isArray(optionActions) ? optionActions : [optionActions];
-  const targets = Array.isArray(optionTargets) ? optionTargets : [optionTargets];
-
-  for (let i = 0; i < labels.length; i++) {
-    if (labels[i]) {
-      branchingQuestion.options.push({
-        label: labels[i],
-        action: actions[i] || 'continue',
-        targetGroup: (actions[i] === 'reassign' && targets[i]) ? targets[i] : null
-      });
-    }
-  }
 
   await TestCase.findByIdAndUpdate(req.params.id, {
     title, description, scenario, expectedResult, points,
     isActive: isActive === 'on',
     visibleToGroups,
-    branchingQuestion
+    reassignOnFail
   });
   res.redirect('/admin/testcases');
 });
@@ -332,30 +290,17 @@ router.post('/flows', async (req, res) => {
       if (!Array.isArray(visibleToGroups)) visibleToGroups = [visibleToGroups];
       visibleToGroups = visibleToGroups.filter(g => g);
 
-      // Parse branchingQuestion
-      let branchingQuestion = { enabled: false, question: '', options: [] };
-      if (tc.branchingQuestion) {
-        const bq = tc.branchingQuestion;
-        branchingQuestion.enabled = bq.enabled === 'on' || bq.enabled === true;
-        branchingQuestion.question = bq.question || '';
-        if (bq.options && typeof bq.options === 'object') {
-          const optKeys = Object.keys(bq.options).sort((a, b) => parseInt(a) - parseInt(b));
-          for (const key of optKeys) {
-            const opt = bq.options[key];
-            if (opt && opt.label) {
-              branchingQuestion.options.push({
-                label: opt.label,
-                action: opt.action || 'continue',
-                targetGroup: (opt.action === 'reassign' && opt.targetGroup) ? opt.targetGroup : null
-              });
-            }
-          }
-        }
+      // Parse reassignOnFail
+      let reassignOnFail = { enabled: false, targetGroup: null };
+      if (tc.reassignOnFail) {
+        const rof = tc.reassignOnFail;
+        reassignOnFail.enabled = rof.enabled === 'on' || rof.enabled === true;
+        reassignOnFail.targetGroup = rof.targetGroup || null;
       }
 
       if (tc.isReused === 'true' && tc.reusedId) {
-        // Reuse existing test case - update visibleToGroups and branchingQuestion
-        await TestCase.findByIdAndUpdate(tc.reusedId, { visibleToGroups, branchingQuestion });
+        // Reuse existing test case - update visibleToGroups and reassignOnFail
+        await TestCase.findByIdAndUpdate(tc.reusedId, { visibleToGroups, reassignOnFail });
         testCaseIds.push(tc.reusedId);
       } else if (tc.title && tc.scenario) {
         // Create new test case
@@ -367,7 +312,7 @@ router.post('/flows', async (req, res) => {
           points: tc.points || 1,
           isActive: true,
           visibleToGroups,
-          branchingQuestion
+          reassignOnFail
         });
         testCaseIds.push(created._id);
       }
@@ -400,14 +345,14 @@ router.get('/flows/export', async (req, res) => {
         path: 'testCases',
         populate: [
           { path: 'visibleToGroups' },
-          { path: 'branchingQuestion.options.targetGroup' }
+          { path: 'reassignOnFail.targetGroup' }
         ]
       }).sort('order'),
       TesterGroup.find().sort('code')
     ]);
 
     const exportData = {
-      version: '1.1',
+      version: '1.2',
       exportDate: new Date().toISOString(),
       groups: groups.map(g => ({
         _id: g._id.toString(),
@@ -434,14 +379,9 @@ router.get('/flows/export', async (req, res) => {
           points: tc.points || 1,
           isActive: tc.isActive,
           visibleToGroupCodes: (tc.visibleToGroups || []).map(g => g.code || g.toString()),
-          branchingQuestion: tc.branchingQuestion && tc.branchingQuestion.enabled ? {
+          reassignOnFail: tc.reassignOnFail && tc.reassignOnFail.enabled ? {
             enabled: true,
-            question: tc.branchingQuestion.question || '',
-            options: (tc.branchingQuestion.options || []).map(opt => ({
-              label: opt.label,
-              action: opt.action,
-              targetGroupCode: opt.targetGroup ? (opt.targetGroup.code || null) : null
-            }))
+            targetGroupCode: tc.reassignOnFail.targetGroup ? (tc.reassignOnFail.targetGroup.code || null) : null
           } : null
         }))
       }))
@@ -580,17 +520,12 @@ router.post('/flows/import', jsonUpload.single('jsonFile'), async (req, res) => 
           .map(code => groupCodeToId[code])
           .filter(id => id);
 
-        // Map branching question with group references
-        let branchingQuestion = { enabled: false, question: '', options: [] };
-        if (tcData.branchingQuestion && tcData.branchingQuestion.enabled) {
-          branchingQuestion = {
+        // Map reassignOnFail with group reference
+        let reassignOnFail = { enabled: false, targetGroup: null };
+        if (tcData.reassignOnFail && tcData.reassignOnFail.enabled) {
+          reassignOnFail = {
             enabled: true,
-            question: tcData.branchingQuestion.question || '',
-            options: (tcData.branchingQuestion.options || []).map(opt => ({
-              label: opt.label,
-              action: opt.action,
-              targetGroup: opt.targetGroupCode ? groupCodeToId[opt.targetGroupCode] : null
-            }))
+            targetGroup: tcData.reassignOnFail.targetGroupCode ? groupCodeToId[tcData.reassignOnFail.targetGroupCode] : null
           };
         }
 
@@ -603,7 +538,7 @@ router.post('/flows/import', jsonUpload.single('jsonFile'), async (req, res) => 
           testCase.points = tcData.points;
           testCase.isActive = tcData.isActive;
           testCase.visibleToGroups = visibleToGroups;
-          testCase.branchingQuestion = branchingQuestion;
+          testCase.reassignOnFail = reassignOnFail;
           await testCase.save();
           updatedTestCases++;
         } else {
@@ -616,7 +551,7 @@ router.post('/flows/import', jsonUpload.single('jsonFile'), async (req, res) => 
             points: tcData.points || 1,
             isActive: tcData.isActive !== false,
             visibleToGroups,
-            branchingQuestion
+            reassignOnFail
           });
           createdTestCases++;
         }
@@ -668,7 +603,7 @@ router.get('/flows/:id/edit', async (req, res) => {
       path: 'testCases',
       populate: [
         { path: 'visibleToGroups' },
-        { path: 'branchingQuestion.options.targetGroup' }
+        { path: 'reassignOnFail.targetGroup' }
       ]
     }).populate('prerequisiteFlows'),
     TestCase.find({ isActive: true }).sort('-createdAt'),
@@ -698,31 +633,17 @@ router.post('/flows/:id', async (req, res) => {
       if (!Array.isArray(visibleToGroups)) visibleToGroups = [visibleToGroups];
       visibleToGroups = visibleToGroups.filter(g => g);
 
-      // Parse branchingQuestion for this test case
-      let branchingQuestion = { enabled: false, question: '', options: [] };
-      if (tc.branchingQuestion) {
-        const bq = tc.branchingQuestion;
-        branchingQuestion.enabled = bq.enabled === 'on' || bq.enabled === true;
-        branchingQuestion.question = bq.question || '';
-        if (bq.options && typeof bq.options === 'object') {
-          // Options come as object with numeric keys: {0: {...}, 1: {...}}
-          const optKeys = Object.keys(bq.options).sort((a, b) => parseInt(a) - parseInt(b));
-          for (const key of optKeys) {
-            const opt = bq.options[key];
-            if (opt && opt.label) {
-              branchingQuestion.options.push({
-                label: opt.label,
-                action: opt.action || 'continue',
-                targetGroup: (opt.action === 'reassign' && opt.targetGroup) ? opt.targetGroup : null
-              });
-            }
-          }
-        }
+      // Parse reassignOnFail for this test case
+      let reassignOnFail = { enabled: false, targetGroup: null };
+      if (tc.reassignOnFail) {
+        const rof = tc.reassignOnFail;
+        reassignOnFail.enabled = rof.enabled === 'on' || rof.enabled === true;
+        reassignOnFail.targetGroup = rof.targetGroup || null;
       }
 
       if (tc.isReused === 'true' && tc.reusedId) {
-        // Reuse existing test case - update visibleToGroups and branchingQuestion
-        await TestCase.findByIdAndUpdate(tc.reusedId, { visibleToGroups, branchingQuestion });
+        // Reuse existing test case - update visibleToGroups and reassignOnFail
+        await TestCase.findByIdAndUpdate(tc.reusedId, { visibleToGroups, reassignOnFail });
         newTestCaseIds.push(tc.reusedId);
         keptIds.push(tc.reusedId);
       } else if (tc.title && tc.scenario) {
@@ -735,7 +656,7 @@ router.post('/flows/:id', async (req, res) => {
             expectedResult: tc.expectedResult,
             points: tc.points || 1,
             visibleToGroups,
-            branchingQuestion
+            reassignOnFail
           });
           newTestCaseIds.push(tc.id);
           keptIds.push(tc.id);
@@ -749,7 +670,7 @@ router.post('/flows/:id', async (req, res) => {
             points: tc.points || 1,
             isActive: true,
             visibleToGroups,
-            branchingQuestion
+            reassignOnFail
           });
           newTestCaseIds.push(created._id);
         }

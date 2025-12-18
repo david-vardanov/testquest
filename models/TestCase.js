@@ -9,15 +9,10 @@ const testCaseSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   // Group visibility - empty array means visible to ALL groups
   visibleToGroups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'TesterGroup' }],
-  // Optional branching question for handling path divergence
-  branchingQuestion: {
+  // Auto-reassign user to another group when they fail this test case
+  reassignOnFail: {
     enabled: { type: Boolean, default: false },
-    question: { type: String },
-    options: [{
-      label: { type: String },
-      action: { type: String, enum: ['continue', 'reassign'] },
-      targetGroup: { type: mongoose.Schema.Types.ObjectId, ref: 'TesterGroup' }
-    }]
+    targetGroup: { type: mongoose.Schema.Types.ObjectId, ref: 'TesterGroup' }
   }
 }, { timestamps: true });
 
