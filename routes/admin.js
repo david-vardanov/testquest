@@ -933,7 +933,8 @@ router.post('/submissions/:id/toggle/:component', async (req, res) => {
 
     await submission.save();
   }
-  res.redirect('/admin/submissions');
+  const queryStr = new URLSearchParams(req.query).toString();
+  res.redirect('/admin/submissions' + (queryStr ? '?' + queryStr : ''));
 });
 
 // Approve submission and award points
@@ -959,7 +960,8 @@ router.post('/submissions/:id/approve', async (req, res) => {
       }
     }
   }
-  res.redirect('/admin/submissions');
+  const queryStr = new URLSearchParams(req.query).toString();
+  res.redirect('/admin/submissions' + (queryStr ? '?' + queryStr : ''));
 });
 
 router.post('/submissions/:id/useful', async (req, res) => {
@@ -969,7 +971,8 @@ router.post('/submissions/:id/useful', async (req, res) => {
     await submission.save();
     await User.findByIdAndUpdate(submission.user._id, { $inc: { points: 1 } });
   }
-  res.redirect('/admin/submissions');
+  const queryStr = new URLSearchParams(req.query).toString();
+  res.redirect('/admin/submissions' + (queryStr ? '?' + queryStr : ''));
 });
 
 // Rerun - allow user to retake test without losing previous points
@@ -986,7 +989,8 @@ router.post('/submissions/:id/rerun', async (req, res) => {
       }
     );
   }
-  res.redirect('/admin/submissions');
+  const queryStr = new URLSearchParams(req.query).toString();
+  res.redirect('/admin/submissions' + (queryStr ? '?' + queryStr : ''));
 });
 
 // Reset - remove submission and deduct points
@@ -1026,7 +1030,8 @@ router.post('/submissions/:id/reset', async (req, res) => {
     // Delete submission
     await Submission.findByIdAndDelete(req.params.id);
   }
-  res.redirect('/admin/submissions');
+  const queryStr = new URLSearchParams(req.query).toString();
+  res.redirect('/admin/submissions' + (queryStr ? '?' + queryStr : ''));
 });
 
 // Reset entire flow for a user

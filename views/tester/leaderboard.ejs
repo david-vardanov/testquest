@@ -1,7 +1,15 @@
 <% layout('layouts/boilerplate') %>
 
+<style>
+  @media (max-width: 767.98px) {
+    .leaderboard-rank { font-size: 1.25rem; }
+    h2 { font-size: 1.5rem; margin-bottom: 1rem; }
+  }
+</style>
+
 <h2>Clasificacion</h2>
 
+<div class="table-responsive">
 <table class="table">
   <thead>
     <tr>
@@ -38,3 +46,4 @@
     <% }) %>
   </tbody>
 </table>
+</div>

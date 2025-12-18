@@ -15,30 +15,31 @@
       <div class="container">
         <a class="navbar-brand" href="/">TestQuest</a>
         <% if (currentUser) { %>
-        <div class="navbar-nav ms-auto">
-          <% if (currentUser.role === 'superadmin') { %>
-          <a class="nav-link" href="/admin">Panel de Control</a>
-          <a class="nav-link" href="/admin/users">Usuarios</a>
-          <a class="nav-link" href="/admin/groups">Grupos</a>
-          <a class="nav-link" href="/admin/testcases">Casos de Prueba</a>
-          <a class="nav-link" href="/admin/flows">Flujos</a>
-          <a class="nav-link" href="/admin/rewards">Recompensas</a>
-          <a class="nav-link" href="/admin/submissions">Envios</a>
-          <a class="nav-link" href="/admin/analytics">Estadisticas</a>
-          <a class="nav-link" href="/admin/rankings">Clasificacion</a>
-          <a class="nav-link" href="/admin/backups">Respaldos</a>
-          <% } else { %>
-          <a class="nav-link" href="/tester">Flujos</a>
-          <a class="nav-link" href="/tester/submissions">Mis Envios</a>
-          <a class="nav-link" href="/tester/leaderboard">Clasificacion</a>
-          <a class="nav-link" href="/tester/history">Historial</a>
-          <span class="nav-link text-warning"
-            >Puntos: <%= currentUser.points %></span
-          >
-          <% } %>
-          <a class="nav-link" href="/logout"
-            >Cerrar Sesion (<%= currentUser.username %>)</a
-          >
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <div class="navbar-nav ms-auto">
+            <% if (currentUser.role === 'superadmin') { %>
+            <a class="nav-link" href="/admin">Panel</a>
+            <a class="nav-link" href="/admin/users">Usuarios</a>
+            <a class="nav-link" href="/admin/groups">Grupos</a>
+            <a class="nav-link" href="/admin/testcases">Casos</a>
+            <a class="nav-link" href="/admin/flows">Flujos</a>
+            <a class="nav-link" href="/admin/rewards">Premios</a>
+            <a class="nav-link" href="/admin/submissions">Envios</a>
+            <a class="nav-link" href="/admin/analytics">Stats</a>
+            <a class="nav-link" href="/admin/rankings">Ranking</a>
+            <a class="nav-link" href="/admin/backups">Backups</a>
+            <% } else { %>
+            <a class="nav-link" href="/tester">Flujos</a>
+            <a class="nav-link" href="/tester/submissions">Envios</a>
+            <a class="nav-link" href="/tester/leaderboard">Ranking</a>
+            <a class="nav-link" href="/tester/history">Historial</a>
+            <span class="nav-link text-warning"><%= currentUser.points %> pts</span>
+            <% } %>
+            <a class="nav-link" href="/logout">Salir (<%= currentUser.username %>)</a>
+          </div>
         </div>
         <% } %>
       </div>

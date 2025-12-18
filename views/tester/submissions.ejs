@@ -1,16 +1,25 @@
 <% layout('layouts/boilerplate') %>
 
+<style>
+  @media (max-width: 767.98px) {
+    h2 { font-size: 1.5rem; margin-bottom: 1rem; }
+    .table { font-size: 0.85rem; }
+    .table th, .table td { padding: 0.5rem 0.35rem; }
+  }
+</style>
+
 <h2>Mis Envios</h2>
 
+<div class="table-responsive">
 <table class="table table-striped">
   <thead>
     <tr>
       <th>Fecha</th>
       <th>Flujo</th>
-      <th>Caso de Prueba</th>
+      <th>Caso</th>
       <th>Estado</th>
-      <th>Puntos</th>
-      <th>Aprobacion</th>
+      <th>Pts</th>
+      <th>Aprobado</th>
     </tr>
   </thead>
   <tbody>
@@ -19,19 +28,20 @@
         <td><%= sub.createdAt.toLocaleDateString() %></td>
         <td><%= sub.flow ? sub.flow.name : 'N/A' %></td>
         <td><%= sub.testCase ? sub.testCase.title : 'N/A' %></td>
-        <td class="status-<%= sub.status %>"><%= sub.status === 'passed' ? 'Aprobado' : 'Fallido' %></td>
-        <td><%= sub.pointsEarned %><%= sub.isUsefulFeedback ? ' +1' : '' %></td>
+        <td class="status-<%= sub.status %>"><%= sub.status === 'passed' ? 'OK' : 'Fallo' %></td>
+        <td><%= sub.pointsEarned %><%= sub.isUsefulFeedback ? '+1' : '' %></td>
         <td>
           <% if (sub.pointsAwarded) { %>
-            <span class="badge bg-success">Aprobado</span>
+            <span class="badge bg-success">Si</span>
           <% } else { %>
-            <span class="badge bg-warning text-dark">Pendiente</span>
+            <span class="badge bg-warning text-dark">No</span>
           <% } %>
         </td>
       </tr>
     <% }) %>
   </tbody>
 </table>
+</div>
 
 <% if (submissions.length === 0) { %>
   <div class="alert alert-info">Aun no hay envios. Comienza un flujo de prueba!</div>

@@ -277,3 +277,331 @@ body {
 .tutorial-tooltip[style*="translate"] {
   transform: translate(-50%, -50%) !important;
 }
+
+/* ===========================================
+   MOBILE RESPONSIVE STYLES
+   =========================================== */
+
+@media (max-width: 991.98px) {
+  /* Navbar mobile improvements */
+  .navbar-nav {
+    padding: 1rem 0;
+  }
+  .navbar-nav .nav-link {
+    padding: 0.75rem 0;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 767.98px) {
+  /* Base mobile typography */
+  body {
+    font-size: 1rem;
+  }
+
+  /* Container padding */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Quest Dashboard Mobile */
+  .quest-journey {
+    padding: 0.5rem 0;
+  }
+
+  .quest-path-line {
+    left: 30px;
+    width: 3px;
+  }
+
+  .quest-status {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+
+  .progress-ring {
+    width: 68px;
+    height: 68px;
+    top: -4px;
+    left: -4px;
+  }
+
+  .quest-card {
+    margin-left: 1rem;
+    padding: 1rem;
+  }
+
+  .quest-title {
+    font-size: 1rem;
+  }
+
+  .quest-description {
+    font-size: 0.8rem;
+  }
+
+  .quest-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+  }
+
+  .quest-footer {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .quest-footer .quest-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Rank card mobile */
+  .rank-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .rank-number {
+    font-size: 2rem;
+  }
+
+  /* Practice card mobile */
+  .practice-quest-card {
+    padding: 1rem;
+    flex-direction: column;
+  }
+
+  .practice-quest-card .d-flex {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .practice-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Section header mobile */
+  .quest-section-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .quest-section-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+
+  .quest-section-title {
+    font-size: 1.25rem;
+  }
+
+  /* Leaderboard table mobile */
+  .table {
+    font-size: 0.875rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.5rem 0.35rem;
+  }
+
+  /* Cards general */
+  .card {
+    border-radius: 12px;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  /* Checklist boxes (test page) */
+  .checklist-box {
+    padding: 0.75rem;
+  }
+
+  .step-checkbox {
+    padding: 0.75rem 0;
+  }
+
+  .step-checkbox label {
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  .form-check-input {
+    width: 1.25em;
+    height: 1.25em;
+  }
+
+  /* Buttons mobile - larger tap targets */
+  .btn {
+    padding: 0.625rem 1rem;
+  }
+
+  .btn-lg {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    width: 100%;
+  }
+
+  .btn-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  /* Form controls mobile */
+  .form-control,
+  .form-select {
+    font-size: 1rem;
+    padding: 0.75rem;
+  }
+
+  /* Radio/checkbox larger */
+  .form-check {
+    padding-left: 2em;
+    margin-bottom: 0.75rem;
+  }
+
+  .form-check-input[type="radio"],
+  .form-check-input[type="checkbox"] {
+    width: 1.25em;
+    height: 1.25em;
+  }
+
+  /* Alert mobile */
+  .alert {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .alert ul {
+    padding-left: 1.25rem;
+  }
+
+  /* Breadcrumb mobile */
+  .breadcrumb {
+    font-size: 0.875rem;
+    padding: 0.5rem 0;
+  }
+
+  /* Flow complete page */
+  .flow-card {
+    margin-bottom: 1rem;
+  }
+
+  /* Tutorial tooltip mobile */
+  .tutorial-tooltip {
+    max-width: calc(100vw - 2rem);
+    width: calc(100vw - 2rem);
+    left: 1rem !important;
+    right: 1rem !important;
+    transform: none !important;
+    padding: 1rem;
+  }
+
+  .tutorial-tooltip-title {
+    font-size: 1rem;
+  }
+
+  .tutorial-tooltip-content {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .tutorial-tooltip-buttons {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .tutorial-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+
+  .tutorial-btn-skip {
+    order: 2;
+  }
+
+  .tutorial-btn-next {
+    order: 1;
+  }
+
+  .tutorial-action-required {
+    font-size: 0.9rem;
+    padding: 0.75rem;
+  }
+
+  .tutorial-highlight {
+    box-shadow: 0 0 0 3px #667eea, 0 0 15px rgba(102, 126, 234, 0.4);
+  }
+
+  /* Submissions page mobile */
+  .submission-card {
+    margin-bottom: 0.75rem;
+  }
+
+  /* Tables responsive wrapper */
+  .table-responsive {
+    margin: 0 -1rem;
+    padding: 0 1rem;
+  }
+
+  /* Badge sizes */
+  .badge {
+    font-size: 0.7rem;
+    padding: 0.35em 0.6em;
+  }
+
+  /* Row reverse on mobile for sidebar-first views */
+  .row.flex-md-row-reverse {
+    flex-direction: column-reverse;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 575.98px) {
+  .quest-status {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+
+  .progress-ring {
+    width: 58px;
+    height: 58px;
+  }
+
+  .quest-path-line {
+    left: 25px;
+  }
+
+  .quest-card {
+    margin-left: 0.75rem;
+    padding: 0.875rem;
+  }
+
+  .quest-badges {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .quest-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .connector-dot {
+    left: 23px;
+  }
+
+  /* Smaller rank card */
+  .rank-number {
+    font-size: 1.75rem;
+  }
+}

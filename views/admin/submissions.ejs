@@ -1,4 +1,9 @@
-<% layout('layouts/boilerplate') %>
+<%
+  layout('layouts/boilerplate');
+  // Build filter query string for preserving filters on actions
+  const filterParams = Object.entries(filters).filter(([k,v]) => v).map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  const filterQuery = filterParams ? `?${filterParams}` : '';
+%>
 
 <style>
   .submission-card {
@@ -235,7 +240,7 @@
                 <span class="d-flex align-items-center gap-1">
                   +3
                   <% if (!sub.pointsAwarded) { %>
-                    <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/bug" class="d-inline">
+                    <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/bug<%= filterQuery %>" class="d-inline">
                       <button type="submit" class="btn btn-link btn-sm p-0 <%= sub.rejectedPoints && sub.rejectedPoints.bug ? 'text-success' : 'text-danger' %>" style="font-size: 0.7rem;">
                         <%= sub.rejectedPoints && sub.rejectedPoints.bug ? '✓' : '✕' %>
                       </button>
@@ -250,7 +255,7 @@
                 <span class="d-flex align-items-center gap-1">
                   +1
                   <% if (!sub.pointsAwarded) { %>
-                    <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/feedback" class="d-inline">
+                    <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/feedback<%= filterQuery %>" class="d-inline">
                       <button type="submit" class="btn btn-link btn-sm p-0 <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? 'text-success' : 'text-danger' %>" style="font-size: 0.7rem;">
                         <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? '✓' : '✕' %>
                       </button>
@@ -265,7 +270,7 @@
                 <span class="d-flex align-items-center gap-1">
                   +1
                   <% if (!sub.pointsAwarded) { %>
-                    <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/screenshot" class="d-inline">
+                    <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/screenshot<%= filterQuery %>" class="d-inline">
                       <button type="submit" class="btn btn-link btn-sm p-0 <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? 'text-success' : 'text-danger' %>" style="font-size: 0.7rem;">
                         <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? '✓' : '✕' %>
                       </button>
@@ -288,19 +293,19 @@
 
           <div class="action-buttons">
             <% if (!sub.pointsAwarded) { %>
-              <form method="POST" action="/admin/submissions/<%= sub._id %>/approve" class="d-inline">
+              <form method="POST" action="/admin/submissions/<%= sub._id %>/approve<%= filterQuery %>" class="d-inline">
                 <button type="submit" class="btn btn-dark btn-sm">Aprobar</button>
               </form>
             <% } %>
             <% if (sub.feedback && !sub.isUsefulFeedback && sub.pointsAwarded) { %>
-              <form method="POST" action="/admin/submissions/<%= sub._id %>/useful" class="d-inline">
+              <form method="POST" action="/admin/submissions/<%= sub._id %>/useful<%= filterQuery %>" class="d-inline">
                 <button type="submit" class="btn btn-outline-dark btn-sm">+1 Util</button>
               </form>
             <% } %>
-            <form method="POST" action="/admin/submissions/<%= sub._id %>/rerun" class="d-inline">
+            <form method="POST" action="/admin/submissions/<%= sub._id %>/rerun<%= filterQuery %>" class="d-inline">
               <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Permitir repetir?')">Repetir</button>
             </form>
-            <form method="POST" action="/admin/submissions/<%= sub._id %>/reset" class="d-inline">
+            <form method="POST" action="/admin/submissions/<%= sub._id %>/reset<%= filterQuery %>" class="d-inline">
               <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Eliminar y descontar puntos?')">Reiniciar</button>
             </form>
           </div>

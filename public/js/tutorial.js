@@ -233,6 +233,10 @@
    * Skip the tutorial
    */
   function skipTutorial() {
+    // Force remove all tutorial-related classes immediately
+    document.querySelectorAll('.tutorial-highlight').forEach(el => {
+      el.classList.remove('tutorial-highlight');
+    });
     completeTutorial();
   }
 
@@ -240,14 +244,20 @@
    * Complete the tutorial
    */
   function completeTutorial() {
-    // Remove highlight
+    // Remove highlight from all elements
     document.querySelectorAll('.tutorial-highlight').forEach(el => {
       el.classList.remove('tutorial-highlight');
     });
 
-    // Hide overlay and tooltip
-    if (overlay) overlay.style.display = 'none';
-    if (tooltip) tooltip.style.display = 'none';
+    // Remove overlay and tooltip from DOM completely
+    if (overlay) {
+      overlay.remove();
+      overlay = null;
+    }
+    if (tooltip) {
+      tooltip.remove();
+      tooltip = null;
+    }
 
     // Mark as complete in backend
     fetch('/tester/tutorial/complete', {
