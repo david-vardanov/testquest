@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   points: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
   hasCompletedTutorial: { type: Boolean, default: false },
+  hasCompletedPractice: { type: Boolean, default: false },
   testerGroup: { type: mongoose.Schema.Types.ObjectId, ref: 'TesterGroup' },
   unlockedTestCases: [{ type: mongoose.Schema.Types.ObjectId, ref: 'TestCase' }]
 }, { timestamps: true });

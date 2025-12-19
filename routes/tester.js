@@ -124,8 +124,9 @@ router.get('/', async (req, res) => {
 
   // Check if user needs tutorial
   const showTutorial = !user.hasCompletedTutorial;
+  const hasCompletedPractice = user.hasCompletedPractice || false;
 
-  res.render('tester/dashboard', { flows: flowsWithLockStatus, user, progressMap, rank, currentReward, nextReward, pointsToNext, myClaims, leaderboard, rewards, seasonSettings, showTutorial });
+  res.render('tester/dashboard', { flows: flowsWithLockStatus, user, progressMap, rank, currentReward, nextReward, pointsToNext, myClaims, leaderboard, rewards, seasonSettings, showTutorial, hasCompletedPractice });
 });
 
 // Start/Continue a flow
@@ -403,7 +404,9 @@ router.post('/practice-flow/submit', async (req, res) => {
   res.redirect('/tester/practice-flow');
 });
 
-router.get('/practice-flow/complete', (req, res) => {
+router.get('/practice-flow/complete', async (req, res) => {
+  // Mark practice as complete for user
+  await User.findByIdAndUpdate(req.session.user.id, { hasCompletedPractice: true });
   // Reset practice flow step for potential re-do
   req.session.practiceFlowStep = 0;
   res.render('tester/practice-complete');

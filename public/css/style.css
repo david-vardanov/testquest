@@ -677,3 +677,62 @@ body {
     font-size: 1.75rem;
   }
 }
+
+/* ===========================================
+   LEADERBOARD SLIDE-UP PANEL (Mobile)
+   =========================================== */
+.leaderboard-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(100%);
+  transition: transform 0.3s ease-out;
+  z-index: 1050;
+  max-height: 70vh;
+  overflow: hidden;
+}
+
+.leaderboard-panel.active {
+  transform: translateY(0);
+}
+
+.leaderboard-panel-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.leaderboard-panel-body {
+  padding: 1rem;
+  max-height: calc(70vh - 60px);
+  overflow-y: auto;
+}
+
+.leaderboard-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 1040;
+}
+
+.leaderboard-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+body.leaderboard-open {
+  overflow: hidden;
+}

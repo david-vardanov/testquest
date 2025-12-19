@@ -248,9 +248,6 @@
             : ""
         }
         <div class="tutorial-tooltip-buttons">
-          <button class="tutorial-btn tutorial-btn-skip" onclick="PracticeTutorialInstance.skip()">
-            Salir de Practica
-          </button>
           <button class="tutorial-btn tutorial-btn-next ${
             hasWaitCondition ? "disabled" : ""
           }"
