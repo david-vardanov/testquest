@@ -3,122 +3,139 @@
  * Forces users through all actions to learn the testing flow
  */
 
-(function() {
-  'use strict';
+(function () {
+  "use strict";
 
   // Practice Case 1: Teaching "Aprobado" (Passed)
   const practiceStep0Tutorial = [
     {
       target: null,
-      title: 'Bienvenido a la Practica!',
-      content: 'Te guiaremos paso a paso para que aprendas como completar una prueba. Sigue las instrucciones - no podras continuar hasta completar cada paso.',
-      position: 'center'
+      title: "Bienvenido a la Practica!",
+      content:
+        "Te guiaremos paso a paso para que aprendas como completar una prueba. Sigue las instrucciones - no podras continuar hasta completar cada paso.",
+      position: "center",
     },
     {
-      target: '.checklist-box:first-of-type',
-      title: 'Pasos del Escenario',
-      content: 'Primero, debes verificar cada paso del escenario. <strong>Marca cada casilla</strong> mientras lees y verificas cada paso.',
-      position: 'bottom',
-      waitFor: 'all-.step-check',
-      actionText: 'Marca todas las casillas de pasos'
+      target: ".checklist-box:first-of-type",
+      title: "Pasos del Escenario",
+      content:
+        "Primero, debes verificar cada paso del escenario. <strong>Marca cada casilla</strong> mientras lees y verificas cada paso.",
+      position: "bottom",
+      waitFor: "all-.step-check",
+      actionText: "Marca todas las casillas de pasos",
     },
     {
-      target: '.checklist-box:last-of-type',
-      title: 'Resultados Esperados',
-      content: 'Ahora verifica cada resultado esperado. <strong>Marca cada casilla</strong> cuando confirmes que el resultado es correcto.',
-      position: 'bottom',
-      waitFor: 'all-.expected-check',
-      actionText: 'Marca todas las casillas de resultados'
+      target: ".checklist-box:last-of-type",
+      title: "Resultados Esperados",
+      content:
+        "Ahora verifica cada resultado esperado. <strong>Marca cada casilla</strong> cuando confirmes que el resultado es correcto.",
+      position: "bottom",
+      waitFor: "all-.expected-check",
+      actionText: "Marca todas las casillas de resultados",
     },
     {
-      target: '#status-passed',
+      target: "#status-passed",
       title: 'Selecciona "Aprobado"',
-      content: 'Completaste todos los pasos y verificaste los resultados. Ahora puedes seleccionar <strong>"Aprobado"</strong> porque todo funciono correctamente.',
-      position: 'top',
-      waitFor: 'click-#status-passed',
-      disable: ['#status-failed'],
-      actionText: 'Haz clic en "Aprobado"'
+      content:
+        'Completaste todos los pasos y verificaste los resultados. Ahora puedes seleccionar <strong>"Aprobado"</strong> porque todo funciono correctamente.',
+      position: "top",
+      waitFor: "click-#status-passed",
+      disable: ["#status-failed"],
+      actionText: 'Haz clic en "Aprobado"',
     },
     {
       target: 'button[type="submit"]',
-      title: 'Enviar y Continuar',
-      content: 'Excelente! Haz clic en el boton para enviar esta prueba y continuar a la siguiente leccion.',
-      position: 'top',
-      allowSubmit: true
-    }
+      title: "Enviar y Continuar",
+      content:
+        "Excelente! Haz clic en el boton para enviar esta prueba y continuar a la siguiente leccion.",
+      position: "top",
+      allowSubmit: true,
+    },
   ];
 
   // Practice Case 2: Teaching "Fallido" (Failed) + Feedback
   const practiceStep1Tutorial = [
     {
       target: null,
-      title: 'Reportando Errores',
-      content: 'Ahora aprenderemos a reportar errores. Cuando encuentras un problema en la aplicacion, seleccionas "Fallido" y describes el error.',
-      position: 'center'
+      title: "Reportando Errores",
+      content:
+        'Ahora aprenderemos a reportar errores. Cuando encuentras un problema en la aplicacion, seleccionas "Fallido" y describes el error.',
+      position: "center",
     },
     {
-      target: '#status-failed',
+      target: "#status-failed",
       title: 'Selecciona "Fallido"',
-      content: 'Imagina que encontraste un error. Selecciona <strong>"Fallido"</strong> para indicar que la prueba no paso. Esto te otorga <strong>+3 puntos extra</strong> por encontrar errores!',
-      position: 'top',
-      waitFor: 'click-#status-failed',
-      disable: ['#status-passed'],
-      actionText: 'Haz clic en "Fallido"'
+      content:
+        'Imagina que encontraste un error. Selecciona <strong>"Fallido"</strong> para indicar que la prueba no paso. Esto te otorga <strong>+3 puntos extra</strong> por encontrar errores!',
+      position: "top",
+      waitFor: "click-#status-failed",
+      disable: ["#status-passed"],
+      actionText: 'Haz clic en "Fallido"',
     },
     {
       target: 'textarea[name="feedback"]',
-      title: 'Describe el Error',
-      content: 'Escribe una descripcion del error que "encontraste". En pruebas reales, describe claramente que paso mal y como reproducir el problema. <strong>Escribe al menos 10 caracteres.</strong>',
-      position: 'top',
+      title: "Describe el Error",
+      content:
+        'Escribe una descripcion del error que "encontraste". En pruebas reales, describe claramente que paso mal y como reproducir el problema. <strong>Escribe al menos 10 caracteres.</strong>',
+      position: "top",
       waitFor: 'input-textarea[name="feedback"]',
       minLength: 10,
-      actionText: 'Escribe una descripcion (minimo 10 caracteres)'
+      actionText: "Escribe una descripcion (minimo 10 caracteres)",
     },
     {
       target: 'button[type="submit"]',
-      title: 'Enviar Reporte',
-      content: 'Perfecto! Ahora haz clic para enviar tu reporte de error y continuar a la ultima leccion.',
-      position: 'top',
-      allowSubmit: true
-    }
+      title: "Enviar Reporte",
+      content:
+        "Perfecto! Ahora haz clic para enviar tu reporte de error y continuar a la ultima leccion.",
+      position: "top",
+      allowSubmit: true,
+    },
   ];
 
   // Practice Case 3: Teaching Screenshot + Feedback
   const practiceStep2Tutorial = [
     {
       target: null,
-      title: 'Evidencia Visual',
-      content: 'Finalmente, aprenderemos a subir capturas de pantalla como evidencia. Las capturas ayudan a los desarrolladores a ver exactamente lo que observaste.',
-      position: 'center'
+      title: "Evidencia Visual",
+      content:
+        "Finalmente, aprenderemos a subir capturas de pantalla como evidencia. Las capturas ayudan a los desarrolladores a ver exactamente lo que observaste.",
+      position: "center",
     },
     {
       target: 'input[name="screenshot"]',
-      title: 'Sube una Captura',
-      content: 'Selecciona cualquier imagen de tu computadora para practicar. En pruebas reales, tomarias una captura de pantalla de lo que observaste. <strong>Esto te da +1 punto extra!</strong>',
-      position: 'top',
+      title: "Sube una Captura",
+      content:
+        "Selecciona cualquier imagen de tu computadora para practicar. En pruebas reales, tomarias una captura de pantalla de lo que observaste. <strong>Esto te da +1 punto extra!</strong>",
+      position: "top",
       waitFor: 'file-input[name="screenshot"]',
-      actionText: 'Selecciona una imagen'
+      actionText: "Selecciona una imagen",
     },
     {
       target: 'textarea[name="feedback"]',
-      title: 'Agrega Comentarios',
-      content: 'Describe lo que muestra tu captura de pantalla. Los comentarios claros ayudan al equipo a entender el contexto. <strong>Escribe al menos 5 caracteres.</strong>',
-      position: 'top',
+      title: "Agrega Comentarios",
+      content:
+        "Describe lo que muestra tu captura de pantalla. Los comentarios claros ayudan al equipo a entender el contexto. <strong>Escribe al menos 5 caracteres.</strong>",
+      position: "top",
       waitFor: 'input-textarea[name="feedback"]',
       minLength: 5,
-      actionText: 'Escribe un comentario (minimo 5 caracteres)'
+      actionText: "Escribe un comentario (minimo 5 caracteres)",
     },
     {
       target: 'button[type="submit"]',
-      title: 'Completar Practica!',
-      content: 'Felicidades! Has aprendido todos los elementos de TestQuest. Haz clic para completar la practica y comenzar con las pruebas reales.',
-      position: 'top',
-      allowSubmit: true
-    }
+      title: "Completar Practica!",
+      content:
+        "Felicidades! Has aprendido todos los elementos de TestQuest. Haz clic para completar la practica y comenzar con las pruebas reales.",
+      position: "top",
+      allowSubmit: true,
+    },
   ];
 
   // Select tutorial based on practice step
-  const tutorialConfigs = [practiceStep0Tutorial, practiceStep1Tutorial, practiceStep2Tutorial];
+  const tutorialConfigs = [
+    practiceStep0Tutorial,
+    practiceStep1Tutorial,
+    practiceStep2Tutorial,
+  ];
 
   class PracticeTutorial {
     constructor(steps) {
@@ -139,23 +156,23 @@
     }
 
     createOverlay() {
-      this.overlay = document.createElement('div');
-      this.overlay.className = 'tutorial-overlay blocking';
-      this.overlay.id = 'practice-tutorial-overlay';
+      this.overlay = document.createElement("div");
+      // this.overlay.className = "tutorial-overlay blocking";
+      // this.overlay.id = 'practice-tutorial-overlay';
       document.body.appendChild(this.overlay);
     }
 
     createTooltip() {
-      this.tooltip = document.createElement('div');
-      this.tooltip.className = 'tutorial-tooltip';
-      this.tooltip.id = 'practice-tutorial-tooltip';
+      this.tooltip = document.createElement("div");
+      this.tooltip.className = "tutorial-tooltip";
+      this.tooltip.id = "practice-tutorial-tooltip";
       document.body.appendChild(this.tooltip);
     }
 
     blockFormSubmit() {
-      const form = document.getElementById('practice-form');
+      const form = document.getElementById("practice-form");
       if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener("submit", (e) => {
           if (!this.isComplete) {
             e.preventDefault();
             this.shakeTooltip();
@@ -165,8 +182,8 @@
     }
 
     shakeTooltip() {
-      this.tooltip.classList.add('tutorial-shake');
-      setTimeout(() => this.tooltip.classList.remove('tutorial-shake'), 500);
+      this.tooltip.classList.add("tutorial-shake");
+      setTimeout(() => this.tooltip.classList.remove("tutorial-shake"), 500);
     }
 
     showStep(index) {
@@ -177,19 +194,19 @@
       this.clearEventListeners();
 
       // Remove previous highlights
-      document.querySelectorAll('.tutorial-highlight').forEach(el => {
-        el.classList.remove('tutorial-highlight');
+      document.querySelectorAll(".tutorial-highlight").forEach((el) => {
+        el.classList.remove("tutorial-highlight");
       });
 
       // Re-enable previously disabled elements
-      this.disabledElements.forEach(el => {
+      this.disabledElements.forEach((el) => {
         el.disabled = false;
       });
       this.disabledElements = [];
 
       // Disable elements if specified
       if (step.disable) {
-        step.disable.forEach(sel => {
+        step.disable.forEach((sel) => {
           const el = document.querySelector(sel);
           if (el) {
             el.disabled = true;
@@ -205,18 +222,28 @@
       this.tooltip.innerHTML = `
         <div class="tutorial-tooltip-header">
           <span class="tutorial-tooltip-title">${step.title}</span>
-          <span class="tutorial-tooltip-step">${index + 1}/${this.steps.length}</span>
+          <span class="tutorial-tooltip-step">${index + 1}/${
+        this.steps.length
+      }</span>
         </div>
         <div class="tutorial-tooltip-content">${step.content}</div>
-        ${step.actionText ? `<div class="tutorial-action-required">→ ${step.actionText}</div>` : ''}
+        ${
+          step.actionText
+            ? `<div class="tutorial-action-required">→ ${step.actionText}</div>`
+            : ""
+        }
         <div class="tutorial-tooltip-buttons">
           <button class="tutorial-btn tutorial-btn-skip" onclick="PracticeTutorialInstance.skip()">
             Salir de Practica
           </button>
-          <button class="tutorial-btn tutorial-btn-next ${hasWaitCondition ? 'disabled' : ''}"
+          <button class="tutorial-btn tutorial-btn-next ${
+            hasWaitCondition ? "disabled" : ""
+          }"
                   id="tutorial-next-btn"
-                  onclick="PracticeTutorialInstance.${isLastStep ? 'complete' : 'next'}()">
-            ${isLastStep ? 'Finalizar!' : 'Siguiente'}
+                  onclick="PracticeTutorialInstance.${
+                    isLastStep ? "complete" : "next"
+                  }()">
+            ${isLastStep ? "Finalizar!" : "Siguiente"}
           </button>
         </div>
         ${this.getArrowHTML(step.position)}
@@ -227,15 +254,20 @@
 
       if (target) {
         // Scroll into view first
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
         setTimeout(() => {
-          target.classList.add('tutorial-highlight');
+          target.classList.add("tutorial-highlight");
+          // Make tooltip visible off-screen first to get dimensions
+          this.tooltip.style.visibility = "hidden";
+          this.tooltip.style.display = "block";
           this.positionTooltip(target, step.position);
-          this.tooltip.style.display = 'block';
+          this.tooltip.style.visibility = "visible";
         }, 350);
       } else {
-        this.positionTooltip(null, 'center');
-        this.tooltip.style.display = 'block';
+        this.tooltip.style.visibility = "hidden";
+        this.tooltip.style.display = "block";
+        this.positionTooltip(null, "center");
+        this.tooltip.style.visibility = "visible";
       }
 
       // Set up wait condition if specified
@@ -250,28 +282,27 @@
     }
 
     setupWaitCondition(waitFor, minLength) {
-      const dashIndex = waitFor.indexOf('-');
+      const dashIndex = waitFor.indexOf("-");
       const type = waitFor.substring(0, dashIndex);
       const selector = waitFor.substring(dashIndex + 1);
 
-      if (type === 'all') {
+      if (type === "all") {
         // Wait for all checkboxes to be checked
         const elements = document.querySelectorAll(selector);
         const check = () => {
-          const allChecked = Array.from(elements).every(el => el.checked);
+          const allChecked = Array.from(elements).every((el) => el.checked);
           if (allChecked) {
             this.enableNextButton();
           } else {
             this.disableNextButton();
           }
         };
-        elements.forEach(el => {
+        elements.forEach((el) => {
           const handler = () => check();
-          el.addEventListener('change', handler);
-          this.eventListeners.push({ el, event: 'change', handler });
+          el.addEventListener("change", handler);
+          this.eventListeners.push({ el, event: "change", handler });
         });
-      }
-      else if (type === 'click') {
+      } else if (type === "click") {
         // Wait for click/change on element (radio button)
         const el = document.querySelector(selector);
         if (el) {
@@ -280,11 +311,10 @@
               this.enableNextButton();
             }
           };
-          el.addEventListener('change', handler);
-          this.eventListeners.push({ el, event: 'change', handler });
+          el.addEventListener("change", handler);
+          this.eventListeners.push({ el, event: "change", handler });
         }
-      }
-      else if (type === 'input') {
+      } else if (type === "input") {
         // Wait for text input with minimum length
         const el = document.querySelector(selector);
         if (el) {
@@ -295,11 +325,10 @@
               this.disableNextButton();
             }
           };
-          el.addEventListener('input', handler);
-          this.eventListeners.push({ el, event: 'input', handler });
+          el.addEventListener("input", handler);
+          this.eventListeners.push({ el, event: "input", handler });
         }
-      }
-      else if (type === 'file') {
+      } else if (type === "file") {
         // Wait for file selection
         const el = document.querySelector(selector);
         if (el) {
@@ -310,8 +339,8 @@
               this.disableNextButton();
             }
           };
-          el.addEventListener('change', handler);
-          this.eventListeners.push({ el, event: 'change', handler });
+          el.addEventListener("change", handler);
+          this.eventListeners.push({ el, event: "change", handler });
         }
       }
     }
@@ -324,81 +353,194 @@
     }
 
     enableNextButton() {
-      const btn = document.getElementById('tutorial-next-btn');
+      const btn = document.getElementById("tutorial-next-btn");
       if (btn) {
-        btn.classList.remove('disabled');
+        btn.classList.remove("disabled");
       }
     }
 
     disableNextButton() {
-      const btn = document.getElementById('tutorial-next-btn');
+      const btn = document.getElementById("tutorial-next-btn");
       if (btn) {
-        btn.classList.add('disabled');
+        btn.classList.add("disabled");
       }
     }
 
     getArrowHTML(position) {
-      switch(position) {
-        case 'top': return '<div class="tutorial-arrow tutorial-arrow-bottom"></div>';
-        case 'bottom': return '<div class="tutorial-arrow tutorial-arrow-top"></div>';
-        case 'left': return '<div class="tutorial-arrow tutorial-arrow-right"></div>';
-        case 'right': return '<div class="tutorial-arrow tutorial-arrow-left"></div>';
-        default: return '';
+      switch (position) {
+        case "top":
+          return '<div class="tutorial-arrow tutorial-arrow-bottom"></div>';
+        case "bottom":
+          return '<div class="tutorial-arrow tutorial-arrow-top"></div>';
+        case "left":
+          return '<div class="tutorial-arrow tutorial-arrow-right"></div>';
+        case "right":
+          return '<div class="tutorial-arrow tutorial-arrow-left"></div>';
+        default:
+          return "";
       }
     }
 
     positionTooltip(targetEl, position) {
-      const tooltipRect = this.tooltip.getBoundingClientRect();
-      const padding = 20;
+      const isMobile = window.innerWidth < 768;
+      const padding = 15;
+      const margin = 10;
 
-      if (!targetEl || position === 'center') {
-        this.tooltip.style.top = '50%';
-        this.tooltip.style.left = '50%';
-        this.tooltip.style.transform = 'translate(-50%, -50%)';
+      // Reset styles
+      this.tooltip.style.setProperty("--arrow-offset", "50%");
+      this.tooltip.style.width = "";
+      this.tooltip.style.transform = "none";
+      this.tooltip.classList.remove("tutorial-tooltip-center");
+
+      // Force reflow and get dimensions
+      this.tooltip.offsetHeight;
+      const tooltipRect = this.tooltip.getBoundingClientRect();
+
+      // On mobile, CSS handles ALL positioning (fixed at bottom)
+      if (isMobile) {
+        this.tooltip.style.top = "";
+        this.tooltip.style.left = "";
+        this.tooltip.style.transform = "";
+        this.tooltip.style.width = "";
         return;
       }
 
-      this.tooltip.style.transform = 'none';
+      if (!targetEl || position === "center") {
+        this.tooltip.classList.add("tutorial-tooltip-center");
+        this.tooltip.style.top = "50%";
+        this.tooltip.style.left = "50%";
+        this.tooltip.style.transform = "translate(-50%, -50%)";
+        return;
+      }
+
       const targetRect = targetEl.getBoundingClientRect();
+      const anchorCenterX = targetRect.left + targetRect.width / 2;
+      let top,
+        left,
+        finalPosition = position;
 
-      switch(position) {
-        case 'top':
-          this.tooltip.style.top = (targetRect.top - tooltipRect.height - padding + window.scrollY) + 'px';
-          this.tooltip.style.left = (targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2)) + 'px';
+      // Calculate available space
+      const spaceAbove = targetRect.top;
+      const spaceBelow = window.innerHeight - targetRect.bottom;
+
+      // Auto-flip if not enough space
+      if (position === "top" && spaceAbove < tooltipRect.height + padding) {
+        finalPosition = "bottom";
+      } else if (
+        position === "bottom" &&
+        spaceBelow < tooltipRect.height + padding
+      ) {
+        finalPosition = "top";
+      }
+
+      // Calculate final position
+      switch (finalPosition) {
+        case "top":
+          top = targetRect.top - tooltipRect.height - padding + window.scrollY;
+          left = anchorCenterX - tooltipRect.width / 2;
           break;
-        case 'bottom':
-          this.tooltip.style.top = (targetRect.bottom + padding + window.scrollY) + 'px';
-          this.tooltip.style.left = (targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2)) + 'px';
+        case "bottom":
+          top = targetRect.bottom + padding + window.scrollY;
+          left = anchorCenterX - tooltipRect.width / 2;
           break;
-        case 'left':
-          this.tooltip.style.top = (targetRect.top + (targetRect.height / 2) - (tooltipRect.height / 2) + window.scrollY) + 'px';
-          this.tooltip.style.left = (targetRect.left - tooltipRect.width - padding) + 'px';
+        case "left":
+          top =
+            targetRect.top +
+            targetRect.height / 2 -
+            tooltipRect.height / 2 +
+            window.scrollY;
+          left = targetRect.left - tooltipRect.width - padding;
           break;
-        case 'right':
-          this.tooltip.style.top = (targetRect.top + (targetRect.height / 2) - (tooltipRect.height / 2) + window.scrollY) + 'px';
-          this.tooltip.style.left = (targetRect.right + padding) + 'px';
+        case "right":
+          top =
+            targetRect.top +
+            targetRect.height / 2 -
+            tooltipRect.height / 2 +
+            window.scrollY;
+          left = targetRect.right + padding;
           break;
       }
 
-      // Keep tooltip in viewport
-      const finalRect = this.tooltip.getBoundingClientRect();
-      if (finalRect.left < 10) {
-        this.tooltip.style.left = '10px';
+      // Clamp to viewport
+      left = Math.max(
+        margin,
+        Math.min(left, window.innerWidth - tooltipRect.width - margin)
+      );
+      top = Math.max(
+        window.scrollY + margin,
+        Math.min(
+          top,
+          window.scrollY + window.innerHeight - tooltipRect.height - margin
+        )
+      );
+
+      this.tooltip.style.left = left + "px";
+      this.tooltip.style.top = top + "px";
+
+      // Update arrow
+      this.updateArrow(
+        finalPosition,
+        anchorCenterX,
+        targetRect.top + targetRect.height / 2,
+        left,
+        top,
+        tooltipRect
+      );
+    }
+
+    updateArrow(
+      finalPosition,
+      anchorX,
+      anchorY,
+      tooltipLeft,
+      tooltipTop,
+      tooltipRect
+    ) {
+      const oldArrow = this.tooltip.querySelector(".tutorial-arrow");
+      if (oldArrow) oldArrow.remove();
+
+      let arrowClass = "";
+      switch (finalPosition) {
+        case "top":
+          arrowClass = "tutorial-arrow tutorial-arrow-bottom";
+          break;
+        case "bottom":
+          arrowClass = "tutorial-arrow tutorial-arrow-top";
+          break;
+        case "left":
+          arrowClass = "tutorial-arrow tutorial-arrow-right";
+          break;
+        case "right":
+          arrowClass = "tutorial-arrow tutorial-arrow-left";
+          break;
       }
-      if (finalRect.right > window.innerWidth - 10) {
-        this.tooltip.style.left = (window.innerWidth - tooltipRect.width - 10) + 'px';
-      }
-      if (finalRect.top < 10) {
-        this.tooltip.style.top = (10 + window.scrollY) + 'px';
-      }
-      if (finalRect.bottom > window.innerHeight - 10) {
-        this.tooltip.style.top = (window.innerHeight - tooltipRect.height - 10 + window.scrollY) + 'px';
+
+      if (arrowClass) {
+        const arrow = document.createElement("div");
+        arrow.className = arrowClass;
+        this.tooltip.appendChild(arrow);
+
+        if (finalPosition === "top" || finalPosition === "bottom") {
+          const offset = ((anchorX - tooltipLeft) / tooltipRect.width) * 100;
+          this.tooltip.style.setProperty(
+            "--arrow-offset",
+            Math.max(15, Math.min(85, offset)) + "%"
+          );
+        } else {
+          const offset =
+            ((anchorY + window.scrollY - tooltipTop) / tooltipRect.height) *
+            100;
+          this.tooltip.style.setProperty(
+            "--arrow-offset",
+            Math.max(15, Math.min(85, offset)) + "%"
+          );
+        }
       }
     }
 
     next() {
-      const btn = document.getElementById('tutorial-next-btn');
-      if (btn && btn.classList.contains('disabled')) {
+      const btn = document.getElementById("tutorial-next-btn");
+      if (btn && btn.classList.contains("disabled")) {
         this.shakeTooltip();
         return;
       }
@@ -412,16 +554,16 @@
 
     skip() {
       // Redirect back to dashboard
-      window.location.href = '/tester';
+      window.location.href = "/tester";
     }
 
     complete() {
       // Clean up
       this.clearEventListeners();
-      document.querySelectorAll('.tutorial-highlight').forEach(el => {
-        el.classList.remove('tutorial-highlight');
+      document.querySelectorAll(".tutorial-highlight").forEach((el) => {
+        el.classList.remove("tutorial-highlight");
       });
-      this.disabledElements.forEach(el => {
+      this.disabledElements.forEach((el) => {
         el.disabled = false;
       });
 
@@ -431,7 +573,7 @@
       this.isComplete = true;
 
       // Auto-submit the form
-      const form = document.getElementById('practice-form');
+      const form = document.getElementById("practice-form");
       if (form) {
         form.submit();
       }
@@ -441,7 +583,11 @@
   // Initialize when DOM is ready
   function initPracticeTutorial() {
     const practiceStep = window.practiceStep;
-    if (typeof practiceStep !== 'number' || practiceStep < 0 || practiceStep >= tutorialConfigs.length) {
+    if (
+      typeof practiceStep !== "number" ||
+      practiceStep < 0 ||
+      practiceStep >= tutorialConfigs.length
+    ) {
       return;
     }
 
@@ -450,8 +596,8 @@
     tutorial.init();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initPracticeTutorial);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initPracticeTutorial);
   } else {
     initPracticeTutorial();
   }
