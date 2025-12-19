@@ -20,28 +20,31 @@
       title: "Pasos del Escenario",
       content:
         "Primero, debes verificar cada paso del escenario. <strong>Marca cada casilla</strong> mientras lees y verificas cada paso.",
-      position: "bottom",
+      position: "right",
       waitFor: "all-.step-check",
       actionText: "Marca todas las casillas de pasos",
+      highlightFields: ".checklist-box:first-of-type .step-checkbox",
     },
     {
       target: ".checklist-box:last-of-type",
       title: "Resultados Esperados",
       content:
         "Ahora verifica cada resultado esperado. <strong>Marca cada casilla</strong> cuando confirmes que el resultado es correcto.",
-      position: "bottom",
+      position: "right",
       waitFor: "all-.expected-check",
       actionText: "Marca todas las casillas de resultados",
+      highlightFields: ".checklist-box:last-of-type .step-checkbox",
     },
     {
       target: "#status-passed",
       title: 'Selecciona "Aprobado"',
       content:
         'Completaste todos los pasos y verificaste los resultados. Ahora puedes seleccionar <strong>"Aprobado"</strong> porque todo funciono correctamente.',
-      position: "top",
+      position: "right",
       waitFor: "click-#status-passed",
       disable: ["#status-failed"],
       actionText: 'Haz clic en "Aprobado"',
+      highlightFieldsParent: "#status-passed",
     },
     {
       target: 'button[type="submit"]',
@@ -50,6 +53,7 @@
         "Excelente! Haz clic en el boton para enviar esta prueba y continuar a la siguiente leccion.",
       position: "top",
       allowSubmit: true,
+      highlightFields: 'button[type="submit"]',
     },
   ];
 
@@ -67,20 +71,22 @@
       title: 'Selecciona "Fallido"',
       content:
         'Imagina que encontraste un error. Selecciona <strong>"Fallido"</strong> para indicar que la prueba no paso. Esto te otorga <strong>+3 puntos extra</strong> por encontrar errores!',
-      position: "top",
+      position: "right",
       waitFor: "click-#status-failed",
       disable: ["#status-passed"],
       actionText: 'Haz clic en "Fallido"',
+      highlightFieldsParent: "#status-failed",
     },
     {
       target: 'textarea[name="feedback"]',
       title: "Describe el Error",
       content:
         'Escribe una descripcion del error que "encontraste". En pruebas reales, describe claramente que paso mal y como reproducir el problema. <strong>Escribe al menos 10 caracteres.</strong>',
-      position: "top",
+      position: "right",
       waitFor: 'input-textarea[name="feedback"]',
       minLength: 10,
       actionText: "Escribe una descripcion (minimo 10 caracteres)",
+      highlightFields: 'textarea[name="feedback"]',
     },
     {
       target: 'button[type="submit"]',
@@ -89,6 +95,7 @@
         "Perfecto! Ahora haz clic para enviar tu reporte de error y continuar a la ultima leccion.",
       position: "top",
       allowSubmit: true,
+      highlightFields: 'button[type="submit"]',
     },
   ];
 
@@ -106,19 +113,21 @@
       title: "Sube una Captura",
       content:
         "Selecciona cualquier imagen de tu computadora para practicar. En pruebas reales, tomarias una captura de pantalla de lo que observaste. <strong>Esto te da +1 punto extra!</strong>",
-      position: "top",
+      position: "right",
       waitFor: 'file-input[name="screenshot"]',
       actionText: "Selecciona una imagen",
+      highlightFields: 'input[name="screenshot"]',
     },
     {
       target: 'textarea[name="feedback"]',
       title: "Agrega Comentarios",
       content:
         "Describe lo que muestra tu captura de pantalla. Los comentarios claros ayudan al equipo a entender el contexto. <strong>Escribe al menos 5 caracteres.</strong>",
-      position: "top",
+      position: "right",
       waitFor: 'input-textarea[name="feedback"]',
       minLength: 5,
       actionText: "Escribe un comentario (minimo 5 caracteres)",
+      highlightFields: 'textarea[name="feedback"]',
     },
     {
       target: 'button[type="submit"]',
@@ -127,6 +136,7 @@
         "Felicidades! Has aprendido todos los elementos de TestQuest. Haz clic para completar la practica y comenzar con las pruebas reales.",
       position: "top",
       allowSubmit: true,
+      highlightFields: 'button[type="submit"]',
     },
   ];
 
@@ -198,6 +208,11 @@
         el.classList.remove("tutorial-highlight");
       });
 
+      // Remove previous field highlights
+      document.querySelectorAll(".tutorial-field-highlight").forEach((el) => {
+        el.classList.remove("tutorial-field-highlight");
+      });
+
       // Re-enable previously disabled elements
       this.disabledElements.forEach((el) => {
         el.disabled = false;
@@ -257,6 +272,24 @@
         target.scrollIntoView({ behavior: "smooth", block: "center" });
         setTimeout(() => {
           target.classList.add("tutorial-highlight");
+
+          // Apply yellow highlight to fields that need user action
+          if (step.highlightFields) {
+            document.querySelectorAll(step.highlightFields).forEach((el) => {
+              el.classList.add("tutorial-field-highlight");
+            });
+          }
+
+          // Highlight parent container of specified fields
+          if (step.highlightFieldsParent) {
+            document.querySelectorAll(step.highlightFieldsParent).forEach((el) => {
+              const parent = el.closest(".form-check") || el.parentElement;
+              if (parent) {
+                parent.classList.add("tutorial-field-highlight");
+              }
+            });
+          }
+
           // Make tooltip visible off-screen first to get dimensions
           this.tooltip.style.visibility = "hidden";
           this.tooltip.style.display = "block";
@@ -302,6 +335,8 @@
           el.addEventListener("change", handler);
           this.eventListeners.push({ el, event: "change", handler });
         });
+        // Check initial state immediately
+        check();
       } else if (type === "click") {
         // Wait for click/change on element (radio button)
         const el = document.querySelector(selector);
@@ -313,6 +348,10 @@
           };
           el.addEventListener("change", handler);
           this.eventListeners.push({ el, event: "change", handler });
+          // Check initial state
+          if (el.checked) {
+            this.enableNextButton();
+          }
         }
       } else if (type === "input") {
         // Wait for text input with minimum length
@@ -327,6 +366,8 @@
           };
           el.addEventListener("input", handler);
           this.eventListeners.push({ el, event: "input", handler });
+          // Check initial state
+          handler();
         }
       } else if (type === "file") {
         // Wait for file selection
@@ -341,6 +382,8 @@
           };
           el.addEventListener("change", handler);
           this.eventListeners.push({ el, event: "change", handler });
+          // Check initial state
+          handler();
         }
       }
     }

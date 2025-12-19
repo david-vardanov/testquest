@@ -296,6 +296,22 @@ body {
   border-left: 3px solid #f5576c;
 }
 
+/* Yellow underline highlight for action elements */
+.tutorial-action-highlight {
+  background: linear-gradient(to bottom, transparent 60%, #fff3cd 60%);
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+/* Yellow highlight for form elements user needs to interact with */
+.tutorial-field-highlight {
+  background-color: #fff9c4 !important;
+  border: 2px solid #ffc107 !important;
+  padding: 8px 12px !important;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(255, 193, 7, 0.5) !important;
+}
+
 /* Shake animation for blocked actions */
 @keyframes tutorial-shake {
   0%,
