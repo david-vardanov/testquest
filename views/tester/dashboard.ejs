@@ -589,30 +589,51 @@
     <p class="text-muted d-none d-md-block mb-2" style="font-size: 0.75rem;">
       Los puntos se agregan despues de la moderacion del administrador
     </p>
-    <div id="leaderboard-section" class="d-none d-md-block">
-      <table class="table table-sm" style="font-size: 0.8rem;">
-        <thead>
+    <div id="leaderboard-section" class="d-none d-md-block" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+      <!-- Header -->
+      <table class="table table-sm mb-0" style="font-size: 0.8rem;">
+        <thead style="background: #f8f9fa;">
           <tr>
-            <th>#</th>
+            <th style="width: 40px;">#</th>
             <th>Usuario</th>
-            <th>Pts</th>
-            <th>Recompensa</th>
+            <th style="width: 50px;">Pts</th>
+            <th style="width: 100px;">Recompensa</th>
           </tr>
         </thead>
+      </table>
+      <!-- Top 3 frozen -->
+      <table class="table table-sm mb-0" style="font-size: 0.8rem; background: #fffbeb;">
         <tbody>
-          <% leaderboard.forEach(function(entry, i) { %>
-            <% if (i === 10) { %>
-              <tr><td colspan="4" class="text-center text-muted">...</td></tr>
-            <% } %>
+          <% leaderboard.slice(0, 3).forEach(function(entry) { %>
             <tr class="<%= entry.isCurrentUser ? 'table-warning' : '' %>">
-              <td><%= entry.position %></td>
+              <td style="width: 40px;"><strong><%= entry.position %></strong></td>
               <td><%= entry.username %> <% if (entry.isCurrentUser) { %><span class="badge bg-primary" style="font-size: 0.6rem;">Tu</span><% } %></td>
-              <td><%= entry.points %></td>
-              <td style="font-size: 0.7rem;"><%= entry.reward %></td>
+              <td style="width: 50px;"><%= entry.points %></td>
+              <td style="width: 100px; font-size: 0.7rem;"><%= entry.reward %></td>
             </tr>
           <% }); %>
         </tbody>
       </table>
+      <% if (leaderboard.length > 3) { %>
+      <!-- Scrollable rest -->
+      <div id="desktop-leaderboard" style="max-height: 200px; overflow-y: auto; border-top: 3px solid; border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1; box-shadow: inset 0 4px 8px -4px rgba(102, 126, 234, 0.3);">
+        <table class="table table-sm mb-0" style="font-size: 0.8rem;">
+          <tbody>
+            <% leaderboard.slice(3).forEach(function(entry) { %>
+              <tr class="<%= entry.isCurrentUser ? 'table-warning' : '' %>" <% if (entry.isCurrentUser) { %>id="desktop-current-user"<% } %>>
+                <td style="width: 40px;"><%= entry.position %></td>
+                <td><%= entry.username %> <% if (entry.isCurrentUser) { %><span class="badge bg-primary" style="font-size: 0.6rem;">Tu</span><% } %></td>
+                <td style="width: 50px;"><%= entry.points %></td>
+                <td style="width: 100px; font-size: 0.7rem;"><%= entry.reward %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+      <div class="text-center py-2" style="background: #f8f9fa; border-top: 1px solid #e2e8f0;">
+        <small class="text-muted"><%= leaderboard.length %> participantes</small>
+      </div>
     </div>
   </div>
 </div>
@@ -623,33 +644,54 @@
     <h5 class="mb-0">Clasificacion</h5>
     <button type="button" class="btn-close btn-close-white" onclick="toggleLeaderboard()"></button>
   </div>
-  <div class="leaderboard-panel-body">
-    <p class="text-muted mb-2" style="font-size: 0.75rem;">
+  <div class="leaderboard-panel-body" style="padding: 0;">
+    <p class="text-muted mb-0 px-3 py-2" style="font-size: 0.75rem; background: #f8f9fa;">
       Los puntos se agregan despues de la moderacion del administrador
     </p>
-    <table class="table table-sm" style="font-size: 0.9rem;">
-      <thead>
+    <!-- Header -->
+    <table class="table table-sm mb-0" style="font-size: 0.9rem;">
+      <thead style="background: #f8f9fa;">
         <tr>
-          <th>#</th>
+          <th style="width: 35px;">#</th>
           <th>Usuario</th>
-          <th>Pts</th>
-          <th>Recompensa</th>
+          <th style="width: 45px;">Pts</th>
+          <th style="width: 90px;">Recompensa</th>
         </tr>
       </thead>
+    </table>
+    <!-- Top 3 frozen -->
+    <table class="table table-sm mb-0" style="font-size: 0.9rem; background: #fffbeb;">
       <tbody>
-        <% leaderboard.forEach(function(entry, i) { %>
-          <% if (i === 10) { %>
-            <tr><td colspan="4" class="text-center text-muted">...</td></tr>
-          <% } %>
+        <% leaderboard.slice(0, 3).forEach(function(entry) { %>
           <tr class="<%= entry.isCurrentUser ? 'table-warning' : '' %>">
-            <td><%= entry.position %></td>
+            <td style="width: 35px;"><strong><%= entry.position %></strong></td>
             <td><%= entry.username %> <% if (entry.isCurrentUser) { %><span class="badge bg-primary" style="font-size: 0.6rem;">Tu</span><% } %></td>
-            <td><%= entry.points %></td>
-            <td style="font-size: 0.7rem;"><%= entry.reward %></td>
+            <td style="width: 45px;"><%= entry.points %></td>
+            <td style="width: 90px; font-size: 0.7rem;"><%= entry.reward %></td>
           </tr>
         <% }); %>
       </tbody>
     </table>
+    <% if (leaderboard.length > 3) { %>
+    <!-- Scrollable rest -->
+    <div id="mobile-leaderboard" style="max-height: calc(70vh - 280px); overflow-y: auto; border-top: 3px solid; border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1; box-shadow: inset 0 4px 8px -4px rgba(102, 126, 234, 0.3);">
+      <table class="table table-sm mb-0" style="font-size: 0.9rem;">
+        <tbody>
+          <% leaderboard.slice(3).forEach(function(entry) { %>
+            <tr class="<%= entry.isCurrentUser ? 'table-warning' : '' %>" <% if (entry.isCurrentUser) { %>id="mobile-current-user"<% } %>>
+              <td style="width: 35px;"><%= entry.position %></td>
+              <td><%= entry.username %> <% if (entry.isCurrentUser) { %><span class="badge bg-primary" style="font-size: 0.6rem;">Tu</span><% } %></td>
+              <td style="width: 45px;"><%= entry.points %></td>
+              <td style="width: 90px; font-size: 0.7rem;"><%= entry.reward %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+    <div class="text-center py-2" style="background: #f8f9fa; border-top: 1px solid #e2e8f0;">
+      <small class="text-muted"><%= leaderboard.length %> participantes</small>
+    </div>
   </div>
 </div>
 <div id="leaderboard-overlay" class="leaderboard-overlay d-md-none" onclick="toggleLeaderboard()"></div>
@@ -661,7 +703,43 @@ function toggleLeaderboard() {
   panel.classList.toggle('active');
   overlay.classList.toggle('active');
   document.body.classList.toggle('leaderboard-open');
+
+  // Scroll to current user in mobile panel when opened
+  if (panel.classList.contains('active')) {
+    setTimeout(() => scrollToCurrentUser('mobile'), 100);
+  }
 }
+
+function scrollToCurrentUser(type) {
+  const containerId = type === 'mobile' ? 'mobile-leaderboard' : 'desktop-leaderboard';
+  const userId = type === 'mobile' ? 'mobile-current-user' : 'desktop-current-user';
+  const container = document.getElementById(containerId);
+  const userRow = document.getElementById(userId);
+
+  // If user is in top 5, no need to scroll (they're in frozen section)
+  if (!container || !userRow) return;
+
+  // Get index of current user in scrollable section
+  const allRows = container.querySelectorAll('tbody tr');
+  let userIndex = -1;
+  allRows.forEach((row, i) => {
+    if (row.id === userId) userIndex = i;
+  });
+
+  if (userIndex >= 0) {
+    // Estimate row height (about 35px per row)
+    const rowHeight = 35;
+    const targetScroll = (userIndex * rowHeight) - (container.clientHeight / 2) + (rowHeight / 2);
+    container.scrollTop = Math.max(0, targetScroll);
+  }
+}
+
+// Auto-scroll desktop leaderboard to current user on page load
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+    scrollToCurrentUser('desktop');
+  }, 300);
+});
 </script>
 
 <% if (showTutorial) { %>

@@ -96,9 +96,8 @@ router.get('/', async (req, res) => {
   const nextRankNeeded = nextReward ? nextReward.positionTo : null;
   const pointsToNext = nextRankNeeded && allUsers[nextRankNeeded - 1] ? allUsers[nextRankNeeded - 1].points - user.points + 1 : null;
 
-  // Build leaderboard: top 10, plus user if not in top 10
-  const top10 = allUsers.slice(0, 10);
-  const leaderboard = top10.map((u, i) => {
+  // Build full leaderboard with all users
+  const leaderboard = allUsers.map((u, i) => {
     const pos = i + 1;
     const reward = rewards.find(r => pos >= r.positionFrom && pos <= r.positionTo);
     return {
@@ -109,18 +108,6 @@ router.get('/', async (req, res) => {
       reward: reward ? (reward.prizeDescription || reward.name) : '-'
     };
   });
-
-  // If user is not in top 10, add them
-  if (rank > 10) {
-    const userReward = rewards.find(r => rank >= r.positionFrom && rank <= r.positionTo);
-    leaderboard.push({
-      username: user.username,
-      points: user.points,
-      position: rank,
-      isCurrentUser: true,
-      reward: userReward ? (userReward.prizeDescription || userReward.name) : '-'
-    });
-  }
 
   // Check if user needs tutorial
   const showTutorial = !user.hasCompletedTutorial;
