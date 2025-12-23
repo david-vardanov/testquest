@@ -190,7 +190,38 @@ router.get('/flow/:id', async (req, res) => {
         await progress.save();
       }
     }
-    return res.render('tester/flow-complete', { flow, progress });
+    // Find next available flow for the user
+    const [allFlows, allProgresses] = await Promise.all([
+      Flow.find({ isActive: true }).populate('prerequisiteFlows').populate('testCases').sort('order'),
+      FlowProgress.find({ user: req.session.user.id })
+    ]);
+
+    let nextFlow = null;
+    for (const f of allFlows) {
+      if (f._id.toString() === flow._id.toString()) continue; // Skip current flow
+      const prog = allProgresses.find(p => p.flow.toString() === f._id.toString());
+      const isCompleted = prog?.isCompleted;
+
+      let isLocked = false;
+      if (f.prerequisiteFlows && f.prerequisiteFlows.length > 0) {
+        for (const prereq of f.prerequisiteFlows) {
+          const prereqProgress = allProgresses.find(p =>
+            p.flow.toString() === prereq._id.toString() && p.isCompleted
+          );
+          if (!prereqProgress) {
+            isLocked = true;
+            break;
+          }
+        }
+      }
+
+      if (!isLocked && !isCompleted) {
+        nextFlow = f;
+        break;
+      }
+    }
+
+    return res.render('tester/flow-complete', { flow, progress, nextFlow });
   }
 
   res.render('tester/test', { flow, testCase: nextTestCase, progress, visibleTestCasesCount: visibleTestCases.length });
@@ -409,7 +440,40 @@ router.get('/practice-flow/complete', async (req, res) => {
   await User.findByIdAndUpdate(req.session.user.id, { hasCompletedPractice: true });
   // Reset practice flow step for potential re-do
   req.session.practiceFlowStep = 0;
-  res.render('tester/practice-complete');
+
+  // Find the next available flow for the user
+  const [flows, progresses] = await Promise.all([
+    Flow.find({ isActive: true }).populate('prerequisiteFlows').populate('testCases').sort('order'),
+    FlowProgress.find({ user: req.session.user.id })
+  ]);
+
+  // Find first unlocked, incomplete flow
+  let nextFlow = null;
+  for (const flow of flows) {
+    const progress = progresses.find(p => p.flow.toString() === flow._id.toString());
+    const isCompleted = progress?.isCompleted;
+
+    // Check prerequisites
+    let isLocked = false;
+    if (flow.prerequisiteFlows && flow.prerequisiteFlows.length > 0) {
+      for (const prereq of flow.prerequisiteFlows) {
+        const prereqProgress = progresses.find(p =>
+          p.flow.toString() === prereq._id.toString() && p.isCompleted
+        );
+        if (!prereqProgress) {
+          isLocked = true;
+          break;
+        }
+      }
+    }
+
+    if (!isLocked && !isCompleted) {
+      nextFlow = flow;
+      break;
+    }
+  }
+
+  res.render('tester/practice-complete', { nextFlow });
 });
 
 module.exports = router;

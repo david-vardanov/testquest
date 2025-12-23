@@ -227,8 +227,6 @@
    */
   function positionTooltip(targetEl, position) {
     const isMobile = window.innerWidth < 768;
-    const padding = 15;
-    const margin = 10;
 
     // Reset styles
     tooltip.style.setProperty("--arrow-offset", "50%");
@@ -236,126 +234,18 @@
     tooltip.style.transform = "none";
     tooltip.classList.remove("tutorial-tooltip-center");
 
-    // Force reflow and get dimensions
-    tooltip.offsetHeight;
-    const tooltipRect = tooltip.getBoundingClientRect();
+    // On mobile and desktop, CSS handles positioning (fixed position)
+    // Mobile: fixed at bottom, Desktop: fixed at top-right
+    tooltip.style.top = "";
+    tooltip.style.left = "";
+    tooltip.style.transform = "";
+    tooltip.style.width = "";
 
-    // On mobile, CSS handles ALL positioning (fixed at bottom)
-    if (isMobile) {
-      tooltip.style.top = "";
-      tooltip.style.left = "";
-      tooltip.style.transform = "";
-      tooltip.style.width = "";
-      return;
+    // Hide arrows on desktop since tooltip is fixed in corner
+    if (!isMobile) {
+      const arrow = tooltip.querySelector(".tutorial-arrow");
+      if (arrow) arrow.style.display = "none";
     }
-
-    if (!targetEl || position === "center") {
-      tooltip.classList.add("tutorial-tooltip-center");
-      tooltip.style.top = "50%";
-      tooltip.style.left = "50%";
-      tooltip.style.transform = "translate(-50%, -50%)";
-      return;
-    }
-
-    const targetRect = targetEl.getBoundingClientRect();
-
-    // Get first visible child element for horizontal centering only
-    let anchorRect = targetRect;
-    const firstCard = targetEl.querySelector(
-      ".quest-card, .quest-item, .card, table"
-    );
-    if (firstCard) {
-      anchorRect = firstCard.getBoundingClientRect();
-    }
-
-    const anchorCenterX = anchorRect.left + anchorRect.width / 2;
-    let top,
-      left,
-      finalPosition = position;
-
-    // Calculate available space using TARGET rect (not anchor) for vertical
-    const spaceAbove = targetRect.top;
-    const spaceBelow = window.innerHeight - targetRect.bottom;
-    const spaceLeft = anchorRect.left;
-    const spaceRight = window.innerWidth - anchorRect.right;
-
-    // Auto-flip if not enough space
-    if (position === "top" && spaceAbove < tooltipRect.height + padding) {
-      finalPosition = "bottom";
-    } else if (
-      position === "bottom" &&
-      spaceBelow < tooltipRect.height + padding
-    ) {
-      finalPosition = "top";
-    } else if (position === "left" && spaceLeft < tooltipRect.width + padding) {
-      finalPosition = "right";
-    } else if (
-      position === "right" &&
-      spaceRight < tooltipRect.width + padding
-    ) {
-      finalPosition = "left";
-    }
-
-    // Calculate final position - use anchorRect for better positioning with large containers
-    switch (finalPosition) {
-      case "top":
-        top = anchorRect.top - tooltipRect.height - padding + window.scrollY;
-        left = anchorCenterX - tooltipRect.width / 2;
-        break;
-      case "bottom":
-        // Use anchor (first card) bottom, not full container bottom
-        top = anchorRect.bottom + padding + window.scrollY;
-        left = anchorCenterX - tooltipRect.width / 2;
-        break;
-      case "left":
-        // Align above top of target
-        top = targetRect.top - tooltipRect.height / 2 + window.scrollY;
-        left = targetRect.left - tooltipRect.width - padding;
-        break;
-      case "right":
-        // Align above top of target
-        top = targetRect.top - tooltipRect.height / 2 + window.scrollY;
-        left = targetRect.right + padding;
-        break;
-    }
-
-    // Clamp to viewport (use larger bottom margin for dock/taskbar)
-    const bottomMargin = 100;
-    left = Math.max(
-      margin,
-      Math.min(left, window.innerWidth - tooltipRect.width - margin)
-    );
-    top = Math.max(
-      window.scrollY + margin,
-      Math.min(
-        top,
-        window.scrollY + window.innerHeight - tooltipRect.height - bottomMargin
-      )
-    );
-
-    tooltip.style.left = left + "px";
-    tooltip.style.top = top + "px";
-
-    // Determine arrow direction based on tooltip position relative to anchor (first card)
-    const tooltipTopViewport = top - window.scrollY;
-    const anchorCenterY = anchorRect.top + anchorRect.height / 2;
-
-    // If tooltip top is below anchor center, tooltip is "below" target - arrow points UP
-    // If tooltip top is above anchor center, tooltip is "above" target - arrow points DOWN
-    let arrowDirection = finalPosition;
-    if (finalPosition === "top" || finalPosition === "bottom") {
-      arrowDirection = tooltipTopViewport > anchorCenterY ? "bottom" : "top";
-    }
-
-    updateArrow(
-      arrowDirection,
-      position,
-      anchorCenterX,
-      anchorRect.top + anchorRect.height / 2,
-      left,
-      top,
-      tooltipRect
-    );
   }
 
   /**

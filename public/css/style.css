@@ -112,6 +112,21 @@ body {
   animation: tutorial-fade-in 0.3s ease-out;
 }
 
+/* Desktop: Fixed position in top-right corner */
+@media (min-width: 768px) {
+  .tutorial-tooltip {
+    top: 100px !important;
+    right: 20px !important;
+    left: auto !important;
+    transform: none !important;
+    max-width: 320px;
+  }
+
+  .tutorial-tooltip .tutorial-arrow {
+    display: none !important;
+  }
+}
+
 @keyframes tutorial-fade-in {
   from {
     opacity: 0;

@@ -423,8 +423,6 @@
 
     positionTooltip(targetEl, position) {
       const isMobile = window.innerWidth < 768;
-      const padding = 15;
-      const margin = 10;
 
       // Reset styles
       this.tooltip.style.setProperty("--arrow-offset", "50%");
@@ -432,100 +430,18 @@
       this.tooltip.style.transform = "none";
       this.tooltip.classList.remove("tutorial-tooltip-center");
 
-      // Force reflow and get dimensions
-      this.tooltip.offsetHeight;
-      const tooltipRect = this.tooltip.getBoundingClientRect();
+      // On mobile and desktop, CSS handles positioning (fixed position)
+      // Mobile: fixed at bottom, Desktop: fixed at top-right
+      this.tooltip.style.top = "";
+      this.tooltip.style.left = "";
+      this.tooltip.style.transform = "";
+      this.tooltip.style.width = "";
 
-      // On mobile, CSS handles ALL positioning (fixed at bottom)
-      if (isMobile) {
-        this.tooltip.style.top = "";
-        this.tooltip.style.left = "";
-        this.tooltip.style.transform = "";
-        this.tooltip.style.width = "";
-        return;
+      // Hide arrows on desktop since tooltip is fixed in corner
+      if (!isMobile) {
+        const arrow = this.tooltip.querySelector(".tutorial-arrow");
+        if (arrow) arrow.style.display = "none";
       }
-
-      if (!targetEl || position === "center") {
-        this.tooltip.classList.add("tutorial-tooltip-center");
-        this.tooltip.style.top = "50%";
-        this.tooltip.style.left = "50%";
-        this.tooltip.style.transform = "translate(-50%, -50%)";
-        return;
-      }
-
-      const targetRect = targetEl.getBoundingClientRect();
-      const anchorCenterX = targetRect.left + targetRect.width / 2;
-      let top,
-        left,
-        finalPosition = position;
-
-      // Calculate available space
-      const spaceAbove = targetRect.top;
-      const spaceBelow = window.innerHeight - targetRect.bottom;
-
-      // Auto-flip if not enough space
-      if (position === "top" && spaceAbove < tooltipRect.height + padding) {
-        finalPosition = "bottom";
-      } else if (
-        position === "bottom" &&
-        spaceBelow < tooltipRect.height + padding
-      ) {
-        finalPosition = "top";
-      }
-
-      // Calculate final position
-      switch (finalPosition) {
-        case "top":
-          top = targetRect.top - tooltipRect.height - padding + window.scrollY;
-          left = anchorCenterX - tooltipRect.width / 2;
-          break;
-        case "bottom":
-          top = targetRect.bottom + padding + window.scrollY;
-          left = anchorCenterX - tooltipRect.width / 2;
-          break;
-        case "left":
-          top =
-            targetRect.top +
-            targetRect.height / 2 -
-            tooltipRect.height / 2 +
-            window.scrollY;
-          left = targetRect.left - tooltipRect.width - padding;
-          break;
-        case "right":
-          top =
-            targetRect.top +
-            targetRect.height / 2 -
-            tooltipRect.height / 2 +
-            window.scrollY;
-          left = targetRect.right + padding;
-          break;
-      }
-
-      // Clamp to viewport
-      left = Math.max(
-        margin,
-        Math.min(left, window.innerWidth - tooltipRect.width - margin)
-      );
-      top = Math.max(
-        window.scrollY + margin,
-        Math.min(
-          top,
-          window.scrollY + window.innerHeight - tooltipRect.height - margin
-        )
-      );
-
-      this.tooltip.style.left = left + "px";
-      this.tooltip.style.top = top + "px";
-
-      // Update arrow
-      this.updateArrow(
-        finalPosition,
-        anchorCenterX,
-        targetRect.top + targetRect.height / 2,
-        left,
-        top,
-        tooltipRect
-      );
     }
 
     updateArrow(
