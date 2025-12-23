@@ -8,6 +8,12 @@
   const currentTestNum = progress.completedTestCases.length + 1;
   const totalTests = visibleTestCasesCount;
   const progressPercent = Math.round((progress.completedTestCases.length / totalTests) * 100);
+
+  // Function to convert URLs to clickable links
+  function linkify(text) {
+    const urlRegex = /(https?:\/\/[^\s<>"']+)/g;
+    return text.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: underline;">$1</a>');
+  }
 %>
 
 <style>
@@ -67,6 +73,17 @@
     font-size: 0.95rem;
     margin: 0 0 1.25rem 0;
     line-height: 1.5;
+  }
+
+  .test-title a,
+  .test-description a {
+    color: #667eea;
+    text-decoration: underline;
+  }
+
+  .test-title a:hover,
+  .test-description a:hover {
+    color: #764ba2;
   }
 
   .progress-bar-container {
@@ -198,6 +215,19 @@
   .step-item.checked label {
     color: #16a34a;
     text-decoration: line-through;
+  }
+
+  .step-item label a {
+    color: #667eea;
+    text-decoration: underline;
+  }
+
+  .step-item label a:hover {
+    color: #764ba2;
+  }
+
+  .step-item.checked label a {
+    color: #16a34a;
   }
 
   /* Form Section */
@@ -480,8 +510,8 @@
       </a>
       <span class="test-badge">Prueba <%= currentTestNum %> de <%= totalTests %></span>
     </div>
-    <h1 class="test-title"><%= testCase.title %></h1>
-    <p class="test-description"><%= testCase.description %></p>
+    <h1 class="test-title"><%- linkify(testCase.title || '') %></h1>
+    <p class="test-description"><%- linkify(testCase.description || '') %></p>
     <div class="progress-bar-container">
       <div class="progress-bar-fill" style="width: <%= progressPercent %>%"></div>
     </div>
@@ -505,7 +535,7 @@
         <% scenarioSteps.forEach((step, idx) => { %>
           <div class="step-item" id="step-item-<%= idx %>">
             <input type="checkbox" class="step-check" id="step-<%= idx %>" data-type="step">
-            <label for="step-<%= idx %>"><%= step %></label>
+            <label for="step-<%= idx %>"><%- linkify(step) %></label>
           </div>
         <% }) %>
       </div>
@@ -521,7 +551,7 @@
         <% expectedSteps.forEach((step, idx) => { %>
           <div class="step-item" id="expected-item-<%= idx %>">
             <input type="checkbox" class="expected-check" id="expected-<%= idx %>" data-type="expected">
-            <label for="expected-<%= idx %>"><%= step %></label>
+            <label for="expected-<%= idx %>"><%- linkify(step) %></label>
           </div>
         <% }) %>
       </div>
