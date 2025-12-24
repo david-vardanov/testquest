@@ -1,6 +1,5 @@
 <%
   layout('layouts/boilerplate');
-  // Build filter query string for preserving filters on actions
   const filterParams = Object.entries(filters).filter(([k,v]) => v).map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
   const filterQuery = filterParams ? `?${filterParams}` : '';
 %>
@@ -9,42 +8,76 @@
   .submission-card {
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    margin-bottom: 1rem;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
+    background: white;
+    transition: all 0.2s ease;
   }
   .submission-card:hover {
     border-color: #bdbdbd;
   }
+  .submission-card.drag-over {
+    border: 2px dashed #007bff;
+    background: #e3f2fd;
+    transform: scale(1.02);
+  }
+  .submission-card.dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
   .submission-header {
     background: #fafafa;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.75rem;
     border-bottom: 1px solid #e0e0e0;
+    border-radius: 8px 8px 0 0;
+  }
+  .drag-handle {
+    cursor: grab;
+    padding: 0.2rem 0.35rem;
+    color: #9e9e9e;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    user-select: none;
+    margin-right: 0.35rem;
+    background: #f0f0f0;
+    vertical-align: middle;
+  }
+  .drag-handle:hover {
+    background: #e0e0e0;
+    color: #424242;
+  }
+  .drag-handle:active {
+    cursor: grabbing;
+    background: #d0d0d0;
   }
   .submission-body {
-    padding: 1rem;
+    padding: 0.75rem;
   }
   .feedback-box {
     background: #fafafa;
-    padding: 0.75rem;
+    padding: 0.5rem;
     border-radius: 6px;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     white-space: pre-wrap;
-    font-size: 0.8125rem;
-    max-height: 150px;
+    font-size: 0.75rem;
+    max-height: 100px;
     overflow-y: auto;
   }
   .screenshot-preview {
-    max-width: 120px;
-    max-height: 80px;
+    max-width: 80px;
+    max-height: 60px;
     border-radius: 4px;
     cursor: pointer;
   }
   .points-breakdown {
     background: #f5f5f5;
-    padding: 0.75rem;
+    padding: 0.5rem;
     border-radius: 6px;
-    margin-bottom: 0.75rem;
-    font-size: 0.8125rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
   }
   .points-item {
     display: flex;
@@ -69,16 +102,16 @@
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
   }
   .action-buttons {
     display: flex;
-    gap: 0.35rem;
+    gap: 0.25rem;
     flex-wrap: wrap;
   }
   .action-buttons .btn {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
   }
   .badge {
     font-size: 0.7rem;
@@ -90,6 +123,803 @@
     color: #757575;
     margin-bottom: 0.5rem;
   }
+
+  /* Group styles */
+  .submission-group {
+    border: 2px solid #5c6bc0;
+    border-radius: 10px;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #e8eaf6 0%, #f5f5f5 100%);
+    box-shadow: 0 2px 8px rgba(92, 107, 192, 0.15);
+  }
+  .submission-group.drag-over {
+    border-color: #1976d2;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    transform: scale(1.01);
+  }
+  .submission-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #c5cae9;
+  }
+  .group-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #3f51b5;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    letter-spacing: 0.5px;
+  }
+  .group-actions {
+    display: flex;
+    gap: 0.25rem;
+  }
+  .group-actions .btn {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.4rem;
+  }
+  .group-count {
+    background: #5c6bc0;
+    color: white;
+    font-size: 0.6rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .submission-group .submission-card {
+    border-color: #c5cae9;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .submission-group .submission-card .submission-header {
+    background: #ffffff;
+  }
+  .ungroup-btn {
+    opacity: 0.6;
+    transition: opacity 0.15s;
+  }
+  .ungroup-btn:hover {
+    opacity: 1;
+  }
+
+  /* Collapsible grouped cards */
+  .submission-group .submission-card .submission-header {
+    cursor: pointer;
+    position: relative;
+  }
+  .submission-group .submission-card .submission-header:hover {
+    background: #f5f5f5;
+  }
+  .submission-group .submission-card .submission-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease-out, padding 0.25s ease-out;
+    padding: 0 0.75rem;
+  }
+  .submission-group .submission-card.expanded .submission-body {
+    max-height: 500px;
+    padding: 0.75rem;
+    transition: max-height 0.3s ease-in, padding 0.25s ease-in;
+  }
+  .collapse-indicator {
+    font-size: 0.7rem;
+    color: #9e9e9e;
+    transition: transform 0.2s ease;
+    margin-left: 0.5rem;
+  }
+  .submission-card.expanded .collapse-indicator {
+    transform: rotate(180deg);
+  }
+
+  /* Editable group name */
+  .group-name {
+    cursor: pointer;
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .group-name:hover {
+    background: rgba(63, 81, 181, 0.1);
+    border-color: #c5cae9;
+  }
+  .group-name-input {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #3f51b5;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid #5c6bc0;
+    border-radius: 4px;
+    padding: 0.1rem 0.3rem;
+    background: white;
+    outline: none;
+    width: 150px;
+  }
+  .group-name-input:focus {
+    box-shadow: 0 0 0 2px rgba(92, 107, 192, 0.3);
+  }
+
+  /* Admin notes */
+  .admin-notes {
+    background: #fff8e1;
+    border: 1px dashed #ffb300;
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+  }
+  .admin-notes-label {
+    font-size: 0.65rem;
+    color: #f57c00;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .admin-notes-content {
+    color: #5d4037;
+    white-space: pre-wrap;
+    cursor: pointer;
+    min-height: 1.2em;
+    padding: 0.2rem;
+    border-radius: 3px;
+    transition: background 0.15s ease;
+  }
+  .admin-notes-content:hover {
+    background: rgba(255, 179, 0, 0.15);
+  }
+  .admin-notes-content.empty {
+    color: #bdbdbd;
+    font-style: italic;
+  }
+  .admin-notes-input {
+    width: 100%;
+    font-size: 0.75rem;
+    color: #5d4037;
+    border: 1px solid #ffb300;
+    border-radius: 4px;
+    padding: 0.3rem;
+    background: white;
+    resize: vertical;
+    min-height: 50px;
+    outline: none;
+  }
+  .admin-notes-input:focus {
+    box-shadow: 0 0 0 2px rgba(255, 179, 0, 0.3);
+  }
+
+  /* Sort buttons */
+  .sort-btn {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+  .sort-btn.active {
+    background-color: #495057;
+    border-color: #495057;
+    color: white;
+  }
+
+  /* Hidden submissions */
+  .submission-item.hidden-by-admin {
+    display: none;
+  }
+  .show-hidden .submission-item.hidden-by-admin {
+    display: block;
+  }
+  .submission-item.hidden-by-admin .submission-card,
+  .submission-item.hidden-by-admin .submission-group {
+    opacity: 0.5;
+    border-style: dashed;
+  }
+  .hide-btn {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.3rem;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+  }
+  .hide-btn:hover {
+    opacity: 1;
+  }
+  .hidden-count-badge {
+    background: #9e9e9e;
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    margin-left: 0.5rem;
+  }
+  /* Hidden cards inside groups */
+  .submission-card.hidden-card {
+    display: none;
+  }
+  .show-hidden .submission-card.hidden-card {
+    display: block;
+    opacity: 0.5;
+    border-style: dashed;
+  }
+
+  /* Board hint */
+  .board-hint {
+    background: #fff3e0;
+    border: 1px dashed #ff9800;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.7rem;
+    color: #e65100;
+  }
+
+  /* Scroll indicator */
+  .scroll-indicator {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .scroll-indicator.visible {
+    opacity: 1;
+  }
+  .scroll-indicator.top {
+    top: 15px;
+  }
+  .scroll-indicator.bottom {
+    bottom: 15px;
+  }
+  .scroll-indicator .arrow {
+    font-size: 1.1rem;
+  }
+  .scroll-indicator .countdown {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.1rem 0.5rem;
+    border-radius: 10px;
+    min-width: 1.5rem;
+    text-align: center;
+  }
+  .scroll-indicator.scrolling {
+    background: rgba(76, 175, 80, 0.9);
+  }
+
+  /* Custom confirm modal */
+  .confirm-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+  .confirm-modal-backdrop.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+  .confirm-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    max-width: 360px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    transform: scale(0.9) translateY(-20px);
+    transition: transform 0.2s ease;
+  }
+  .confirm-modal-backdrop.visible .confirm-modal {
+    transform: scale(1) translateY(0);
+  }
+  .confirm-modal-icon {
+    width: 48px;
+    height: 48px;
+    background: #fff3e0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+  }
+  .confirm-modal-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+  .confirm-modal-message {
+    font-size: 0.9rem;
+    text-align: center;
+    color: #666;
+    margin-bottom: 1.25rem;
+    line-height: 1.4;
+  }
+  .confirm-modal-buttons {
+    display: flex;
+    gap: 0.75rem;
+  }
+  .confirm-modal-buttons button {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .confirm-modal-cancel {
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    color: #666;
+  }
+  .confirm-modal-cancel:hover {
+    background: #eeeeee;
+  }
+  .confirm-modal-confirm {
+    background: #ef5350;
+    border: none;
+    color: white;
+  }
+  .confirm-modal-confirm:hover {
+    background: #e53935;
+  }
+
+  /* Kanban board */
+  .kanban-board {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .kanban-column {
+    flex: 0 0 260px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    max-height: 500px;
+  }
+  .kanban-column-header {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    border-radius: 8px 8px 0 0;
+    cursor: grab;
+  }
+  .kanban-column-header:active {
+    cursor: grabbing;
+  }
+  .kanban-column-title {
+    font-weight: 600;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .kanban-column-title .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .kanban-column-count {
+    background: #e0e0e0;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .kanban-column-actions {
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .kanban-column-header:hover .kanban-column-actions {
+    opacity: 1;
+  }
+  .kanban-column-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0.15rem;
+    border-radius: 3px;
+    color: #666;
+  }
+  .kanban-column-actions button:hover {
+    background: #e0e0e0;
+  }
+  .kanban-column-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 100px;
+  }
+  .kanban-column-body.drag-over {
+    background: #e3f2fd;
+  }
+  .kanban-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    cursor: grab;
+    transition: all 0.15s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    border-left: 3px solid #e0e0e0;
+  }
+  .kanban-card.status-passed {
+    border-left-color: #4caf50;
+  }
+  .kanban-card.status-failed {
+    border-left-color: #f44336;
+  }
+  .kanban-card:hover {
+    border-color: #bdbdbd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .kanban-card-details.visible {
+    display: block;
+  }
+  .kanban-card:active {
+    cursor: grabbing;
+  }
+  .kanban-card.dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+  .kanban-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.25rem;
+  }
+  .kanban-card-user {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .kanban-card-date {
+    color: #9e9e9e;
+    font-size: 0.65rem;
+  }
+  .kanban-card-flow {
+    color: #666;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .kanban-card-testcase {
+    color: #888;
+    font-size: 0.65rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .kanban-card-title {
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: #333;
+    margin-bottom: 0.25rem;
+    cursor: pointer;
+    padding: 0.15rem 0.25rem;
+    margin: 0 -0.25rem;
+    border-radius: 3px;
+    transition: background 0.15s;
+  }
+  .kanban-card-title:hover {
+    background: #f5f5f5;
+  }
+  .kanban-card-title.empty {
+    color: #bbb;
+    font-weight: 400;
+    font-style: italic;
+  }
+  .kanban-card-feedback {
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid #f0f0f0;
+    color: #333;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    cursor: pointer;
+    padding: 0.25rem;
+    margin: 0.35rem -0.25rem 0;
+    border-radius: 3px;
+    transition: background 0.15s;
+  }
+  .kanban-card-feedback:hover {
+    background: #f5f5f5;
+  }
+  .kanban-card-feedback.empty {
+    color: #bbb;
+    font-style: italic;
+  }
+  .kanban-card-notes {
+    margin-top: 0.35rem;
+    padding: 0.25rem;
+    background: #fff8e1;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    color: #666;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.25rem;
+    transition: background 0.15s;
+  }
+  .kanban-card-notes:hover {
+    background: #fff3c4;
+  }
+  .kanban-card-notes.empty {
+    background: transparent;
+    color: #bbb;
+    font-style: italic;
+  }
+  .kanban-card-notes.empty:hover {
+    background: #f5f5f5;
+  }
+  .kanban-card-notes .notes-icon {
+    flex-shrink: 0;
+  }
+  .kanban-card-notes .notes-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .kanban-card-input {
+    width: 100%;
+    border: 1px solid #2196f3;
+    border-radius: 3px;
+    padding: 0.25rem;
+    font-size: inherit;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+  }
+  .kanban-card-input:focus {
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+  }
+  .kanban-card-thumb {
+    margin-top: 0.35rem;
+    width: 100%;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .kanban-card-footer {
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.65rem;
+    color: #888;
+  }
+  .kanban-card-icons {
+    display: flex;
+    gap: 0.35rem;
+  }
+  .kanban-card-icons span {
+    opacity: 0.6;
+  }
+  .kanban-card-points {
+    font-weight: 600;
+  }
+  .kanban-card-points.pending {
+    color: #ff9800;
+  }
+  .kanban-card-points.awarded {
+    color: #4caf50;
+  }
+  .kanban-card-details {
+    display: none;
+    margin-top: 0.35rem;
+    padding: 0.35rem;
+    background: #f8f8f8;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    color: #555;
+  }
+  .kanban-card-details strong {
+    color: #333;
+  }
+  .kanban-add-column {
+    flex: 0 0 120px;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #888;
+    font-size: 0.8rem;
+    transition: all 0.15s ease;
+    min-height: 150px;
+  }
+  .kanban-add-column:hover {
+    border-color: #999;
+    background: #fafafa;
+    color: #666;
+  }
+  .kanban-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .kanban-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+  }
+  .kanban-toggle-btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  .kanban-board-wrapper {
+    display: block;
+  }
+  .kanban-board-wrapper.collapsed .kanban-board {
+    display: none;
+  }
+
+  /* Column edit modal */
+  .column-edit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+  }
+  .column-edit-modal.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+  .column-edit-modal-content {
+    background: white;
+    border-radius: 10px;
+    padding: 1.25rem;
+    width: 300px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  }
+  .column-edit-modal h5 {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+  .column-edit-modal label {
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+    display: block;
+    color: #666;
+  }
+  .column-edit-modal input {
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+  .column-edit-modal input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+  }
+  .column-edit-modal .color-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .column-edit-modal input[type="color"] {
+    width: 40px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid #ddd;
+    cursor: pointer;
+  }
+  .column-edit-modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .column-edit-modal-buttons button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .column-edit-modal-buttons .btn-cancel {
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    color: #666;
+  }
+  .column-edit-modal-buttons .btn-save {
+    background: #007bff;
+    border: none;
+    color: white;
+  }
+  .column-edit-modal-buttons .btn-delete {
+    background: #dc3545;
+    border: none;
+    color: white;
+    margin-right: auto;
+  }
+
+  /* Masonry layout */
+  #submissions-container {
+    column-count: 3;
+    column-gap: 1rem;
+  }
+  .submission-item {
+    break-inside: avoid;
+    margin-bottom: 0.75rem;
+  }
+  @media (max-width: 992px) {
+    #submissions-container {
+      column-count: 2;
+    }
+  }
+  @media (max-width: 576px) {
+    #submissions-container {
+      column-count: 1;
+    }
+  }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -97,6 +927,97 @@
   <a href="/admin/submissions/export?<%= Object.entries(filters).filter(([k,v]) => v).map(([k,v]) => `${k}=${v}`).join('&') %>" class="btn btn-outline-secondary">
     Exportar CSV
   </a>
+</div>
+
+<!-- Kanban Board Section -->
+<div class="kanban-board-wrapper" id="kanban-wrapper">
+  <div class="kanban-section-header">
+    <span class="kanban-section-title">📋 Tablero de Estados</span>
+    <button type="button" class="btn btn-outline-secondary kanban-toggle-btn" id="kanban-toggle">
+      Ocultar
+    </button>
+  </div>
+  <div class="kanban-board" id="kanban-board">
+    <% statuses.filter(s => s.showAsColumn).forEach(status => { %>
+      <div class="kanban-column" data-status-code="<%= status.code %>">
+        <div class="kanban-column-header">
+          <div class="kanban-column-title">
+            <span class="status-dot" style="background-color: <%= status.color %>;"></span>
+            <span class="status-name"><%= status.name %></span>
+            <span class="kanban-column-count"><%= (submissionsByStatus[status.code] || []).length %></span>
+          </div>
+          <div class="kanban-column-actions">
+            <button type="button" class="edit-column-btn" data-status-code="<%= status.code %>" data-status-name="<%= status.name %>" data-status-color="<%= status.color %>" data-is-system="<%= status.isSystem %>" title="Editar columna">✏️</button>
+          </div>
+        </div>
+        <div class="kanban-column-body" data-status-code="<%= status.code %>">
+          <% (submissionsByStatus[status.code] || []).slice(0, 10).forEach(sub => { %>
+            <div class="kanban-card status-<%= sub.status %>" draggable="true" data-submission-id="<%= sub._id %>" data-status="<%= status.code %>">
+              <div class="kanban-card-header">
+                <span class="kanban-card-user">
+                  <span class="status-dot <%= sub.status %>"></span>
+                  <%= sub.user ? sub.user.username : 'N/A' %>
+                </span>
+                <span class="kanban-card-date"><%= sub.createdAt.toLocaleDateString('es', {day: '2-digit', month: '2-digit'}) %></span>
+              </div>
+              <div class="kanban-card-title<%= sub.adminTitle ? '' : ' empty' %>" data-submission-id="<%= sub._id %>" title="Clic para editar título"><%= sub.adminTitle || 'Agregar título...' %></div>
+              <div class="kanban-card-flow"><%= sub.flow ? sub.flow.name : 'N/A' %> → <%= sub.testCase ? sub.testCase.title : 'N/A' %></div>
+              <div class="kanban-card-feedback<%= sub.feedback ? '' : ' empty' %>" data-submission-id="<%= sub._id %>" title="Clic para editar feedback"><%= sub.feedback || 'Agregar feedback...' %></div>
+              <% if (sub.screenshot) { %>
+                <img src="<%= sub.screenshot %>" alt="Screenshot" class="kanban-card-thumb" onclick="window.open('<%= sub.screenshot %>', '_blank')">
+              <% } %>
+              <div class="kanban-card-notes<%= sub.adminNotes ? '' : ' empty' %>" data-submission-id="<%= sub._id %>" title="Clic para editar notas">
+                <span class="notes-icon">📝</span>
+                <span class="notes-text"><%= sub.adminNotes || 'Agregar nota...' %></span>
+              </div>
+              <div class="kanban-card-footer">
+                <div class="kanban-card-icons">
+                  <% if (sub.screenshot) { %><span title="Tiene screenshot">📷</span><% } %>
+                  <% if (sub.wasReassigned) { %><span title="Reasignado">🔄</span><% } %>
+                </div>
+                <span class="kanban-card-points <%= sub.pointsAwarded ? 'awarded' : 'pending' %>" title="<%= sub.pointsAwarded ? 'Puntos otorgados' : 'Pendiente de revisar' %>">
+                  <%= sub.pointsEarned %> pts <%= sub.pointsAwarded ? '✓' : '⏳' %>
+                </span>
+              </div>
+              <% if (sub.testCase) { %>
+                <div class="kanban-card-details">
+                  <div><strong>Objetivo:</strong> <%= sub.testCase.description %></div>
+                  <div><strong>Esperado:</strong> <%= sub.testCase.expectedResult %></div>
+                </div>
+              <% } %>
+            </div>
+          <% }) %>
+          <% if ((submissionsByStatus[status.code] || []).length > 10) { %>
+            <div class="text-center text-muted" style="font-size: 0.7rem; padding: 0.25rem;">
+              +<%= (submissionsByStatus[status.code] || []).length - 10 %> más
+            </div>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+    <div class="kanban-add-column" id="add-column-btn">
+      + Agregar columna
+    </div>
+  </div>
+</div>
+
+<!-- Column Edit Modal -->
+<div class="column-edit-modal" id="column-edit-modal">
+  <div class="column-edit-modal-content">
+    <h5 id="column-modal-title">Editar Columna</h5>
+    <label>Nombre</label>
+    <input type="text" id="column-name-input" placeholder="Nombre de la columna">
+    <label>Color</label>
+    <div class="color-row">
+      <input type="color" id="column-color-input" value="#6c757d">
+      <span id="column-color-preview" style="font-size: 0.8rem; color: #666;">#6c757d</span>
+    </div>
+    <div class="column-edit-modal-buttons">
+      <button type="button" class="btn-delete" id="column-delete-btn" style="display: none;">Eliminar</button>
+      <button type="button" class="btn-cancel" id="column-cancel-btn">Cancelar</button>
+      <button type="button" class="btn-save" id="column-save-btn">Guardar</button>
+    </div>
+  </div>
 </div>
 
 <div class="filter-card">
@@ -148,6 +1069,40 @@
       <button type="submit" class="btn btn-primary w-100">Filtrar</button>
     </div>
   </form>
+  <div class="d-flex align-items-center justify-content-between mt-3 pt-3 border-top">
+    <div class="d-flex align-items-center gap-2">
+      <span class="text-muted" style="font-size: 0.8rem;">Ordenar:</span>
+      <div class="btn-group btn-group-sm" role="group">
+        <button type="button" class="btn btn-outline-secondary sort-btn active" data-sort="date-desc" title="Más reciente primero">
+          📅 Reciente
+        </button>
+        <button type="button" class="btn btn-outline-secondary sort-btn" data-sort="date-asc" title="Más antiguo primero">
+          📅 Antiguo
+        </button>
+        <button type="button" class="btn btn-outline-secondary sort-btn" data-sort="name-asc" title="A-Z por usuario">
+          A→Z
+        </button>
+        <button type="button" class="btn btn-outline-secondary sort-btn" data-sort="name-desc" title="Z-A por usuario">
+          Z→A
+        </button>
+        <button type="button" class="btn btn-outline-secondary sort-btn" data-sort="count-desc" title="Grupos con más envíos primero">
+          📊 Más envíos
+        </button>
+        <button type="button" class="btn btn-outline-secondary sort-btn" data-sort="count-asc" title="Grupos con menos envíos primero">
+          📊 Menos envíos
+        </button>
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <label class="form-check-label text-muted" style="font-size: 0.8rem;" for="showHiddenToggle">
+        Mostrar ocultos
+        <span id="hidden-count" class="hidden-count-badge" style="display: none;">0</span>
+      </label>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" id="showHiddenToggle">
+      </div>
+    </div>
+  </div>
 </div>
 
 <% if (submissions.length === 0) { %>
@@ -156,163 +1111,1416 @@
     <h5 class="mt-3">No se encontraron envios</h5>
     <p class="text-muted">Intenta ajustando tus filtros</p>
   </div>
-<% } %>
+<% } else { %>
 
-<div class="row">
-<% submissions.forEach((sub, idx) => { %>
-  <div class="col-md-6">
-    <div class="submission-card">
-      <div class="submission-header">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <span class="status-dot <%= sub.status %>"></span>
-            <strong><%= sub.user ? sub.user.username : 'N/A' %></strong>
-            <% if (sub.userGroupAtSubmission) { %>
-              <span class="badge ms-1" style="background-color: <%= sub.userGroupAtSubmission.color %>; font-size: 0.65rem;">
-                <%= sub.userGroupAtSubmission.code %>
-              </span>
-            <% } %>
-            <span class="text-muted">· <%= sub.createdAt.toLocaleDateString() %></span>
-            <% if (!sub.pointsAwarded) { %>
-              <span class="badge bg-warning text-dark ms-2">Pendiente</span>
-            <% } %>
-            <% if (sub.wasReassigned) { %>
-              <span class="badge bg-info text-dark ms-1" title="Reasignado desde <%= sub.reassignedFrom ? sub.reassignedFrom.code : 'N/A' %>">Reasignado</span>
-            <% } %>
-          </div>
-          <div>
-            <span class="text-muted"><%= sub.pointsEarned %> pts</span>
+<div class="board-hint">
+  <strong>Tip:</strong> Arrastra el icono <span style="background:#f0f0f0;padding:2px 6px;border-radius:3px;">⋮⋮</span> para agrupar envios similares. Suelta una tarjeta sobre otra para crear un grupo.
+</div>
+
+<!-- Scroll indicators -->
+<div id="scroll-indicator-top" class="scroll-indicator top">
+  <span class="arrow">↑</span>
+  <span>Scroll</span>
+  <span class="countdown">3</span>
+</div>
+<div id="scroll-indicator-bottom" class="scroll-indicator bottom">
+  <span class="arrow">↓</span>
+  <span>Scroll</span>
+  <span class="countdown">3</span>
+</div>
+
+<!-- Custom confirm modal -->
+<div id="confirm-modal" class="confirm-modal-backdrop">
+  <div class="confirm-modal">
+    <div class="confirm-modal-icon" id="confirm-modal-icon">📦</div>
+    <div class="confirm-modal-title" id="confirm-modal-title">Confirmar</div>
+    <div class="confirm-modal-message" id="confirm-modal-message">¿Estas seguro?</div>
+    <div class="confirm-modal-buttons">
+      <button type="button" class="confirm-modal-cancel" id="confirm-modal-cancel">Cancelar</button>
+      <button type="button" class="confirm-modal-confirm" id="confirm-modal-confirm">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<%
+  // Merge groups and ungrouped submissions, interleaved by date
+  const allItems = [];
+
+  // Add groups with their most recent submission date for sorting
+  Object.values(groupedSubmissions).forEach(groupData => {
+    const mostRecentDate = groupData.submissions.reduce((latest, sub) => {
+      const subDate = new Date(sub.createdAt).getTime();
+      return subDate > latest ? subDate : latest;
+    }, 0);
+    allItems.push({
+      type: 'group',
+      data: groupData,
+      sortDate: mostRecentDate,
+      order: groupData.group.order || 0
+    });
+  });
+
+  // Add ungrouped submissions
+  ungroupedSubmissions.forEach(sub => {
+    allItems.push({
+      type: 'card',
+      data: sub,
+      sortDate: new Date(sub.createdAt).getTime(),
+      order: 999999 // Cards don't have manual order, always after groups with same date
+    });
+  });
+
+  // Sort by date (newest first), then by order for groups
+  allItems.sort((a, b) => {
+    // First sort by date (newest first)
+    const dateDiff = b.sortDate - a.sortDate;
+    if (dateDiff !== 0) return dateDiff;
+    // If same date, sort by order (lower order first)
+    return a.order - b.order;
+  });
+%>
+
+<div id="submissions-container">
+  <% allItems.forEach(item => { %>
+    <% if (item.type === 'group') { %>
+      <% const groupData = item.data; %>
+      <%
+        const groupName = groupData.group.name || 'Grupo';
+        const groupCount = groupData.submissions.length;
+        const firstUser = groupData.submissions[0]?.user?.username || 'zzz';
+      %>
+    <div class="submission-item"
+         data-sort-date="<%= item.sortDate %>"
+         data-sort-name="<%= firstUser.toLowerCase() %>"
+         data-sort-count="<%= groupCount %>"
+         data-sort-group-name="<%= groupName.toLowerCase() %>"
+         data-is-group="true">
+      <div class="submission-group" data-group-id="<%= groupData.group._id %>" draggable="false">
+        <div class="submission-group-header">
+          <span class="group-label">
+            <span class="group-name" data-group-id="<%= groupData.group._id %>" title="Clic para editar nombre"><%= groupData.group.name || 'Grupo' %></span>
+            <span class="group-count"><%= groupData.submissions.length %> envios</span>
+          </span>
+          <div class="group-actions">
+            <button type="button" class="btn btn-outline-danger btn-sm dissolve-group-btn" data-group-id="<%= groupData.group._id %>">
+              Disolver Grupo
+            </button>
           </div>
         </div>
-        <div class="mt-1">
-          <small class="text-muted">
-            <%= sub.flow ? sub.flow.name : 'N/A' %> → <%= sub.testCase ? sub.testCase.title : 'N/A' %>
-          </small>
+
+        <% groupData.submissions.forEach(sub => { %>
+          <div class="submission-card <%= sub.hiddenByAdmin ? 'hidden-card' : '' %>"
+               data-submission-id="<%= sub._id %>"
+               data-group-id="<%= sub.submissionGroup ? sub.submissionGroup._id : '' %>"
+               data-in-group="true"
+               data-hidden="<%= sub.hiddenByAdmin ? 'true' : 'false' %>"
+               draggable="false">
+            <div class="submission-header">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="drag-handle card-handle" title="Arrastrar tarjeta">⋮⋮</span>
+                  <span class="status-dot <%= sub.status %>"></span>
+                  <strong><%= sub.user ? sub.user.username : 'N/A' %></strong>
+                  <% if (sub.userGroupAtSubmission) { %>
+                    <span class="badge ms-1" style="background-color: <%= sub.userGroupAtSubmission.color %>; font-size: 0.65rem;">
+                      <%= sub.userGroupAtSubmission.code %>
+                    </span>
+                  <% } %>
+                  <span class="text-muted">· <%= sub.createdAt.toLocaleDateString() %></span>
+                  <% if (!sub.pointsAwarded) { %>
+                    <span class="badge bg-warning text-dark ms-2">Pendiente</span>
+                  <% } %>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <button type="button" class="btn btn-outline-secondary hide-btn"
+                          data-submission-id="<%= sub._id %>"
+                          title="<%= sub.hiddenByAdmin ? 'Mostrar' : 'Ocultar' %>">
+                    <%= sub.hiddenByAdmin ? '👁' : '👁‍🗨' %>
+                  </button>
+                  <span class="text-muted"><%= sub.pointsEarned %> pts</span>
+                  <button type="button" class="btn btn-link btn-sm p-0 text-danger ungroup-btn"
+                          data-submission-id="<%= sub._id %>" title="Quitar del grupo">✕</button>
+                </div>
+              </div>
+              <div class="mt-1 d-flex align-items-center">
+                <small class="text-muted">
+                  <%= sub.flow ? sub.flow.name : 'N/A' %> → <%= sub.testCase ? sub.testCase.title : 'N/A' %>
+                </small>
+                <span class="collapse-indicator">▼</span>
+              </div>
+            </div>
+
+            <div class="submission-body">
+              <div class="row">
+                <div class="col-8">
+                  <% if (sub.feedback) { %>
+                    <h6>Comentarios</h6>
+                    <div class="feedback-box"><%= sub.feedback %></div>
+                  <% } else { %>
+                    <div class="text-muted mb-3"><em>Sin comentarios</em></div>
+                  <% } %>
+                  <div class="admin-notes">
+                    <div class="admin-notes-label">📝 Nota Admin</div>
+                    <div class="admin-notes-content <%= sub.adminNotes ? '' : 'empty' %>"
+                         data-submission-id="<%= sub._id %>"
+                         title="Clic para editar"><%= sub.adminNotes || 'Agregar nota...' %></div>
+                  </div>
+                  <% if (sub.screenshot) { %>
+                    <h6 class="mt-3">Captura</h6>
+                    <a href="/uploads/<%= sub.screenshot %>" target="_blank">
+                      <img src="/uploads/<%= sub.screenshot %>" alt="Captura" class="screenshot-preview">
+                    </a>
+                  <% } %>
+                </div>
+                <div class="col-4">
+                  <h6>Puntos</h6>
+                  <div class="points-breakdown">
+                    <div class="points-item"><span>Base</span><span>1</span></div>
+                    <% if (sub.status === 'failed') { %>
+                      <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.bug ? 'rejected' : '' %>">
+                        <span>Error</span><span>+3</span>
+                      </div>
+                    <% } %>
+                    <% if (sub.feedback && sub.feedback.trim()) { %>
+                      <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? 'rejected' : '' %>">
+                        <span>Feedback</span><span>+1</span>
+                      </div>
+                    <% } %>
+                    <% if (sub.screenshot) { %>
+                      <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? 'rejected' : '' %>">
+                        <span>Captura</span><span>+1</span>
+                      </div>
+                    <% } %>
+                    <div class="points-item" style="border-top: 1px solid #ddd; margin-top: 0.25rem; padding-top: 0.5rem;">
+                      <strong>Total</strong><strong><%= sub.pointsEarned %></strong>
+                    </div>
+                  </div>
+                  <div class="action-buttons">
+                    <% if (!sub.pointsAwarded) { %>
+                      <form method="POST" action="/admin/submissions/<%= sub._id %>/approve<%= filterQuery %>" class="d-inline">
+                        <button type="submit" class="btn btn-dark btn-sm">Aprobar</button>
+                      </form>
+                    <% } %>
+                    <form method="POST" action="/admin/submissions/<%= sub._id %>/reset<%= filterQuery %>" class="d-inline">
+                      <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Eliminar?')">Reiniciar</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+    <% } else { %>
+      <% const sub = item.data; %>
+    <div class="submission-item <%= sub.hiddenByAdmin ? 'hidden-by-admin' : '' %>"
+         data-sort-date="<%= item.sortDate %>"
+         data-sort-name="<%= (sub.user?.username || 'zzz').toLowerCase() %>"
+         data-sort-count="1"
+         data-is-group="false"
+         data-hidden="<%= sub.hiddenByAdmin ? 'true' : 'false' %>">
+      <div class="submission-card"
+           data-submission-id="<%= sub._id %>"
+           data-group-id=""
+           data-in-group="false"
+           draggable="false">
+        <div class="submission-header">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <span class="drag-handle card-handle" title="Arrastrar para agrupar">⋮⋮</span>
+              <span class="status-dot <%= sub.status %>"></span>
+              <strong><%= sub.user ? sub.user.username : 'N/A' %></strong>
+              <% if (sub.userGroupAtSubmission) { %>
+                <span class="badge ms-1" style="background-color: <%= sub.userGroupAtSubmission.color %>; font-size: 0.65rem;">
+                  <%= sub.userGroupAtSubmission.code %>
+                </span>
+              <% } %>
+              <span class="text-muted">· <%= sub.createdAt.toLocaleDateString() %></span>
+              <% if (!sub.pointsAwarded) { %>
+                <span class="badge bg-warning text-dark ms-2">Pendiente</span>
+              <% } %>
+              <% if (sub.wasReassigned) { %>
+                <span class="badge bg-info text-dark ms-1">Reasignado</span>
+              <% } %>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <button type="button" class="btn btn-outline-secondary hide-btn"
+                      data-submission-id="<%= sub._id %>"
+                      title="<%= sub.hiddenByAdmin ? 'Mostrar' : 'Ocultar' %>">
+                <%= sub.hiddenByAdmin ? '👁' : '👁‍🗨' %>
+              </button>
+              <span class="text-muted"><%= sub.pointsEarned %> pts</span>
+            </div>
+          </div>
+          <div class="mt-1">
+            <small class="text-muted">
+              <%= sub.flow ? sub.flow.name : 'N/A' %> → <%= sub.testCase ? sub.testCase.title : 'N/A' %>
+            </small>
+            <% if (sub.testCase) { %>
+              <a class="ms-2" style="font-size: 0.7rem; cursor: pointer;" data-bs-toggle="collapse" href="#testcase-<%= sub._id %>">Ver detalles</a>
+            <% } %>
+          </div>
           <% if (sub.testCase) { %>
-            <a class="ms-2" style="font-size: 0.7rem; cursor: pointer;" data-bs-toggle="collapse" href="#testcase-<%= sub._id %>">Mostrar detalles de prueba</a>
+            <div class="collapse mt-2" id="testcase-<%= sub._id %>">
+              <div style="background: #f0f0f0; padding: 0.5rem; border-radius: 4px; font-size: 0.75rem;">
+                <div><strong>Objetivo:</strong> <%= sub.testCase.description %></div>
+                <div class="mt-1"><strong>Pasos:</strong></div>
+                <pre style="font-size: 0.7rem; margin: 0; white-space: pre-wrap;"><%= sub.testCase.scenario %></pre>
+                <div class="mt-1"><strong>Esperado:</strong> <%= sub.testCase.expectedResult %></div>
+              </div>
+            </div>
           <% } %>
         </div>
-        <% if (sub.wasReassigned && sub.reassignmentReason) { %>
-          <div class="mt-1">
-            <small class="text-info"><strong>Razon de reasignacion:</strong> <%= sub.reassignmentReason %></small>
-          </div>
-        <% } %>
-        <% if (sub.testCase) { %>
-          <div class="collapse mt-2" id="testcase-<%= sub._id %>">
-            <div style="background: #f0f0f0; padding: 0.5rem; border-radius: 4px; font-size: 0.75rem;">
-              <div><strong>Objetivo:</strong> <%= sub.testCase.description %></div>
-              <div class="mt-1"><strong>Pasos:</strong></div>
-              <pre style="font-size: 0.7rem; margin: 0; white-space: pre-wrap;"><%= sub.testCase.scenario %></pre>
-              <div class="mt-1"><strong>Esperado:</strong> <%= sub.testCase.expectedResult %></div>
+
+        <div class="submission-body">
+          <div class="row">
+            <div class="col-8">
+              <% if (sub.feedback) { %>
+                <h6>Comentarios</h6>
+                <div class="feedback-box"><%= sub.feedback %></div>
+              <% } else { %>
+                <div class="text-muted mb-3"><em>Sin comentarios proporcionados</em></div>
+              <% } %>
+              <div class="admin-notes">
+                <div class="admin-notes-label">📝 Nota Admin</div>
+                <div class="admin-notes-content <%= sub.adminNotes ? '' : 'empty' %>"
+                     data-submission-id="<%= sub._id %>"
+                     title="Clic para editar"><%= sub.adminNotes || 'Agregar nota...' %></div>
+              </div>
+              <% if (sub.screenshot) { %>
+                <h6 class="mt-3">Captura de Pantalla</h6>
+                <a href="/uploads/<%= sub.screenshot %>" target="_blank">
+                  <img src="/uploads/<%= sub.screenshot %>" alt="Captura" class="screenshot-preview">
+                </a>
+              <% } %>
             </div>
-          </div>
-        <% } %>
-      </div>
 
-      <div class="submission-body">
-        <div class="row">
-          <div class="col-8">
-            <% if (sub.feedback) { %>
-              <h6>Comentarios</h6>
-              <div class="feedback-box"><%= sub.feedback %></div>
-            <% } else { %>
-              <div class="text-muted mb-3"><em>Sin comentarios proporcionados</em></div>
-            <% } %>
+            <div class="col-4">
+              <h6>Puntos</h6>
+              <div class="points-breakdown">
+                <div class="points-item"><span>Base</span><span>1</span></div>
+                <% if (sub.status === 'failed') { %>
+                  <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.bug ? 'rejected' : '' %>">
+                    <span>Error</span>
+                    <span class="d-flex align-items-center gap-1">
+                      +3
+                      <% if (!sub.pointsAwarded) { %>
+                        <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/bug<%= filterQuery %>" class="d-inline">
+                          <button type="submit" class="btn btn-link btn-sm p-0 <%= sub.rejectedPoints && sub.rejectedPoints.bug ? 'text-success' : 'text-danger' %>" style="font-size: 0.7rem;">
+                            <%= sub.rejectedPoints && sub.rejectedPoints.bug ? '✓' : '✕' %>
+                          </button>
+                        </form>
+                      <% } %>
+                    </span>
+                  </div>
+                <% } %>
+                <% if (sub.feedback && sub.feedback.trim()) { %>
+                  <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? 'rejected' : '' %>">
+                    <span>Comentarios</span>
+                    <span class="d-flex align-items-center gap-1">
+                      +1
+                      <% if (!sub.pointsAwarded) { %>
+                        <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/feedback<%= filterQuery %>" class="d-inline">
+                          <button type="submit" class="btn btn-link btn-sm p-0 <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? 'text-success' : 'text-danger' %>" style="font-size: 0.7rem;">
+                            <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? '✓' : '✕' %>
+                          </button>
+                        </form>
+                      <% } %>
+                    </span>
+                  </div>
+                <% } %>
+                <% if (sub.screenshot) { %>
+                  <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? 'rejected' : '' %>">
+                    <span>Captura</span>
+                    <span class="d-flex align-items-center gap-1">
+                      +1
+                      <% if (!sub.pointsAwarded) { %>
+                        <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/screenshot<%= filterQuery %>" class="d-inline">
+                          <button type="submit" class="btn btn-link btn-sm p-0 <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? 'text-success' : 'text-danger' %>" style="font-size: 0.7rem;">
+                            <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? '✓' : '✕' %>
+                          </button>
+                        </form>
+                      <% } %>
+                    </span>
+                  </div>
+                <% } %>
+                <% if (sub.isUsefulFeedback) { %>
+                  <div class="points-item"><span>Util</span><span>+1</span></div>
+                <% } %>
+                <div class="points-item" style="border-top: 1px solid #ddd; margin-top: 0.25rem; padding-top: 0.5rem;">
+                  <strong>Total</strong>
+                  <strong><%= sub.pointsEarned + (sub.isUsefulFeedback ? 1 : 0) %></strong>
+                </div>
+              </div>
 
-            <% if (sub.screenshot) { %>
-              <h6>Captura de Pantalla</h6>
-              <a href="/uploads/<%= sub.screenshot %>" target="_blank">
-                <img src="/uploads/<%= sub.screenshot %>" alt="Captura" class="screenshot-preview">
-              </a>
-            <% } %>
-          </div>
-
-        <div class="col-4">
-          <h6>Puntos</h6>
-          <div class="points-breakdown">
-            <div class="points-item">
-              <span>Base</span>
-              <span>1</span>
+              <div class="action-buttons">
+                <% if (!sub.pointsAwarded) { %>
+                  <form method="POST" action="/admin/submissions/<%= sub._id %>/approve<%= filterQuery %>" class="d-inline">
+                    <button type="submit" class="btn btn-dark btn-sm">Aprobar</button>
+                  </form>
+                <% } %>
+                <% if (sub.feedback && !sub.isUsefulFeedback && sub.pointsAwarded) { %>
+                  <form method="POST" action="/admin/submissions/<%= sub._id %>/useful<%= filterQuery %>" class="d-inline">
+                    <button type="submit" class="btn btn-outline-dark btn-sm">+1 Util</button>
+                  </form>
+                <% } %>
+                <form method="POST" action="/admin/submissions/<%= sub._id %>/rerun<%= filterQuery %>" class="d-inline">
+                  <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Permitir repetir?')">Repetir</button>
+                </form>
+                <form method="POST" action="/admin/submissions/<%= sub._id %>/reset<%= filterQuery %>" class="d-inline">
+                  <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Eliminar y descontar puntos?')">Reiniciar</button>
+                </form>
+              </div>
             </div>
-            <% if (sub.status === 'failed') { %>
-              <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.bug ? 'rejected' : '' %>">
-                <span>Error</span>
-                <span class="d-flex align-items-center gap-1">
-                  +3
-                  <% if (!sub.pointsAwarded) { %>
-                    <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/bug<%= filterQuery %>" class="d-inline">
-                      <button type="submit" class="btn btn-link btn-sm p-0 <%= sub.rejectedPoints && sub.rejectedPoints.bug ? 'text-success' : 'text-danger' %>" style="font-size: 0.7rem;">
-                        <%= sub.rejectedPoints && sub.rejectedPoints.bug ? '✓' : '✕' %>
-                      </button>
-                    </form>
-                  <% } %>
-                </span>
-              </div>
-            <% } %>
-            <% if (sub.feedback && sub.feedback.trim()) { %>
-              <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? 'rejected' : '' %>">
-                <span>Comentarios</span>
-                <span class="d-flex align-items-center gap-1">
-                  +1
-                  <% if (!sub.pointsAwarded) { %>
-                    <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/feedback<%= filterQuery %>" class="d-inline">
-                      <button type="submit" class="btn btn-link btn-sm p-0 <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? 'text-success' : 'text-danger' %>" style="font-size: 0.7rem;">
-                        <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? '✓' : '✕' %>
-                      </button>
-                    </form>
-                  <% } %>
-                </span>
-              </div>
-            <% } %>
-            <% if (sub.screenshot) { %>
-              <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? 'rejected' : '' %>">
-                <span>Captura</span>
-                <span class="d-flex align-items-center gap-1">
-                  +1
-                  <% if (!sub.pointsAwarded) { %>
-                    <form method="POST" action="/admin/submissions/<%= sub._id %>/toggle/screenshot<%= filterQuery %>" class="d-inline">
-                      <button type="submit" class="btn btn-link btn-sm p-0 <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? 'text-success' : 'text-danger' %>" style="font-size: 0.7rem;">
-                        <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? '✓' : '✕' %>
-                      </button>
-                    </form>
-                  <% } %>
-                </span>
-              </div>
-            <% } %>
-            <% if (sub.isUsefulFeedback) { %>
-              <div class="points-item">
-                <span>Util</span>
-                <span>+1</span>
-              </div>
-            <% } %>
-            <div class="points-item" style="border-top: 1px solid #ddd; margin-top: 0.25rem; padding-top: 0.5rem;">
-              <strong>Total</strong>
-              <strong><%= sub.pointsEarned + (sub.isUsefulFeedback ? 1 : 0) %></strong>
-            </div>
-          </div>
-
-          <div class="action-buttons">
-            <% if (!sub.pointsAwarded) { %>
-              <form method="POST" action="/admin/submissions/<%= sub._id %>/approve<%= filterQuery %>" class="d-inline">
-                <button type="submit" class="btn btn-dark btn-sm">Aprobar</button>
-              </form>
-            <% } %>
-            <% if (sub.feedback && !sub.isUsefulFeedback && sub.pointsAwarded) { %>
-              <form method="POST" action="/admin/submissions/<%= sub._id %>/useful<%= filterQuery %>" class="d-inline">
-                <button type="submit" class="btn btn-outline-dark btn-sm">+1 Util</button>
-              </form>
-            <% } %>
-            <form method="POST" action="/admin/submissions/<%= sub._id %>/rerun<%= filterQuery %>" class="d-inline">
-              <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Permitir repetir?')">Repetir</button>
-            </form>
-            <form method="POST" action="/admin/submissions/<%= sub._id %>/reset<%= filterQuery %>" class="d-inline">
-              <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Eliminar y descontar puntos?')">Reiniciar</button>
-            </form>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  </div>
-<% }) %>
+    <% } %>
+  <% }) %>
 </div>
+<% } %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let draggedElement = null;
+  let draggedId = null;
+
+  // ==================== Kanban Board ====================
+  const kanbanBoard = document.getElementById('kanban-board');
+  const kanbanWrapper = document.getElementById('kanban-wrapper');
+  const kanbanToggle = document.getElementById('kanban-toggle');
+  let kanbanDraggedCard = null;
+
+  // Toggle Kanban visibility
+  if (kanbanToggle) {
+    kanbanToggle.addEventListener('click', function() {
+      kanbanWrapper.classList.toggle('collapsed');
+      this.textContent = kanbanWrapper.classList.contains('collapsed') ? 'Mostrar' : 'Ocultar';
+    });
+  }
+
+  // Kanban card drag start
+  document.querySelectorAll('.kanban-card').forEach(card => {
+    card.addEventListener('dragstart', function(e) {
+      kanbanDraggedCard = this;
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', this.dataset.submissionId);
+    });
+
+    card.addEventListener('dragend', function() {
+      this.classList.remove('dragging');
+      kanbanDraggedCard = null;
+      document.querySelectorAll('.kanban-column-body.drag-over').forEach(col => {
+        col.classList.remove('drag-over');
+      });
+    });
+
+    // Toggle details on click (only on card body, not editable fields)
+    card.addEventListener('click', function(e) {
+      // Don't toggle if clicking on editable fields or thumbnail
+      if (e.target.classList.contains('kanban-card-thumb')) return;
+      if (e.target.classList.contains('kanban-card-title')) return;
+      if (e.target.classList.contains('kanban-card-feedback')) return;
+      if (e.target.classList.contains('kanban-card-notes')) return;
+      if (e.target.closest('.kanban-card-notes')) return;
+      if (e.target.classList.contains('kanban-card-input')) return;
+      const details = this.querySelector('.kanban-card-details');
+      if (details) {
+        details.classList.toggle('visible');
+      }
+    });
+  });
+
+  // Kanban card inline editing
+  function createKanbanEditor(element, field, isTextarea = false) {
+    const submissionId = element.dataset.submissionId;
+    const currentValue = element.classList.contains('empty') ? '' :
+      (field === 'notes' ? element.querySelector('.notes-text').textContent.trim() : element.textContent.trim());
+
+    const input = document.createElement(isTextarea ? 'textarea' : 'input');
+    input.className = 'kanban-card-input';
+    input.value = currentValue;
+    if (isTextarea) {
+      input.rows = 3;
+    }
+
+    element.style.display = 'none';
+    element.parentNode.insertBefore(input, element.nextSibling);
+    input.focus();
+    input.select();
+
+    let saved = false;
+
+    const saveValue = async () => {
+      if (saved) return;
+      saved = true;
+
+      const newValue = input.value.trim();
+
+      try {
+        const endpoint = field === 'title' ? 'title' : field === 'feedback' ? 'feedback' : 'notes';
+        const bodyKey = field === 'notes' ? 'notes' : field;
+
+        const response = await fetch(`/admin/submissions/${submissionId}/${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [bodyKey]: newValue })
+        });
+
+        if (response.ok) {
+          if (field === 'notes') {
+            element.querySelector('.notes-text').textContent = newValue || 'Agregar nota...';
+          } else {
+            element.textContent = newValue || (field === 'title' ? 'Agregar título...' : 'Agregar feedback...');
+          }
+
+          if (newValue) {
+            element.classList.remove('empty');
+          } else {
+            element.classList.add('empty');
+          }
+        }
+      } catch (err) {
+        console.error('Save error:', err);
+      }
+
+      input.remove();
+      element.style.display = '';
+    };
+
+    const cancelEdit = () => {
+      if (saved) return;
+      saved = true;
+      input.remove();
+      element.style.display = '';
+    };
+
+    input.addEventListener('blur', saveValue);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !isTextarea) {
+        e.preventDefault();
+        saveValue();
+      } else if (e.key === 'Enter' && e.ctrlKey) {
+        e.preventDefault();
+        saveValue();
+      } else if (e.key === 'Escape') {
+        cancelEdit();
+      }
+    });
+  }
+
+  // Attach click handlers for editable fields
+  document.querySelectorAll('.kanban-card-title').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      createKanbanEditor(this, 'title', false);
+    });
+  });
+
+  document.querySelectorAll('.kanban-card-feedback').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      createKanbanEditor(this, 'feedback', true);
+    });
+  });
+
+  document.querySelectorAll('.kanban-card-notes').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      createKanbanEditor(this, 'notes', true);
+    });
+  });
+
+  // Kanban column body as drop target
+  document.querySelectorAll('.kanban-column-body').forEach(columnBody => {
+    columnBody.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      if (kanbanDraggedCard) {
+        this.classList.add('drag-over');
+      }
+    });
+
+    columnBody.addEventListener('dragleave', function(e) {
+      if (!this.contains(e.relatedTarget)) {
+        this.classList.remove('drag-over');
+      }
+    });
+
+    columnBody.addEventListener('drop', async function(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+
+      if (!kanbanDraggedCard) return;
+
+      // Save reference before async operation (dragend may set kanbanDraggedCard to null)
+      const card = kanbanDraggedCard;
+      const submissionId = card.dataset.submissionId;
+      const newStatus = this.dataset.statusCode;
+      const oldStatus = card.dataset.status;
+
+      if (newStatus === oldStatus) return;
+
+      try {
+        const response = await fetch(`/admin/submissions/${submissionId}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        if (response.ok) {
+          // Move card to new column
+          card.dataset.status = newStatus;
+          this.appendChild(card);
+
+          // Update counts
+          updateColumnCounts();
+        } else {
+          alert('Error al cambiar estado');
+        }
+      } catch (err) {
+        console.error('Status change error:', err);
+        alert('Error al cambiar estado');
+      }
+    });
+  });
+
+  // Update column counts after drag
+  function updateColumnCounts() {
+    document.querySelectorAll('.kanban-column').forEach(column => {
+      const body = column.querySelector('.kanban-column-body');
+      const count = body.querySelectorAll('.kanban-card').length;
+      const countEl = column.querySelector('.kanban-column-count');
+      if (countEl) {
+        countEl.textContent = count;
+      }
+    });
+  }
+
+  // Column Edit Modal
+  const columnEditModal = document.getElementById('column-edit-modal');
+  const columnModalTitle = document.getElementById('column-modal-title');
+  const columnNameInput = document.getElementById('column-name-input');
+  const columnColorInput = document.getElementById('column-color-input');
+  const columnColorPreview = document.getElementById('column-color-preview');
+  const columnDeleteBtn = document.getElementById('column-delete-btn');
+  const columnCancelBtn = document.getElementById('column-cancel-btn');
+  const columnSaveBtn = document.getElementById('column-save-btn');
+  const addColumnBtn = document.getElementById('add-column-btn');
+
+  let editingStatusCode = null;
+  let isNewColumn = false;
+
+  // Update color preview
+  if (columnColorInput) {
+    columnColorInput.addEventListener('input', function() {
+      columnColorPreview.textContent = this.value;
+    });
+  }
+
+  // Edit column button
+  document.querySelectorAll('.edit-column-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      editingStatusCode = this.dataset.statusCode;
+      isNewColumn = false;
+
+      columnModalTitle.textContent = 'Editar Columna';
+      columnNameInput.value = this.dataset.statusName;
+      columnColorInput.value = this.dataset.statusColor;
+      columnColorPreview.textContent = this.dataset.statusColor;
+
+      // Show delete button only for non-system statuses
+      columnDeleteBtn.style.display = this.dataset.isSystem === 'true' ? 'none' : 'block';
+
+      columnEditModal.classList.add('visible');
+    });
+  });
+
+  // Add new column
+  if (addColumnBtn) {
+    addColumnBtn.addEventListener('click', function() {
+      editingStatusCode = null;
+      isNewColumn = true;
+
+      columnModalTitle.textContent = 'Nueva Columna';
+      columnNameInput.value = '';
+      columnColorInput.value = '#6c757d';
+      columnColorPreview.textContent = '#6c757d';
+      columnDeleteBtn.style.display = 'none';
+
+      columnEditModal.classList.add('visible');
+    });
+  }
+
+  // Cancel modal
+  if (columnCancelBtn) {
+    columnCancelBtn.addEventListener('click', function() {
+      columnEditModal.classList.remove('visible');
+    });
+  }
+
+  // Close modal on backdrop click
+  if (columnEditModal) {
+    columnEditModal.addEventListener('click', function(e) {
+      if (e.target === columnEditModal) {
+        columnEditModal.classList.remove('visible');
+      }
+    });
+  }
+
+  // Save column
+  if (columnSaveBtn) {
+    columnSaveBtn.addEventListener('click', async function() {
+      const name = columnNameInput.value.trim();
+      const color = columnColorInput.value;
+
+      if (!name) {
+        alert('El nombre es requerido');
+        return;
+      }
+
+      try {
+        if (isNewColumn) {
+          // Create new column
+          const response = await fetch('/admin/submission-statuses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, color })
+          });
+
+          if (response.ok) {
+            location.reload();
+          } else {
+            const data = await response.json();
+            alert('Error: ' + (data.error || 'Error al crear columna'));
+          }
+        } else {
+          // Update existing column
+          const response = await fetch(`/admin/submission-statuses/${editingStatusCode}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, color })
+          });
+
+          if (response.ok) {
+            // Update UI without reload
+            const column = document.querySelector(`.kanban-column[data-status-code="${editingStatusCode}"]`);
+            if (column) {
+              const nameEl = column.querySelector('.status-name');
+              const dotEl = column.querySelector('.kanban-column-title .status-dot');
+              const editBtn = column.querySelector('.edit-column-btn');
+
+              if (nameEl) nameEl.textContent = name;
+              if (dotEl) dotEl.style.backgroundColor = color;
+              if (editBtn) {
+                editBtn.dataset.statusName = name;
+                editBtn.dataset.statusColor = color;
+              }
+            }
+            columnEditModal.classList.remove('visible');
+          } else {
+            const data = await response.json();
+            alert('Error: ' + (data.error || 'Error al actualizar columna'));
+          }
+        }
+      } catch (err) {
+        console.error('Save column error:', err);
+        alert('Error al guardar columna');
+      }
+    });
+  }
+
+  // Delete column
+  if (columnDeleteBtn) {
+    columnDeleteBtn.addEventListener('click', async function() {
+      if (!editingStatusCode) return;
+
+      showConfirm({
+        icon: '🗑️',
+        title: 'Eliminar columna',
+        message: 'Los envios de esta columna se moveran a Backlog. Esta accion no se puede deshacer.',
+        confirmText: 'Eliminar',
+        onConfirm: async () => {
+          try {
+            const response = await fetch(`/admin/submission-statuses/${editingStatusCode}`, {
+              method: 'DELETE'
+            });
+
+            if (response.ok) {
+              location.reload();
+            } else {
+              const data = await response.json();
+              alert('Error: ' + (data.error || 'Error al eliminar columna'));
+            }
+          } catch (err) {
+            console.error('Delete column error:', err);
+            alert('Error al eliminar columna');
+          }
+        }
+      });
+    });
+  }
+
+  // Sorting functionality
+  const container = document.getElementById('submissions-container');
+  const sortButtons = document.querySelectorAll('.sort-btn');
+
+  function sortItems(sortType) {
+    const items = Array.from(container.querySelectorAll('.submission-item'));
+
+    items.sort((a, b) => {
+      switch (sortType) {
+        case 'date-desc':
+          return parseInt(b.dataset.sortDate) - parseInt(a.dataset.sortDate);
+        case 'date-asc':
+          return parseInt(a.dataset.sortDate) - parseInt(b.dataset.sortDate);
+        case 'name-asc':
+          return a.dataset.sortName.localeCompare(b.dataset.sortName);
+        case 'name-desc':
+          return b.dataset.sortName.localeCompare(a.dataset.sortName);
+        case 'count-desc':
+          return parseInt(b.dataset.sortCount) - parseInt(a.dataset.sortCount);
+        case 'count-asc':
+          return parseInt(a.dataset.sortCount) - parseInt(b.dataset.sortCount);
+        default:
+          return 0;
+      }
+    });
+
+    // Re-append items in sorted order
+    items.forEach(item => container.appendChild(item));
+  }
+
+  sortButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      // Update active state
+      sortButtons.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+
+      // Sort items
+      sortItems(this.dataset.sort);
+    });
+  });
+
+  // Hide/Show functionality
+  const showHiddenToggle = document.getElementById('showHiddenToggle');
+  const hiddenCountBadge = document.getElementById('hidden-count');
+
+  function updateHiddenCount() {
+    const hiddenItems = document.querySelectorAll('.submission-item.hidden-by-admin, .submission-card.hidden-card').length;
+    if (hiddenItems > 0) {
+      hiddenCountBadge.textContent = hiddenItems;
+      hiddenCountBadge.style.display = 'inline';
+    } else {
+      hiddenCountBadge.style.display = 'none';
+    }
+  }
+
+  // Initial count
+  updateHiddenCount();
+
+  // Toggle show hidden
+  if (showHiddenToggle && container) {
+    showHiddenToggle.addEventListener('change', function() {
+      container.classList.toggle('show-hidden', this.checked);
+    });
+  }
+
+  // Hide button handler
+  async function toggleHideSubmission(btn) {
+    const submissionId = btn.dataset.submissionId;
+    const card = btn.closest('.submission-card');
+    const item = btn.closest('.submission-item');
+
+    try {
+      const response = await fetch(`/admin/submissions/${submissionId}/toggle-hidden`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Update button
+        btn.innerHTML = data.hidden ? '👁' : '👁‍🗨';
+        btn.title = data.hidden ? 'Mostrar' : 'Ocultar';
+
+        // Update classes
+        if (card.dataset.inGroup === 'true') {
+          card.classList.toggle('hidden-card', data.hidden);
+          card.dataset.hidden = data.hidden ? 'true' : 'false';
+        } else {
+          item.classList.toggle('hidden-by-admin', data.hidden);
+          item.dataset.hidden = data.hidden ? 'true' : 'false';
+        }
+
+        updateHiddenCount();
+      } else {
+        alert('Error al ocultar/mostrar');
+      }
+    } catch (err) {
+      console.error('Hide error:', err);
+      alert('Error al ocultar/mostrar');
+    }
+  }
+
+  document.querySelectorAll('.hide-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const card = this.closest('.submission-card');
+      const item = this.closest('.submission-item');
+      const isCurrentlyHidden = card.dataset.hidden === 'true' || (item && item.dataset.hidden === 'true');
+      const buttonRef = this;
+
+      // Only confirm when hiding, not when showing
+      if (!isCurrentlyHidden) {
+        showConfirm({
+          icon: '👁‍🗨',
+          title: 'Ocultar envío',
+          message: 'Este envío se ocultara del panel. Puedes verlo activando "Mostrar ocultos".',
+          confirmText: 'Ocultar',
+          onConfirm: () => toggleHideSubmission(buttonRef)
+        });
+      } else {
+        toggleHideSubmission(this);
+      }
+    });
+  });
+
+  // Auto-scroll variables
+  let scrollInterval = null;
+  let countdownInterval = null;
+  let isAutoScrolling = false;
+  let currentCountdown = 0;
+  let currentScrollSpeed = 0;
+  const SCROLL_ZONE = 120; // pixels from edge
+  const SCROLL_SPEED_MIN = 3; // starting speed
+  const SCROLL_SPEED_MAX = 25; // max speed
+  const SCROLL_ACCELERATION = 0.5; // speed increase per frame
+
+  const indicatorTop = document.getElementById('scroll-indicator-top');
+  const indicatorBottom = document.getElementById('scroll-indicator-bottom');
+
+  function showIndicator(direction, countdown) {
+    const indicator = direction === 'up' ? indicatorTop : indicatorBottom;
+    const otherIndicator = direction === 'up' ? indicatorBottom : indicatorTop;
+
+    if (indicator) {
+      indicator.classList.add('visible');
+      indicator.classList.toggle('scrolling', countdown === 0);
+      const countdownEl = indicator.querySelector('.countdown');
+      if (countdownEl) {
+        const scrollingText = direction === 'up' ? '↑↑' : '↓↓';
+        countdownEl.textContent = countdown === 0 ? scrollingText : countdown;
+      }
+    }
+    if (otherIndicator) {
+      otherIndicator.classList.remove('visible', 'scrolling');
+    }
+  }
+
+  function hideIndicators() {
+    if (indicatorTop) indicatorTop.classList.remove('visible', 'scrolling');
+    if (indicatorBottom) indicatorBottom.classList.remove('visible', 'scrolling');
+  }
+
+  function startCountdown(direction) {
+    currentCountdown = 3;
+    showIndicator(direction, currentCountdown);
+
+    countdownInterval = setInterval(() => {
+      currentCountdown--;
+      if (currentCountdown > 0) {
+        showIndicator(direction, currentCountdown);
+      } else {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+        startAutoScroll(direction);
+      }
+    }, 700); // 2.1 seconds total (3 steps x 700ms)
+  }
+
+  function startAutoScroll(direction) {
+    if (isAutoScrolling) return;
+    isAutoScrolling = true;
+    currentScrollSpeed = SCROLL_SPEED_MIN;
+    showIndicator(direction, 0);
+
+    function doScroll() {
+      if (!isAutoScrolling) return;
+
+      // Accelerate up to max speed
+      if (currentScrollSpeed < SCROLL_SPEED_MAX) {
+        currentScrollSpeed = Math.min(currentScrollSpeed + SCROLL_ACCELERATION, SCROLL_SPEED_MAX);
+      }
+
+      window.scrollBy(0, direction === 'up' ? -currentScrollSpeed : currentScrollSpeed);
+      requestAnimationFrame(doScroll);
+    }
+    doScroll();
+  }
+
+  function stopAutoScroll() {
+    isAutoScrolling = false;
+    currentScrollSpeed = 0;
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+    if (scrollInterval) {
+      clearInterval(scrollInterval);
+      scrollInterval = null;
+    }
+    hideIndicators();
+  }
+
+  // Handle drag start from drag handles only (cards only)
+  document.querySelectorAll('.card-handle').forEach(handle => {
+    handle.addEventListener('mousedown', function(e) {
+      const card = this.closest('.submission-card');
+      if (card) {
+        card.setAttribute('draggable', 'true');
+        draggedElement = card;
+        draggedId = card.dataset.submissionId;
+      }
+    });
+  });
+
+  // Reset draggable on mouse up
+  document.addEventListener('mouseup', function() {
+    document.querySelectorAll('.submission-card').forEach(el => {
+      el.setAttribute('draggable', 'false');
+    });
+  });
+
+  // Drag start - set data
+  document.addEventListener('dragstart', function(e) {
+    if (draggedElement) {
+      draggedElement.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', draggedId);
+    }
+  });
+
+  // Drag over - show drop target and handle auto-scroll
+  let lastScrollZone = null;
+
+  document.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    // Auto-scroll when near edges (only when dragging)
+    if (draggedElement) {
+      const y = e.clientY;
+      const windowHeight = window.innerHeight;
+
+      if (y < SCROLL_ZONE) {
+        // Near top - prepare to scroll up
+        if (lastScrollZone !== 'top') {
+          stopAutoScroll();
+          lastScrollZone = 'top';
+          startCountdown('up');
+        }
+      } else if (y > windowHeight - SCROLL_ZONE) {
+        // Near bottom - prepare to scroll down
+        if (lastScrollZone !== 'bottom') {
+          stopAutoScroll();
+          lastScrollZone = 'bottom';
+          startCountdown('down');
+        }
+      } else {
+        // Not in scroll zone
+        if (lastScrollZone !== null) {
+          stopAutoScroll();
+          lastScrollZone = null;
+        }
+      }
+    }
+
+    // Remove previous highlights
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+    const targetCard = e.target.closest('.submission-card');
+    const targetGroup = e.target.closest('.submission-group');
+
+    // Cards can drop on other cards or groups
+    if (targetCard && targetCard !== draggedElement && !draggedElement.contains(targetCard)) {
+      targetCard.classList.add('drag-over');
+    } else if (targetGroup && !targetGroup.contains(draggedElement)) {
+      targetGroup.classList.add('drag-over');
+    }
+  });
+
+  // Drag leave
+  document.addEventListener('dragleave', function(e) {
+    const el = e.target.closest('.submission-card, .submission-group');
+    if (el) el.classList.remove('drag-over');
+  });
+
+  // Drag end - cleanup
+  document.addEventListener('dragend', function(e) {
+    // Stop auto-scroll
+    stopAutoScroll();
+    lastScrollZone = null;
+
+    document.querySelectorAll('.dragging, .drag-over').forEach(el => {
+      el.classList.remove('dragging', 'drag-over');
+    });
+    document.querySelectorAll('.submission-card[draggable="true"]').forEach(el => {
+      el.setAttribute('draggable', 'false');
+    });
+    draggedElement = null;
+    draggedId = null;
+  });
+
+  // Drop - perform grouping
+  document.addEventListener('drop', async function(e) {
+    e.preventDefault();
+
+    // Stop auto-scroll
+    stopAutoScroll();
+    lastScrollZone = null;
+
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+    if (!draggedId || !draggedElement) {
+      console.log('Drop: No dragged element');
+      return;
+    }
+
+    const targetCard = e.target.closest('.submission-card');
+    const targetGroup = e.target.closest('.submission-group');
+
+    try {
+      if (targetGroup && !targetGroup.contains(draggedElement)) {
+        // Drop card onto existing group - add to group
+        const response = await fetch(`/admin/submissions/group/${targetGroup.dataset.groupId}/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ submissionId: draggedId })
+        });
+        const data = await response.json();
+        if (response.ok) location.reload();
+        else alert('Error: ' + (data.error || 'Error al agregar al grupo'));
+      } else if (targetCard && targetCard !== draggedElement) {
+        const targetId = targetCard.dataset.submissionId;
+        const targetGroupId = targetCard.dataset.groupId;
+
+        if (targetGroupId) {
+          // Target is in a group - add dragged card to that group
+          const response = await fetch(`/admin/submissions/group/${targetGroupId}/add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ submissionId: draggedId })
+          });
+          const data = await response.json();
+          if (response.ok) location.reload();
+          else alert('Error: ' + (data.error || 'Error al agregar al grupo'));
+        } else {
+          // Create new group from two cards
+          const response = await fetch('/admin/submissions/group', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ submissionIds: [draggedId, targetId] })
+          });
+          const data = await response.json();
+          if (response.ok) location.reload();
+          else alert('Error: ' + (data.error || 'Error al crear grupo'));
+        }
+      }
+    } catch (err) {
+      console.error('Drop error:', err);
+      alert('Error al agrupar envios: ' + err.message);
+    }
+  });
+
+  // Ungroup button handler
+  document.querySelectorAll('.ungroup-btn').forEach(btn => {
+    btn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const submissionId = this.dataset.submissionId;
+      try {
+        const response = await fetch(`/admin/submissions/${submissionId}/ungroup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (response.ok) location.reload();
+        else alert('Error al quitar del grupo');
+      } catch (err) {
+        console.error('Ungroup error:', err);
+        alert('Error al quitar del grupo');
+      }
+    });
+  });
+
+  // Toggle collapsed state for grouped cards
+  document.querySelectorAll('.submission-group .submission-card .submission-header').forEach(header => {
+    header.addEventListener('click', function(e) {
+      // Don't toggle if clicking on buttons or drag handle
+      if (e.target.closest('.ungroup-btn') || e.target.closest('.drag-handle')) {
+        return;
+      }
+      const card = this.closest('.submission-card');
+      card.classList.toggle('expanded');
+    });
+  });
+
+  // Editable group name
+  function attachGroupNameEditor(nameEl) {
+    nameEl.addEventListener('click', function(e) {
+      e.stopPropagation();
+
+      const groupId = this.dataset.groupId;
+      const currentName = this.textContent.trim();
+      const originalName = currentName === 'Grupo' ? '' : currentName;
+
+      // Create input
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'group-name-input';
+      input.value = originalName;
+      input.placeholder = 'Nombre del grupo';
+
+      // Replace span with input
+      this.replaceWith(input);
+      input.focus();
+      input.select();
+
+      let saved = false;
+
+      // Save function
+      const saveGroupName = async () => {
+        if (saved) return;
+        saved = true;
+
+        const newName = input.value.trim();
+
+        try {
+          const response = await fetch(`/admin/submissions/group/${groupId}/rename`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newName })
+          });
+
+          if (response.ok) {
+            // Create new span with updated name
+            const newSpan = document.createElement('span');
+            newSpan.className = 'group-name';
+            newSpan.dataset.groupId = groupId;
+            newSpan.title = 'Clic para editar nombre';
+            newSpan.textContent = newName || 'Grupo';
+            input.replaceWith(newSpan);
+
+            // Re-attach click handler
+            attachGroupNameEditor(newSpan);
+          } else {
+            alert('Error al guardar nombre');
+            location.reload();
+          }
+        } catch (err) {
+          console.error('Rename error:', err);
+          alert('Error al guardar nombre');
+          location.reload();
+        }
+      };
+
+      // Cancel function
+      const cancelEdit = () => {
+        if (saved) return;
+        saved = true;
+
+        const newSpan = document.createElement('span');
+        newSpan.className = 'group-name';
+        newSpan.dataset.groupId = groupId;
+        newSpan.title = 'Clic para editar nombre';
+        newSpan.textContent = originalName || 'Grupo';
+        input.replaceWith(newSpan);
+        attachGroupNameEditor(newSpan);
+      };
+
+      // Save on blur
+      input.addEventListener('blur', saveGroupName);
+
+      // Save on Enter, cancel on Escape
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.blur();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelEdit();
+        }
+      });
+    });
+  }
+
+  document.querySelectorAll('.group-name').forEach(attachGroupNameEditor);
+
+  // Editable admin notes
+  function attachAdminNotesEditor(notesEl) {
+    notesEl.addEventListener('click', function(e) {
+      e.stopPropagation();
+
+      const submissionId = this.dataset.submissionId;
+      const currentNotes = this.classList.contains('empty') ? '' : this.textContent.trim();
+
+      // Create textarea
+      const textarea = document.createElement('textarea');
+      textarea.className = 'admin-notes-input';
+      textarea.value = currentNotes;
+      textarea.placeholder = 'Agregar nota del admin...';
+
+      // Replace span with textarea
+      this.replaceWith(textarea);
+      textarea.focus();
+
+      let saved = false;
+
+      // Save function
+      const saveNotes = async () => {
+        if (saved) return;
+        saved = true;
+
+        const newNotes = textarea.value.trim();
+
+        try {
+          const response = await fetch(`/admin/submissions/${submissionId}/notes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: newNotes })
+          });
+
+          if (response.ok) {
+            // Create new span with updated notes
+            const newSpan = document.createElement('div');
+            newSpan.className = 'admin-notes-content' + (newNotes ? '' : ' empty');
+            newSpan.dataset.submissionId = submissionId;
+            newSpan.title = 'Clic para editar';
+            newSpan.textContent = newNotes || 'Agregar nota...';
+            textarea.replaceWith(newSpan);
+
+            // Re-attach click handler
+            attachAdminNotesEditor(newSpan);
+          } else {
+            alert('Error al guardar nota');
+            location.reload();
+          }
+        } catch (err) {
+          console.error('Save notes error:', err);
+          alert('Error al guardar nota');
+          location.reload();
+        }
+      };
+
+      // Cancel function
+      const cancelEdit = () => {
+        if (saved) return;
+        saved = true;
+
+        const newSpan = document.createElement('div');
+        newSpan.className = 'admin-notes-content' + (currentNotes ? '' : ' empty');
+        newSpan.dataset.submissionId = submissionId;
+        newSpan.title = 'Clic para editar';
+        newSpan.textContent = currentNotes || 'Agregar nota...';
+        textarea.replaceWith(newSpan);
+        attachAdminNotesEditor(newSpan);
+      };
+
+      // Save on blur
+      textarea.addEventListener('blur', saveNotes);
+
+      // Save on Ctrl+Enter, cancel on Escape
+      textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          this.blur();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelEdit();
+        }
+      });
+    });
+  }
+
+  document.querySelectorAll('.admin-notes-content').forEach(attachAdminNotesEditor);
+
+  // Reusable confirm modal
+  const confirmModal = document.getElementById('confirm-modal');
+  const confirmModalIcon = document.getElementById('confirm-modal-icon');
+  const confirmModalTitle = document.getElementById('confirm-modal-title');
+  const confirmModalMessage = document.getElementById('confirm-modal-message');
+  const confirmModalCancel = document.getElementById('confirm-modal-cancel');
+  const confirmModalConfirm = document.getElementById('confirm-modal-confirm');
+  let confirmCallback = null;
+
+  function showConfirm({ icon, title, message, confirmText, onConfirm }) {
+    confirmModalIcon.textContent = icon || '❓';
+    confirmModalTitle.textContent = title || 'Confirmar';
+    confirmModalMessage.textContent = message || '¿Estas seguro?';
+    confirmModalConfirm.textContent = confirmText || 'Confirmar';
+    confirmCallback = onConfirm;
+    confirmModal.classList.add('visible');
+  }
+
+  function hideConfirmModal() {
+    confirmModal.classList.remove('visible');
+    confirmCallback = null;
+  }
+
+  // Close modal on backdrop click
+  confirmModal.addEventListener('click', function(e) {
+    if (e.target === confirmModal) {
+      hideConfirmModal();
+    }
+  });
+
+  // Cancel button
+  confirmModalCancel.addEventListener('click', hideConfirmModal);
+
+  // Confirm button
+  confirmModalConfirm.addEventListener('click', function() {
+    if (confirmCallback) {
+      confirmCallback();
+    }
+    hideConfirmModal();
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && confirmModal.classList.contains('visible')) {
+      hideConfirmModal();
+    }
+  });
+
+  // Dissolve group button handler
+  document.querySelectorAll('.dissolve-group-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const groupId = this.dataset.groupId;
+      showConfirm({
+        icon: '📦',
+        title: 'Disolver grupo',
+        message: 'Los envios volveran a estar sin agrupar.',
+        confirmText: 'Disolver',
+        onConfirm: async () => {
+          try {
+            const response = await fetch(`/admin/submissions/group/${groupId}/dissolve`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            if (response.ok) location.reload();
+            else alert('Error al disolver grupo');
+          } catch (err) {
+            console.error('Dissolve error:', err);
+            alert('Error al disolver grupo');
+          }
+        }
+      });
+    });
+  });
+});
+</script>
