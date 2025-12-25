@@ -13,6 +13,7 @@ const RewardClaim = require('../models/RewardClaim');
 const SeasonArchive = require('../models/SeasonArchive');
 const LeaderboardSettings = require('../models/LeaderboardSettings');
 const TesterGroup = require('../models/TesterGroup');
+const Message = require('../models/Message');
 
 // Multer config for screenshots
 const storage = multer.diskStorage({
@@ -461,6 +462,204 @@ router.get('/practice-flow/complete', async (req, res) => {
   }
 
   res.render('tester/practice-complete', { nextFlow });
+});
+
+// ===== MESSAGING SYSTEM =====
+
+// Messages page - organized by submission (case)
+router.get('/messages', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    // Get all conversations grouped by submission
+    const conversations = await Message.aggregate([
+      { $match: { user: new (require('mongoose').Types.ObjectId)(userId), deletedAt: null, submission: { $ne: null } } },
+      { $sort: { createdAt: -1 } },
+      { $group: {
+        _id: '$submission',
+        lastMessage: { $first: '$$ROOT' },
+        unreadCount: { $sum: { $cond: [{ $and: [{ $eq: ['$sender', 'admin'] }, { $eq: ['$readByUser', false] }] }, 1, 0] } },
+        messageCount: { $sum: 1 }
+      }},
+      { $sort: { 'lastMessage.createdAt': -1 } }
+    ]);
+
+    // Populate submission details
+    const submissionIds = conversations.map(c => c._id);
+    const submissions = await Submission.find({ _id: { $in: submissionIds } })
+      .populate('testCase', 'title description')
+      .select('testCase status createdAt');
+    const submissionMap = {};
+    submissions.forEach(s => { submissionMap[s._id.toString()] = s; });
+
+    const result = conversations.map(c => ({
+      submission: submissionMap[c._id.toString()],
+      lastMessage: c.lastMessage,
+      unreadCount: c.unreadCount,
+      messageCount: c.messageCount
+    })).filter(c => c.submission);
+
+    res.render('tester/messages', { conversations: result });
+  } catch (err) {
+    console.error('Get messages error:', err);
+    res.status(500).send('Error loading messages');
+  }
+});
+
+// Get messages for a specific submission
+router.get('/messages/submission/:submissionId', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const { submissionId } = req.params;
+
+    // Verify this submission belongs to the user
+    const submission = await Submission.findOne({ _id: submissionId, user: userId })
+      .populate('testCase', 'title description scenario expectedResult')
+      .select('testCase status feedback screenshot createdAt');
+
+    if (!submission) {
+      return res.status(404).json({ error: 'Envio no encontrado' });
+    }
+
+    const messages = await Message.find({ submission: submissionId, deletedAt: null })
+      .sort('createdAt');
+
+    // Mark admin messages as read
+    await Message.updateMany(
+      { submission: submissionId, sender: 'admin', readByUser: false, deletedAt: null },
+      { $set: { readByUser: true } }
+    );
+
+    res.json({ success: true, messages, submission });
+  } catch (err) {
+    console.error('Get submission messages error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Reply to a specific submission thread
+router.post('/messages/submission/:submissionId', upload.single('screenshot'), async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const { submissionId } = req.params;
+    const { content } = req.body;
+    const screenshot = req.file ? req.file.filename : null;
+
+    if ((!content || !content.trim()) && !screenshot) {
+      return res.status(400).json({ error: 'El mensaje no puede estar vacio' });
+    }
+
+    // Verify this submission belongs to the user
+    const submission = await Submission.findOne({ _id: submissionId, user: userId });
+    if (!submission) {
+      return res.status(404).json({ error: 'Envio no encontrado' });
+    }
+
+    const message = await Message.create({
+      user: userId,
+      submission: submissionId,
+      sender: 'user',
+      content: content ? content.trim() : '',
+      screenshot,
+      readByUser: true
+    });
+
+    res.json({ success: true, message });
+  } catch (err) {
+    console.error('Send message error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all messages as JSON (for API calls)
+router.get('/messages/data', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    const messages = await Message.find({ user: userId, deletedAt: null })
+      .populate('submission', 'testCase status createdAt')
+      .sort('createdAt');
+
+    // Populate submission test case
+    await Submission.populate(messages.map(m => m.submission).filter(s => s), {
+      path: 'testCase',
+      select: 'title'
+    });
+
+    res.json({ success: true, messages });
+  } catch (err) {
+    console.error('Get messages error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get unread count for badge
+router.get('/messages/unread-count', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    const count = await Message.countDocuments({
+      user: userId,
+      sender: 'admin',
+      readByUser: false,
+      deletedAt: null
+    });
+
+    res.json({ success: true, count });
+  } catch (err) {
+    console.error('Get unread count error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Reply to thread (with optional screenshot)
+router.post('/messages', upload.single('screenshot'), async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const { content, submissionId } = req.body;
+    const screenshot = req.file ? req.file.filename : null;
+
+    if ((!content || !content.trim()) && !screenshot) {
+      return res.status(400).json({ error: 'El mensaje no puede estar vacio' });
+    }
+
+    const message = await Message.create({
+      user: userId,
+      submission: submissionId || null,
+      sender: 'user',
+      content: content ? content.trim() : '',
+      screenshot,
+      readByUser: true
+    });
+
+    // Populate for response
+    await message.populate('submission', 'testCase status createdAt');
+    if (message.submission) {
+      await Submission.populate(message.submission, { path: 'testCase', select: 'title' });
+    }
+
+    res.json({ success: true, message });
+  } catch (err) {
+    console.error('Send message error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Mark all messages as read
+router.post('/messages/read', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    await Message.updateMany(
+      { user: userId, sender: 'admin', readByUser: false, deletedAt: null },
+      { $set: { readByUser: true } }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Mark read error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

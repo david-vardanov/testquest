@@ -1,0 +1,600 @@
+<% layout('layouts/boilerplate') %>
+
+<style>
+  .messages-page {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .conversation-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .conversation-card:hover {
+    border-color: #11998e;
+    box-shadow: 0 4px 12px rgba(17, 153, 142, 0.15);
+  }
+  .conversation-card.has-unread {
+    border-left: 4px solid #dc3545;
+    background: #fff8f8;
+  }
+  .conversation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .conversation-title {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .conversation-status {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+  }
+  .conversation-status.passed {
+    background: #d4edda;
+    color: #155724;
+  }
+  .conversation-status.failed {
+    background: #f8d7da;
+    color: #721c24;
+  }
+  .conversation-preview {
+    color: #666;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .conversation-meta {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #6c757d;
+  }
+  .unread-badge {
+    background: #dc3545;
+    color: white;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  /* Chat panel */
+  .chat-panel {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+    min-height: 400px;
+  }
+  .chat-panel-header {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 12px 12px 0 0;
+  }
+  .chat-panel-body {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    background: #f8f9fa;
+  }
+  .chat-panel-footer {
+    padding: 1rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  /* Case info card */
+  .chat-case-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+  }
+  .chat-case-card .case-status {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .chat-case-card .case-status.passed {
+    background: rgba(76, 175, 80, 0.3);
+  }
+  .chat-case-card .case-status.failed {
+    background: rgba(244, 67, 54, 0.3);
+  }
+  .chat-case-card .case-section {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .chat-case-card .case-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 0.15rem;
+  }
+
+  .message-bubble {
+    max-width: 80%;
+    padding: 0.75rem 1rem;
+    border-radius: 16px;
+    margin-bottom: 0.75rem;
+    position: relative;
+  }
+  .message-bubble.admin {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    margin-right: auto;
+    border-bottom-left-radius: 4px;
+  }
+  .message-bubble.user {
+    background: #e9ecef;
+    color: #333;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+  }
+  .message-content {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  .message-meta {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    margin-top: 0.25rem;
+  }
+  .message-screenshot {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    cursor: pointer;
+    display: block;
+  }
+  .message-bubble.admin .message-screenshot {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+  .message-bubble.user .message-screenshot {
+    border: 2px solid rgba(0, 0, 0, 0.1);
+  }
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+  }
+  .empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+</style>
+
+<div class="messages-page">
+  <h2 class="mb-4">Mensajes</h2>
+
+  <div class="row">
+    <!-- Conversations list -->
+    <div class="col-md-4">
+      <div id="conversations-list">
+        <% if (conversations.length === 0) { %>
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>No tienes mensajes</p>
+            <small class="text-muted">Los mensajes del administrador sobre tus casos apareceran aqui</small>
+          </div>
+        <% } else { %>
+          <% conversations.forEach(conv => { %>
+            <div class="conversation-card <%= conv.unreadCount > 0 ? 'has-unread' : '' %>"
+                 data-submission-id="<%= conv.submission._id %>"
+                 onclick="loadConversation('<%= conv.submission._id %>')">
+              <div class="conversation-header">
+                <span class="conversation-title"><%= conv.submission.testCase ? conv.submission.testCase.title : 'Caso' %></span>
+                <% if (conv.unreadCount > 0) { %>
+                  <span class="unread-badge"><%= conv.unreadCount %> nuevo<%= conv.unreadCount > 1 ? 's' : '' %></span>
+                <% } %>
+              </div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="conversation-status <%= conv.submission.status %>">
+                  <%= conv.submission.status === 'passed' ? '✓ Aprobado' : '✗ Fallido' %>
+                </span>
+              </div>
+              <div class="conversation-preview">
+                <% if (conv.lastMessage.sender === 'user') { %>Tu: <% } %>
+                <%= conv.lastMessage.content ? conv.lastMessage.content.substring(0, 50) : '[Imagen]' %><%= conv.lastMessage.content && conv.lastMessage.content.length > 50 ? '...' : '' %>
+              </div>
+              <div class="conversation-meta">
+                <span><%= new Date(conv.lastMessage.createdAt).toLocaleDateString('es') %></span>
+                <span><%= conv.messageCount %> mensaje<%= conv.messageCount > 1 ? 's' : '' %></span>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Chat panel -->
+    <div class="col-md-8">
+      <div class="chat-panel" id="chat-panel">
+        <div class="chat-panel-header" id="chat-header" style="display: none;">
+          <strong id="chat-case-title">Caso</strong>
+        </div>
+        <div class="chat-panel-body" id="chat-messages">
+          <div class="empty-state">
+            <div class="empty-state-icon">💬</div>
+            <p>Selecciona una conversacion para ver los mensajes</p>
+          </div>
+        </div>
+        <div class="chat-panel-footer" id="chat-footer" style="display: none;">
+          <form id="chat-form" enctype="multipart/form-data">
+            <input type="hidden" id="current-submission-id">
+            <div class="d-flex gap-2 align-items-end">
+              <div class="flex-grow-1">
+                <input type="text" class="form-control" id="chat-input" placeholder="Escribe tu mensaje..." autocomplete="off">
+              </div>
+              <label class="btn btn-outline-secondary" title="Adjuntar imagen">
+                <input type="file" id="chat-screenshot" accept="image/*" style="display: none;">
+                📎
+              </label>
+              <button type="submit" class="btn btn-success">Enviar</button>
+            </div>
+            <div id="screenshot-preview" style="display: none; margin-top: 0.5rem;">
+              <small class="text-muted">Imagen: <span id="screenshot-name"></span></small>
+              <button type="button" class="btn btn-link btn-sm text-danger p-0 ms-2" onclick="clearScreenshot()">✕</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentSubmissionId = null;
+
+// Check URL for submission to open on page load
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const openSubmission = params.get('open');
+  if (openSubmission) {
+    // Small delay to ensure DOM is ready
+    setTimeout(() => loadConversation(openSubmission), 100);
+  }
+})();
+
+async function loadConversation(submissionId) {
+  // Update URL without reload
+  const url = new URL(window.location);
+  url.searchParams.set('open', submissionId);
+  window.history.replaceState({}, '', url);
+  currentSubmissionId = submissionId;
+  document.getElementById('current-submission-id').value = submissionId;
+  document.getElementById('chat-header').style.display = 'block';
+  document.getElementById('chat-footer').style.display = 'block';
+
+  // Highlight selected conversation
+  document.querySelectorAll('.conversation-card').forEach(card => {
+    card.classList.remove('border-success');
+    if (card.dataset.submissionId === submissionId) {
+      card.classList.add('border-success');
+      card.classList.remove('has-unread');
+      const badge = card.querySelector('.unread-badge');
+      if (badge) badge.remove();
+    }
+  });
+
+  const messagesContainer = document.getElementById('chat-messages');
+  messagesContainer.innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></div>';
+
+  try {
+    const res = await fetch(`/tester/messages/submission/${submissionId}`);
+    const data = await res.json();
+
+    if (!data.success) {
+      messagesContainer.innerHTML = '<div class="empty-state"><p>Error al cargar mensajes</p></div>';
+      return;
+    }
+
+    messagesContainer.innerHTML = '';
+
+    // Show case info card
+    if (data.submission && data.submission.testCase) {
+      const tc = data.submission.testCase;
+      const sub = data.submission;
+      document.getElementById('chat-case-title').textContent = tc.title;
+
+      const caseCard = document.createElement('div');
+      caseCard.className = 'chat-case-card';
+      caseCard.innerHTML = `
+        <div class="case-status ${sub.status}">${sub.status === 'passed' ? '✓ Aprobado' : '✗ Fallido'}</div>
+        <div><strong>${escapeHtml(tc.title)}</strong></div>
+        ${tc.description ? `<div class="case-section"><div class="case-label">Objetivo</div><div>${escapeHtml(tc.description)}</div></div>` : ''}
+        ${tc.scenario ? `<div class="case-section"><div class="case-label">Pasos</div><div style="white-space: pre-wrap;">${escapeHtml(tc.scenario)}</div></div>` : ''}
+        ${tc.expectedResult ? `<div class="case-section"><div class="case-label">Resultado esperado</div><div>${escapeHtml(tc.expectedResult)}</div></div>` : ''}
+        ${sub.feedback ? `<div class="case-section" style="background: rgba(255,255,255,0.1); border-radius: 6px; padding: 0.5rem; margin-top: 0.75rem;"><div class="case-label">Tu comentario</div><div style="white-space: pre-wrap;">${escapeHtml(sub.feedback)}</div></div>` : ''}
+        ${sub.screenshot ? `<div class="case-section"><div class="case-label">Tu captura</div><a href="/uploads/${sub.screenshot}" target="_blank"><img src="/uploads/${sub.screenshot}" style="max-width: 100%; max-height: 150px; border-radius: 6px; margin-top: 0.25rem; border: 2px solid rgba(255,255,255,0.3);" alt="Captura"></a></div>` : ''}
+      `;
+      messagesContainer.appendChild(caseCard);
+    }
+
+    // Show messages
+    if (!data.messages || data.messages.length === 0) {
+      const emptyNote = document.createElement('div');
+      emptyNote.className = 'empty-state';
+      emptyNote.innerHTML = '<p>No hay mensajes en esta conversacion</p>';
+      messagesContainer.appendChild(emptyNote);
+    } else {
+      data.messages.forEach(msg => {
+        const bubble = document.createElement('div');
+        bubble.className = `message-bubble ${msg.sender}`;
+
+        const time = new Date(msg.createdAt).toLocaleString('es', {
+          day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+        });
+
+        let html = '';
+        if (msg.content) {
+          html += `<div class="message-content">${escapeHtml(msg.content)}</div>`;
+        }
+        if (msg.screenshot) {
+          html += `<a href="/uploads/${msg.screenshot}" target="_blank"><img src="/uploads/${msg.screenshot}" class="message-screenshot" alt="Imagen"></a>`;
+        }
+        html += `<div class="message-meta">${time}</div>`;
+
+        bubble.innerHTML = html;
+        messagesContainer.appendChild(bubble);
+      });
+    }
+
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Track message count for polling
+    lastMessageCount = data.messages ? data.messages.length : 0;
+
+    // Start polling for new messages
+    startPolling();
+
+    // Update badge counts
+    updateMessageBadge();
+  } catch (err) {
+    console.error('Load messages error:', err);
+    messagesContainer.innerHTML = '<div class="empty-state"><p>Error al cargar mensajes</p></div>';
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Screenshot handling
+const screenshotInput = document.getElementById('chat-screenshot');
+const screenshotPreview = document.getElementById('screenshot-preview');
+const screenshotName = document.getElementById('screenshot-name');
+
+screenshotInput?.addEventListener('change', function() {
+  if (this.files && this.files[0]) {
+    screenshotName.textContent = this.files[0].name;
+    screenshotPreview.style.display = 'block';
+  }
+});
+
+function clearScreenshot() {
+  screenshotInput.value = '';
+  screenshotPreview.style.display = 'none';
+}
+
+// Send message
+document.getElementById('chat-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const input = document.getElementById('chat-input');
+  const content = input.value.trim();
+  const file = screenshotInput?.files[0];
+
+  if ((!content && !file) || !currentSubmissionId) return;
+
+  try {
+    const formData = new FormData();
+    if (content) formData.append('content', content);
+    if (file) formData.append('screenshot', file);
+
+    const res = await fetch(`/tester/messages/submission/${currentSubmissionId}`, {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      input.value = '';
+      clearScreenshot();
+
+      const messagesContainer = document.getElementById('chat-messages');
+
+      // Remove empty state if present
+      const emptyState = messagesContainer.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+
+      // Add message to chat
+      const bubble = document.createElement('div');
+      bubble.className = 'message-bubble user';
+
+      const time = new Date().toLocaleString('es', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+      });
+
+      let html = '';
+      if (content) {
+        html += `<div class="message-content">${escapeHtml(content)}</div>`;
+      }
+      if (data.message.screenshot) {
+        html += `<a href="/uploads/${data.message.screenshot}" target="_blank"><img src="/uploads/${data.message.screenshot}" class="message-screenshot" alt="Imagen"></a>`;
+      }
+      html += `<div class="message-meta">${time}</div>`;
+
+      bubble.innerHTML = html;
+      messagesContainer.appendChild(bubble);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      // Increment message count so polling doesn't duplicate
+      lastMessageCount++;
+    } else {
+      alert('Error al enviar: ' + (data.error || 'Error desconocido'));
+    }
+  } catch (err) {
+    console.error('Error sending message:', err);
+    alert('Error al enviar mensaje');
+  }
+});
+
+async function updateMessageBadge() {
+  try {
+    const res = await fetch('/tester/messages/unread-count');
+    const data = await res.json();
+    const mobileBadge = document.getElementById('message-badge');
+    const desktopBadge = document.getElementById('desktop-message-badge');
+    if (data.success) {
+      const count = data.count > 99 ? '99+' : data.count;
+      if (mobileBadge) {
+        if (data.count > 0) {
+          mobileBadge.textContent = count;
+          mobileBadge.style.display = 'block';
+        } else {
+          mobileBadge.style.display = 'none';
+        }
+      }
+      if (desktopBadge) {
+        if (data.count > 0) {
+          desktopBadge.textContent = count;
+          desktopBadge.style.display = 'block';
+        } else {
+          desktopBadge.style.display = 'none';
+        }
+      }
+    }
+  } catch (err) { /* ignore */ }
+}
+
+// ===== AUTO-FETCH NEW MESSAGES =====
+let pollInterval = null;
+let lastMessageCount = 0;
+
+function startPolling() {
+  stopPolling();
+  pollInterval = setInterval(fetchNewMessages, 5000);
+}
+
+function stopPolling() {
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+}
+
+async function fetchNewMessages() {
+  if (!currentSubmissionId || document.hidden) return;
+
+  try {
+    const res = await fetch(`/tester/messages/submission/${currentSubmissionId}`);
+    const data = await res.json();
+
+    if (!data.success || !data.messages) return;
+
+    // Only update if we have new messages
+    if (data.messages.length > lastMessageCount) {
+      const messagesContainer = document.getElementById('chat-messages');
+
+      // Remove empty state if present
+      const emptyState = messagesContainer.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+
+      // Add only new messages
+      const newMessages = data.messages.slice(lastMessageCount);
+      newMessages.forEach(msg => {
+        const bubble = document.createElement('div');
+        bubble.className = `message-bubble ${msg.sender}`;
+
+        const time = new Date(msg.createdAt).toLocaleString('es', {
+          day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+        });
+
+        let html = '';
+        if (msg.content) {
+          html += `<div class="message-content">${escapeHtml(msg.content)}</div>`;
+        }
+        if (msg.screenshot) {
+          html += `<a href="/uploads/${msg.screenshot}" target="_blank"><img src="/uploads/${msg.screenshot}" class="message-screenshot" alt="Imagen"></a>`;
+        }
+        html += `<div class="message-meta">${time}</div>`;
+
+        bubble.innerHTML = html;
+        messagesContainer.appendChild(bubble);
+      });
+
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      lastMessageCount = data.messages.length;
+      updateMessageBadge();
+    }
+
+    // Also check for new messages in other conversations
+    updateConversationBadges();
+  } catch (err) { /* ignore polling errors */ }
+}
+
+// Update unread badges on conversation cards
+async function updateConversationBadges() {
+  try {
+    const res = await fetch('/tester/messages');
+    const html = await res.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Update each conversation card's unread badge
+    doc.querySelectorAll('.conversation-card').forEach(newCard => {
+      const submissionId = newCard.dataset.submissionId;
+      if (submissionId === currentSubmissionId) return; // Skip current open chat
+
+      const existingCard = document.querySelector(`.conversation-card[data-submission-id="${submissionId}"]`);
+      if (existingCard) {
+        const newBadge = newCard.querySelector('.unread-badge');
+        const existingBadge = existingCard.querySelector('.unread-badge');
+
+        if (newBadge && !existingBadge) {
+          // Add new badge
+          existingCard.querySelector('.conversation-header').appendChild(newBadge.cloneNode(true));
+          existingCard.classList.add('has-unread');
+        } else if (newBadge && existingBadge) {
+          // Update badge count
+          existingBadge.textContent = newBadge.textContent;
+        }
+      }
+    });
+  } catch (err) { /* ignore */ }
+}
+
+// Stop polling when page is hidden, resume when visible
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    stopPolling();
+  } else if (currentSubmissionId) {
+    startPolling();
+  }
+});
+
+// Stop polling when leaving page
+window.addEventListener('beforeunload', stopPolling);
+</script>

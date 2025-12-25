@@ -14,8 +14,16 @@ const RewardClaim = require('../models/RewardClaim');
 const LeaderboardSettings = require('../models/LeaderboardSettings');
 const SeasonArchive = require('../models/SeasonArchive');
 const TesterGroup = require('../models/TesterGroup');
-const SubmissionGroup = require('../models/SubmissionGroup');
-const SubmissionStatus = require('../models/SubmissionStatus');
+const Message = require('../models/Message');
+
+// Multer config for message screenshots
+const messageStorage = multer.diskStorage({
+  destination: './uploads/',
+  filename: (req, file, cb) => {
+    cb(null, `msg-${Date.now()}-${file.originalname}`);
+  }
+});
+const messageUpload = multer({ storage: messageStorage });
 
 // Ensure backups directory exists
 const BACKUPS_DIR = path.join(__dirname, '..', 'backups');
@@ -906,60 +914,18 @@ router.get('/submissions', async (req, res) => {
   if (approved === 'pending') filter.pointsAwarded = false;
   if (approved === 'approved') filter.pointsAwarded = true;
 
-  // Initialize default statuses if needed
-  await initializeDefaultStatuses();
-
-  const [submissions, flows, users, groups, submissionGroups, statuses] = await Promise.all([
-    Submission.find(filter).sort('-createdAt').populate('user testCase flow userGroupAtSubmission reassignedFrom submissionGroup'),
+  const [submissions, flows, users, groups] = await Promise.all([
+    Submission.find(filter).sort('-createdAt').populate('user testCase flow userGroupAtSubmission reassignedFrom'),
     Flow.find(),
     User.find({ role: 'tester' }),
-    TesterGroup.find().sort('code'),
-    SubmissionGroup.find(),
-    SubmissionStatus.find().sort('order')
+    TesterGroup.find().sort('code')
   ]);
-
-  // Organize submissions by groups for rendering
-  const groupedSubmissions = {};
-  const ungroupedSubmissions = [];
-
-  submissions.forEach(sub => {
-    if (sub.submissionGroup) {
-      const groupId = sub.submissionGroup._id.toString();
-      if (!groupedSubmissions[groupId]) {
-        groupedSubmissions[groupId] = {
-          group: sub.submissionGroup,
-          submissions: []
-        };
-      }
-      groupedSubmissions[groupId].submissions.push(sub);
-    } else {
-      ungroupedSubmissions.push(sub);
-    }
-  });
-
-  // Organize submissions by status for Kanban board
-  const submissionsByStatus = {};
-  statuses.forEach(s => {
-    submissionsByStatus[s.code] = [];
-  });
-  submissions.forEach(sub => {
-    const statusCode = sub.adminStatus || 'backlog';
-    if (submissionsByStatus[statusCode]) {
-      submissionsByStatus[statusCode].push(sub);
-    } else {
-      submissionsByStatus['backlog'].push(sub);
-    }
-  });
 
   res.render('admin/submissions', {
     submissions,
-    groupedSubmissions,
-    ungroupedSubmissions,
     flows,
     users,
     groups,
-    statuses,
-    submissionsByStatus,
     filters: { flow, status, user, approved, group }
   });
 });
@@ -1102,45 +1068,6 @@ router.post('/submissions/:id/toggle-hidden', async (req, res) => {
   }
 });
 
-// Update admin notes for a submission
-router.post('/submissions/:id/notes', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { notes } = req.body;
-    const submission = await Submission.findByIdAndUpdate(
-      id,
-      { adminNotes: notes || '' },
-      { new: true }
-    );
-    if (!submission) {
-      return res.status(404).json({ error: 'Envio no encontrado' });
-    }
-    res.json({ success: true, adminNotes: submission.adminNotes });
-  } catch (err) {
-    console.error('Update admin notes error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.post('/submissions/:id/title', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { title } = req.body;
-    const submission = await Submission.findByIdAndUpdate(
-      id,
-      { adminTitle: title || '' },
-      { new: true }
-    );
-    if (!submission) {
-      return res.status(404).json({ error: 'Envio no encontrado' });
-    }
-    res.json({ success: true, adminTitle: submission.adminTitle });
-  } catch (err) {
-    console.error('Update admin title error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
 router.post('/submissions/:id/feedback', async (req, res) => {
   try {
     const { id } = req.params;
@@ -1156,164 +1083,6 @@ router.post('/submissions/:id/feedback', async (req, res) => {
     res.json({ success: true, feedback: submission.feedback });
   } catch (err) {
     console.error('Update feedback error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Submission Grouping API
-// Create a new group from two submissions
-router.post('/submissions/group', async (req, res) => {
-  try {
-    const { submissionIds } = req.body;
-    console.log('Creating group with submissions:', submissionIds);
-
-    if (!submissionIds || submissionIds.length < 2) {
-      return res.status(400).json({ error: 'Se necesitan al menos 2 envios para crear un grupo' });
-    }
-
-    // Remove submissions from any existing groups first
-    await Submission.updateMany(
-      { _id: { $in: submissionIds } },
-      { $unset: { submissionGroup: 1 } }
-    );
-
-    // Get max order to put new group at end
-    const maxOrderGroup = await SubmissionGroup.findOne().sort('-order');
-    const newOrder = maxOrderGroup ? maxOrderGroup.order + 1 : 1;
-
-    // Create new group
-    const group = await SubmissionGroup.create({
-      createdBy: req.user ? req.user._id : null,
-      order: newOrder
-    });
-
-    // Assign submissions to the group
-    await Submission.updateMany(
-      { _id: { $in: submissionIds } },
-      { submissionGroup: group._id }
-    );
-
-    console.log('Group created:', group._id);
-    res.json({ success: true, groupId: group._id });
-  } catch (err) {
-    console.error('Create group error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Add submission to existing group
-router.post('/submissions/group/:groupId/add', async (req, res) => {
-  try {
-    const { groupId } = req.params;
-    const { submissionId } = req.body;
-
-    // If submission is already in a group, remove it first
-    const submission = await Submission.findById(submissionId);
-    if (submission.submissionGroup) {
-      // Check if old group will be empty
-      const oldGroupCount = await Submission.countDocuments({
-        submissionGroup: submission.submissionGroup,
-        _id: { $ne: submissionId }
-      });
-      if (oldGroupCount === 0) {
-        await SubmissionGroup.findByIdAndDelete(submission.submissionGroup);
-      }
-    }
-
-    await Submission.findByIdAndUpdate(submissionId, { submissionGroup: groupId });
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Add to group error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Remove submission from group
-router.post('/submissions/:id/ungroup', async (req, res) => {
-  try {
-    const submission = await Submission.findById(req.params.id);
-    if (submission && submission.submissionGroup) {
-      const groupId = submission.submissionGroup;
-      submission.submissionGroup = null;
-      await submission.save();
-
-      // Check if group is now empty or has only 1 member
-      const remaining = await Submission.countDocuments({ submissionGroup: groupId });
-      if (remaining <= 1) {
-        // Ungroup the last member and delete the group
-        await Submission.updateMany({ submissionGroup: groupId }, { submissionGroup: null });
-        await SubmissionGroup.findByIdAndDelete(groupId);
-      }
-    }
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Ungroup error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Dissolve entire group
-router.post('/submissions/group/:groupId/dissolve', async (req, res) => {
-  try {
-    const { groupId } = req.params;
-    await Submission.updateMany({ submissionGroup: groupId }, { submissionGroup: null });
-    await SubmissionGroup.findByIdAndDelete(groupId);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Dissolve group error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Rename group
-router.post('/submissions/group/:groupId/rename', async (req, res) => {
-  try {
-    const { groupId } = req.params;
-    const { name } = req.body;
-    const group = await SubmissionGroup.findByIdAndUpdate(
-      groupId,
-      { name: name || '' },
-      { new: true }
-    );
-    if (!group) {
-      return res.status(404).json({ error: 'Grupo no encontrado' });
-    }
-    res.json({ success: true, group });
-  } catch (err) {
-    console.error('Rename group error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Swap two groups' positions
-router.post('/submissions/group/:groupId/swap/:targetGroupId', async (req, res) => {
-  try {
-    const { groupId, targetGroupId } = req.params;
-
-    const group1 = await SubmissionGroup.findById(groupId);
-    const group2 = await SubmissionGroup.findById(targetGroupId);
-
-    if (!group1 || !group2) {
-      return res.status(404).json({ error: 'Grupo no encontrado' });
-    }
-
-    // Swap order values
-    const tempOrder = group1.order;
-    group1.order = group2.order;
-    group2.order = tempOrder;
-
-    // If both have same order (default 0), assign different values
-    if (group1.order === group2.order) {
-      group1.order = 1;
-      group2.order = 2;
-    }
-
-    await group1.save();
-    await group2.save();
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Swap groups error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1363,7 +1132,7 @@ router.get('/submissions/export', async (req, res) => {
     'Date', 'Time', 'Username', 'Email', 'Group', 'Flow', 'Test Case',
     'Status', 'Points Earned', 'Approved', 'Feedback',
     'Has Screenshot', 'Bug Points', 'Feedback Points', 'Screenshot Points',
-    'Useful Feedback', 'Was Reassigned', 'Reassigned From', 'Reassignment Reason', 'Admin Notes'
+    'Useful Feedback', 'Was Reassigned', 'Reassigned From', 'Reassignment Reason'
   ];
 
   const rows = submissions.map(sub => [
@@ -1385,8 +1154,7 @@ router.get('/submissions/export', async (req, res) => {
     sub.isUsefulFeedback ? 'Yes' : 'No',
     sub.wasReassigned ? 'Yes' : 'No',
     sub.reassignedFrom ? sub.reassignedFrom.code : '',
-    sub.reassignmentReason ? sub.reassignmentReason.replace(/[\n\r,]/g, ' ') : '',
-    sub.adminNotes ? sub.adminNotes.replace(/[\n\r,]/g, ' ') : ''
+    sub.reassignmentReason ? sub.reassignmentReason.replace(/[\n\r,]/g, ' ') : ''
   ]);
 
   // Escape CSV values
@@ -1677,136 +1445,212 @@ router.post('/backups/:filename/delete', async (req, res) => {
   }
 });
 
-// ==================== Submission Status API ====================
+// ===== MESSAGING SYSTEM =====
 
-// Initialize default statuses (call this on app startup or first access)
-async function initializeDefaultStatuses() {
-  const defaults = [
-    { code: 'all', name: 'Todos', color: '#6c757d', order: 0, isSystem: true, showAsColumn: false },
-    { code: 'backlog', name: 'Backlog', color: '#6c757d', order: 1, isSystem: true, showAsColumn: true },
-    { code: 'doing', name: 'Revisando', color: '#007bff', order: 2, isSystem: true, showAsColumn: true },
-    { code: 'unclear', name: 'No claro', color: '#ffc107', order: 3, isSystem: true, showAsColumn: true },
-    { code: 'rerunning', name: 'Re-testing', color: '#17a2b8', order: 4, isSystem: true, showAsColumn: true },
-    { code: 'fixed', name: 'Resuelto', color: '#28a745', order: 5, isSystem: true, showAsColumn: true },
-    { code: 'archive', name: 'Archivo', color: '#343a40', order: 99, isSystem: true, showAsColumn: false }
-  ];
-
-  for (const status of defaults) {
-    await SubmissionStatus.findOneAndUpdate(
-      { code: status.code },
-      status,
-      { upsert: true, new: true }
-    );
-  }
-}
-
-// Get all statuses
-router.get('/submission-statuses', async (req, res) => {
+// Get unread count for admin badge
+router.get('/messages/unread-count', async (req, res) => {
   try {
-    await initializeDefaultStatuses();
-    const statuses = await SubmissionStatus.find().sort('order');
-    res.json(statuses);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Create custom status
-router.post('/submission-statuses', async (req, res) => {
-  try {
-    const { name, color } = req.body;
-    const code = 'custom_' + Date.now();
-    const maxOrder = await SubmissionStatus.findOne({ showAsColumn: true }).sort('-order');
-    const order = (maxOrder?.order || 0) + 1;
-
-    const status = await SubmissionStatus.create({
-      code,
-      name,
-      color: color || '#6c757d',
-      order,
-      isSystem: false,
-      showAsColumn: true
+    const count = await Message.countDocuments({
+      sender: 'user',
+      readByAdmin: false,
+      deletedAt: null
     });
-    res.json({ success: true, status });
+    res.json({ success: true, count });
   } catch (err) {
+    console.error('Get unread count error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Update status (rename, change color)
-router.post('/submission-statuses/:code', async (req, res) => {
+// Admin messages page - list all conversations by submission (case)
+router.get('/messages', async (req, res) => {
   try {
-    const { code } = req.params;
-    const { name, color } = req.body;
+    // Get all conversations grouped by submission
+    const conversations = await Message.aggregate([
+      { $match: { deletedAt: null, submission: { $ne: null } } },
+      { $sort: { createdAt: -1 } },
+      { $group: {
+        _id: '$submission',
+        user: { $first: '$user' },
+        lastMessage: { $first: '$$ROOT' },
+        unreadCount: { $sum: { $cond: [{ $and: [{ $eq: ['$sender', 'user'] }, { $eq: ['$readByAdmin', false] }] }, 1, 0] } },
+        messageCount: { $sum: 1 }
+      }},
+      { $sort: { 'lastMessage.createdAt': -1 } }
+    ]);
 
-    const status = await SubmissionStatus.findOneAndUpdate(
-      { code },
-      { name, color },
-      { new: true }
+    // Populate submission and user details
+    const submissionIds = conversations.map(c => c._id);
+    const userIds = conversations.map(c => c.user);
+
+    const [submissions, users] = await Promise.all([
+      Submission.find({ _id: { $in: submissionIds } })
+        .populate('testCase', 'title')
+        .select('testCase status feedback screenshot createdAt'),
+      User.find({ _id: { $in: userIds } }).select('username')
+    ]);
+
+    const submissionMap = {};
+    submissions.forEach(s => { submissionMap[s._id.toString()] = s; });
+    const userMap = {};
+    users.forEach(u => { userMap[u._id.toString()] = u; });
+
+    const result = conversations.map(c => ({
+      submission: submissionMap[c._id.toString()],
+      user: userMap[c.user.toString()],
+      lastMessage: c.lastMessage,
+      unreadCount: c.unreadCount,
+      messageCount: c.messageCount
+    })).filter(c => c.submission && c.user);
+
+    res.render('admin/messages', { conversations: result });
+  } catch (err) {
+    console.error('Get messages error:', err);
+    res.status(500).send('Error loading messages');
+  }
+});
+
+// Get conversation with specific user
+router.get('/messages/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const messages = await Message.find({ user: userId, deletedAt: null })
+      .populate('submission', 'testCase status createdAt')
+      .sort('createdAt');
+
+    // Populate submission test case
+    await Submission.populate(messages.map(m => m.submission).filter(s => s), {
+      path: 'testCase',
+      select: 'title'
+    });
+
+    // Mark all user messages as read by admin
+    await Message.updateMany(
+      { user: userId, sender: 'user', readByAdmin: false, deletedAt: null },
+      { $set: { readByAdmin: true } }
     );
-    if (!status) {
-      return res.status(404).json({ error: 'Status no encontrado' });
-    }
-    res.json({ success: true, status });
+
+    const user = await User.findById(userId).select('username email');
+
+    res.json({ success: true, messages, user });
   } catch (err) {
+    console.error('Get user messages error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Delete custom status (move submissions to backlog)
-router.delete('/submission-statuses/:code', async (req, res) => {
+// Get messages for a specific submission (case-based chat)
+router.get('/messages/submission/:submissionId', async (req, res) => {
   try {
-    const { code } = req.params;
-    const status = await SubmissionStatus.findOne({ code });
+    const { submissionId } = req.params;
 
-    if (!status) {
-      return res.status(404).json({ error: 'Status no encontrado' });
-    }
-    if (status.isSystem) {
-      return res.status(400).json({ error: 'No se puede eliminar un status del sistema' });
-    }
+    // Get the submission with case details and user submission data
+    const submission = await Submission.findById(submissionId)
+      .populate('user', 'username')
+      .populate('testCase', 'title description scenario expectedResult')
+      .select('user testCase status feedback screenshot createdAt');
 
-    // Move all submissions with this status to backlog
-    await Submission.updateMany({ adminStatus: code }, { adminStatus: 'backlog' });
-    await SubmissionStatus.deleteOne({ code });
-
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Update submission status
-router.post('/submissions/:id/status', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    const submission = await Submission.findByIdAndUpdate(
-      id,
-      { adminStatus: status },
-      { new: true }
-    );
     if (!submission) {
       return res.status(404).json({ error: 'Envio no encontrado' });
     }
-    res.json({ success: true, adminStatus: submission.adminStatus });
+
+    // Get only messages linked to this submission
+    const messages = await Message.find({ submission: submissionId, deletedAt: null })
+      .sort('createdAt');
+
+    // Mark user messages as read by admin
+    await Message.updateMany(
+      { submission: submissionId, sender: 'user', readByAdmin: false, deletedAt: null },
+      { $set: { readByAdmin: true } }
+    );
+
+    res.json({ success: true, messages, submission });
   } catch (err) {
+    console.error('Get submission messages error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Reorder statuses
-router.post('/submission-statuses/reorder', async (req, res) => {
+// Send message linked to a submission
+router.post('/messages/submission/:submissionId', messageUpload.single('screenshot'), async (req, res) => {
   try {
-    const { orders } = req.body; // { code: newOrder, ... }
+    const { submissionId } = req.params;
+    const { content } = req.body;
+    const screenshot = req.file ? req.file.filename : null;
 
-    for (const [code, order] of Object.entries(orders)) {
-      await SubmissionStatus.updateOne({ code }, { order });
+    if ((!content || !content.trim()) && !screenshot) {
+      return res.status(400).json({ error: 'El mensaje no puede estar vacio' });
     }
+
+    // Get the submission to know the user
+    const submission = await Submission.findById(submissionId);
+    if (!submission) {
+      return res.status(404).json({ error: 'Envio no encontrado' });
+    }
+
+    const message = await Message.create({
+      user: submission.user,
+      submission: submissionId,
+      sender: 'admin',
+      content: content ? content.trim() : '',
+      screenshot,
+      readByAdmin: true
+    });
+
+    res.json({ success: true, message });
+  } catch (err) {
+    console.error('Send message error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Send message to user (with optional screenshot)
+router.post('/messages/user/:userId', messageUpload.single('screenshot'), async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { content, submissionId } = req.body;
+    const screenshot = req.file ? req.file.filename : null;
+
+    if ((!content || !content.trim()) && !screenshot) {
+      return res.status(400).json({ error: 'El mensaje no puede estar vacio' });
+    }
+
+    const message = await Message.create({
+      user: userId,
+      submission: submissionId || null,
+      sender: 'admin',
+      content: content ? content.trim() : '',
+      screenshot,
+      readByAdmin: true
+    });
+
+    // Populate for response
+    await message.populate('submission', 'testCase status createdAt');
+    if (message.submission) {
+      await Submission.populate(message.submission, { path: 'testCase', select: 'title' });
+    }
+
+    res.json({ success: true, message });
+  } catch (err) {
+    console.error('Send message error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Soft delete conversation with user
+router.delete('/messages/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    await Message.updateMany(
+      { user: userId, deletedAt: null },
+      { $set: { deletedAt: new Date() } }
+    );
 
     res.json({ success: true });
   } catch (err) {
+    console.error('Delete conversation error:', err);
     res.status(500).json({ error: err.message });
   }
 });

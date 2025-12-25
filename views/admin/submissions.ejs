@@ -124,130 +124,6 @@
     margin-bottom: 0.5rem;
   }
 
-  /* Group styles */
-  .submission-group {
-    border: 2px solid #5c6bc0;
-    border-radius: 10px;
-    padding: 0.75rem;
-    background: linear-gradient(135deg, #e8eaf6 0%, #f5f5f5 100%);
-    box-shadow: 0 2px 8px rgba(92, 107, 192, 0.15);
-  }
-  .submission-group.drag-over {
-    border-color: #1976d2;
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-    transform: scale(1.01);
-  }
-  .submission-group-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #c5cae9;
-  }
-  .group-label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #3f51b5;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    letter-spacing: 0.5px;
-  }
-  .group-actions {
-    display: flex;
-    gap: 0.25rem;
-  }
-  .group-actions .btn {
-    font-size: 0.6rem;
-    padding: 0.15rem 0.4rem;
-  }
-  .group-count {
-    background: #5c6bc0;
-    color: white;
-    font-size: 0.6rem;
-    padding: 0.1rem 0.4rem;
-    border-radius: 10px;
-    font-weight: 600;
-  }
-  .submission-group .submission-card {
-    border-color: #c5cae9;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  }
-  .submission-group .submission-card .submission-header {
-    background: #ffffff;
-  }
-  .ungroup-btn {
-    opacity: 0.6;
-    transition: opacity 0.15s;
-  }
-  .ungroup-btn:hover {
-    opacity: 1;
-  }
-
-  /* Collapsible grouped cards */
-  .submission-group .submission-card .submission-header {
-    cursor: pointer;
-    position: relative;
-  }
-  .submission-group .submission-card .submission-header:hover {
-    background: #f5f5f5;
-  }
-  .submission-group .submission-card .submission-body {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.25s ease-out, padding 0.25s ease-out;
-    padding: 0 0.75rem;
-  }
-  .submission-group .submission-card.expanded .submission-body {
-    max-height: 500px;
-    padding: 0.75rem;
-    transition: max-height 0.3s ease-in, padding 0.25s ease-in;
-  }
-  .collapse-indicator {
-    font-size: 0.7rem;
-    color: #9e9e9e;
-    transition: transform 0.2s ease;
-    margin-left: 0.5rem;
-  }
-  .submission-card.expanded .collapse-indicator {
-    transform: rotate(180deg);
-  }
-
-  /* Editable group name */
-  .group-name {
-    cursor: pointer;
-    padding: 0.1rem 0.3rem;
-    border-radius: 4px;
-    border: 1px solid transparent;
-    transition: all 0.15s ease;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .group-name:hover {
-    background: rgba(63, 81, 181, 0.1);
-    border-color: #c5cae9;
-  }
-  .group-name-input {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #3f51b5;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border: 1px solid #5c6bc0;
-    border-radius: 4px;
-    padding: 0.1rem 0.3rem;
-    background: white;
-    outline: none;
-    width: 150px;
-  }
-  .group-name-input:focus {
-    box-shadow: 0 0 0 2px rgba(92, 107, 192, 0.3);
-  }
-
   /* Admin notes */
   .admin-notes {
     background: #fff8e1;
@@ -490,417 +366,6 @@
     background: #e53935;
   }
 
-  /* Kanban board */
-  .kanban-board {
-    display: flex;
-    gap: 0.75rem;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1.5rem;
-  }
-  .kanban-column {
-    flex: 0 0 260px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-    display: flex;
-    flex-direction: column;
-    max-height: 500px;
-  }
-  .kanban-column-header {
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #e0e0e0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: white;
-    border-radius: 8px 8px 0 0;
-    cursor: grab;
-  }
-  .kanban-column-header:active {
-    cursor: grabbing;
-  }
-  .kanban-column-title {
-    font-weight: 600;
-    font-size: 0.8rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .kanban-column-title .status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-  }
-  .kanban-column-count {
-    background: #e0e0e0;
-    font-size: 0.7rem;
-    padding: 0.1rem 0.4rem;
-    border-radius: 10px;
-    font-weight: 600;
-  }
-  .kanban-column-actions {
-    display: flex;
-    gap: 0.25rem;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-  .kanban-column-header:hover .kanban-column-actions {
-    opacity: 1;
-  }
-  .kanban-column-actions button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 0.75rem;
-    padding: 0.15rem;
-    border-radius: 3px;
-    color: #666;
-  }
-  .kanban-column-actions button:hover {
-    background: #e0e0e0;
-  }
-  .kanban-column-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    min-height: 100px;
-  }
-  .kanban-column-body.drag-over {
-    background: #e3f2fd;
-  }
-  .kanban-card {
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    padding: 0.5rem;
-    font-size: 0.75rem;
-    cursor: grab;
-    transition: all 0.15s ease;
-    user-select: none;
-    -webkit-user-select: none;
-    border-left: 3px solid #e0e0e0;
-  }
-  .kanban-card.status-passed {
-    border-left-color: #4caf50;
-  }
-  .kanban-card.status-failed {
-    border-left-color: #f44336;
-  }
-  .kanban-card:hover {
-    border-color: #bdbdbd;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-  .kanban-card-details.visible {
-    display: block;
-  }
-  .kanban-card:active {
-    cursor: grabbing;
-  }
-  .kanban-card.dragging {
-    opacity: 0.4;
-    transform: scale(0.95);
-  }
-  .kanban-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 0.25rem;
-  }
-  .kanban-card-user {
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-  .kanban-card-date {
-    color: #9e9e9e;
-    font-size: 0.65rem;
-  }
-  .kanban-card-flow {
-    color: #666;
-    font-size: 0.7rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .kanban-card-testcase {
-    color: #888;
-    font-size: 0.65rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .kanban-card-title {
-    font-weight: 600;
-    font-size: 0.75rem;
-    color: #333;
-    margin-bottom: 0.25rem;
-    cursor: pointer;
-    padding: 0.15rem 0.25rem;
-    margin: 0 -0.25rem;
-    border-radius: 3px;
-    transition: background 0.15s;
-  }
-  .kanban-card-title:hover {
-    background: #f5f5f5;
-  }
-  .kanban-card-title.empty {
-    color: #bbb;
-    font-weight: 400;
-    font-style: italic;
-  }
-  .kanban-card-feedback {
-    margin-top: 0.35rem;
-    padding-top: 0.35rem;
-    border-top: 1px solid #f0f0f0;
-    color: #333;
-    font-size: 0.7rem;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    cursor: pointer;
-    padding: 0.25rem;
-    margin: 0.35rem -0.25rem 0;
-    border-radius: 3px;
-    transition: background 0.15s;
-  }
-  .kanban-card-feedback:hover {
-    background: #f5f5f5;
-  }
-  .kanban-card-feedback.empty {
-    color: #bbb;
-    font-style: italic;
-  }
-  .kanban-card-notes {
-    margin-top: 0.35rem;
-    padding: 0.25rem;
-    background: #fff8e1;
-    border-radius: 3px;
-    font-size: 0.65rem;
-    color: #666;
-    cursor: pointer;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.25rem;
-    transition: background 0.15s;
-  }
-  .kanban-card-notes:hover {
-    background: #fff3c4;
-  }
-  .kanban-card-notes.empty {
-    background: transparent;
-    color: #bbb;
-    font-style: italic;
-  }
-  .kanban-card-notes.empty:hover {
-    background: #f5f5f5;
-  }
-  .kanban-card-notes .notes-icon {
-    flex-shrink: 0;
-  }
-  .kanban-card-notes .notes-text {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .kanban-card-input {
-    width: 100%;
-    border: 1px solid #2196f3;
-    border-radius: 3px;
-    padding: 0.25rem;
-    font-size: inherit;
-    font-family: inherit;
-    resize: none;
-    outline: none;
-  }
-  .kanban-card-input:focus {
-    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
-  }
-  .kanban-card-thumb {
-    margin-top: 0.35rem;
-    width: 100%;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  .kanban-card-footer {
-    margin-top: 0.35rem;
-    padding-top: 0.35rem;
-    border-top: 1px solid #f0f0f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.65rem;
-    color: #888;
-  }
-  .kanban-card-icons {
-    display: flex;
-    gap: 0.35rem;
-  }
-  .kanban-card-icons span {
-    opacity: 0.6;
-  }
-  .kanban-card-points {
-    font-weight: 600;
-  }
-  .kanban-card-points.pending {
-    color: #ff9800;
-  }
-  .kanban-card-points.awarded {
-    color: #4caf50;
-  }
-  .kanban-card-details {
-    display: none;
-    margin-top: 0.35rem;
-    padding: 0.35rem;
-    background: #f8f8f8;
-    border-radius: 4px;
-    font-size: 0.65rem;
-    color: #555;
-  }
-  .kanban-card-details strong {
-    color: #333;
-  }
-  .kanban-add-column {
-    flex: 0 0 120px;
-    border: 2px dashed #ccc;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #888;
-    font-size: 0.8rem;
-    transition: all 0.15s ease;
-    min-height: 150px;
-  }
-  .kanban-add-column:hover {
-    border-color: #999;
-    background: #fafafa;
-    color: #666;
-  }
-  .kanban-section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
-  }
-  .kanban-section-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
-  }
-  .kanban-toggle-btn {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-  }
-  .kanban-board-wrapper {
-    display: block;
-  }
-  .kanban-board-wrapper.collapsed .kanban-board {
-    display: none;
-  }
-
-  /* Column edit modal */
-  .column-edit-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 10001;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.2s, visibility 0.2s;
-  }
-  .column-edit-modal.visible {
-    opacity: 1;
-    visibility: visible;
-  }
-  .column-edit-modal-content {
-    background: white;
-    border-radius: 10px;
-    padding: 1.25rem;
-    width: 300px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-  }
-  .column-edit-modal h5 {
-    margin-bottom: 1rem;
-    font-size: 1rem;
-  }
-  .column-edit-modal label {
-    font-size: 0.8rem;
-    margin-bottom: 0.25rem;
-    display: block;
-    color: #666;
-  }
-  .column-edit-modal input {
-    width: 100%;
-    padding: 0.4rem 0.6rem;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    margin-bottom: 0.75rem;
-  }
-  .column-edit-modal input:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
-  }
-  .column-edit-modal .color-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-  }
-  .column-edit-modal input[type="color"] {
-    width: 40px;
-    height: 32px;
-    padding: 0;
-    border: 1px solid #ddd;
-    cursor: pointer;
-  }
-  .column-edit-modal-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
-  .column-edit-modal-buttons button {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  .column-edit-modal-buttons .btn-cancel {
-    background: #f0f0f0;
-    border: 1px solid #ddd;
-    color: #666;
-  }
-  .column-edit-modal-buttons .btn-save {
-    background: #007bff;
-    border: none;
-    color: white;
-  }
-  .column-edit-modal-buttons .btn-delete {
-    background: #dc3545;
-    border: none;
-    color: white;
-    margin-right: auto;
-  }
-
   /* Masonry layout */
   #submissions-container {
     column-count: 3;
@@ -920,6 +385,133 @@
       column-count: 1;
     }
   }
+
+  /* Chat Modal */
+  .chat-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+  .chat-modal-backdrop.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+  .chat-modal {
+    background: white;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    transform: scale(0.9) translateY(-20px);
+    transition: transform 0.2s ease;
+  }
+  .chat-modal-backdrop.visible .chat-modal {
+    transform: scale(1) translateY(0);
+  }
+  .chat-modal-header {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    padding: 1rem 1.25rem;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .chat-modal-header h5 {
+    margin: 0;
+    font-size: 1rem;
+  }
+  .chat-modal-body {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    max-height: 300px;
+    min-height: 100px;
+    background: #f8f9fa;
+  }
+  .chat-modal-body .message-bubble {
+    max-width: 85%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+  }
+  .chat-modal-body .message-bubble.admin {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    margin-right: auto;
+  }
+  .chat-modal-body .message-bubble.user {
+    background: #e9ecef;
+    color: #333;
+    margin-left: auto;
+  }
+  .chat-modal-body .message-time {
+    font-size: 0.65rem;
+    opacity: 0.7;
+  }
+  .chat-modal-footer {
+    padding: 1rem;
+    border-top: 1px solid #e9ecef;
+  }
+  .chat-empty {
+    text-align: center;
+    color: #6c757d;
+    padding: 2rem;
+  }
+  .chat-case-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+  }
+  .chat-case-card .case-status {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .chat-case-card .case-status.passed {
+    background: rgba(76, 175, 80, 0.3);
+  }
+  .chat-case-card .case-status.failed {
+    background: rgba(244, 67, 54, 0.3);
+  }
+  .chat-case-card .case-section {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .chat-case-card .case-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 0.15rem;
+  }
+  .message-screenshot {
+    max-width: 100%;
+    max-height: 150px;
+    border-radius: 8px;
+    margin-top: 0.25rem;
+    cursor: pointer;
+  }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -927,97 +519,6 @@
   <a href="/admin/submissions/export?<%= Object.entries(filters).filter(([k,v]) => v).map(([k,v]) => `${k}=${v}`).join('&') %>" class="btn btn-outline-secondary">
     Exportar CSV
   </a>
-</div>
-
-<!-- Kanban Board Section -->
-<div class="kanban-board-wrapper" id="kanban-wrapper">
-  <div class="kanban-section-header">
-    <span class="kanban-section-title">📋 Tablero de Estados</span>
-    <button type="button" class="btn btn-outline-secondary kanban-toggle-btn" id="kanban-toggle">
-      Ocultar
-    </button>
-  </div>
-  <div class="kanban-board" id="kanban-board">
-    <% statuses.filter(s => s.showAsColumn).forEach(status => { %>
-      <div class="kanban-column" data-status-code="<%= status.code %>">
-        <div class="kanban-column-header">
-          <div class="kanban-column-title">
-            <span class="status-dot" style="background-color: <%= status.color %>;"></span>
-            <span class="status-name"><%= status.name %></span>
-            <span class="kanban-column-count"><%= (submissionsByStatus[status.code] || []).length %></span>
-          </div>
-          <div class="kanban-column-actions">
-            <button type="button" class="edit-column-btn" data-status-code="<%= status.code %>" data-status-name="<%= status.name %>" data-status-color="<%= status.color %>" data-is-system="<%= status.isSystem %>" title="Editar columna">✏️</button>
-          </div>
-        </div>
-        <div class="kanban-column-body" data-status-code="<%= status.code %>">
-          <% (submissionsByStatus[status.code] || []).slice(0, 10).forEach(sub => { %>
-            <div class="kanban-card status-<%= sub.status %>" draggable="true" data-submission-id="<%= sub._id %>" data-status="<%= status.code %>">
-              <div class="kanban-card-header">
-                <span class="kanban-card-user">
-                  <span class="status-dot <%= sub.status %>"></span>
-                  <%= sub.user ? sub.user.username : 'N/A' %>
-                </span>
-                <span class="kanban-card-date"><%= sub.createdAt.toLocaleDateString('es', {day: '2-digit', month: '2-digit'}) %></span>
-              </div>
-              <div class="kanban-card-title<%= sub.adminTitle ? '' : ' empty' %>" data-submission-id="<%= sub._id %>" title="Clic para editar título"><%= sub.adminTitle || 'Agregar título...' %></div>
-              <div class="kanban-card-flow"><%= sub.flow ? sub.flow.name : 'N/A' %> → <%= sub.testCase ? sub.testCase.title : 'N/A' %></div>
-              <div class="kanban-card-feedback<%= sub.feedback ? '' : ' empty' %>" data-submission-id="<%= sub._id %>" title="Clic para editar feedback"><%= sub.feedback || 'Agregar feedback...' %></div>
-              <% if (sub.screenshot) { %>
-                <img src="<%= sub.screenshot %>" alt="Screenshot" class="kanban-card-thumb" onclick="window.open('<%= sub.screenshot %>', '_blank')">
-              <% } %>
-              <div class="kanban-card-notes<%= sub.adminNotes ? '' : ' empty' %>" data-submission-id="<%= sub._id %>" title="Clic para editar notas">
-                <span class="notes-icon">📝</span>
-                <span class="notes-text"><%= sub.adminNotes || 'Agregar nota...' %></span>
-              </div>
-              <div class="kanban-card-footer">
-                <div class="kanban-card-icons">
-                  <% if (sub.screenshot) { %><span title="Tiene screenshot">📷</span><% } %>
-                  <% if (sub.wasReassigned) { %><span title="Reasignado">🔄</span><% } %>
-                </div>
-                <span class="kanban-card-points <%= sub.pointsAwarded ? 'awarded' : 'pending' %>" title="<%= sub.pointsAwarded ? 'Puntos otorgados' : 'Pendiente de revisar' %>">
-                  <%= sub.pointsEarned %> pts <%= sub.pointsAwarded ? '✓' : '⏳' %>
-                </span>
-              </div>
-              <% if (sub.testCase) { %>
-                <div class="kanban-card-details">
-                  <div><strong>Objetivo:</strong> <%= sub.testCase.description %></div>
-                  <div><strong>Esperado:</strong> <%= sub.testCase.expectedResult %></div>
-                </div>
-              <% } %>
-            </div>
-          <% }) %>
-          <% if ((submissionsByStatus[status.code] || []).length > 10) { %>
-            <div class="text-center text-muted" style="font-size: 0.7rem; padding: 0.25rem;">
-              +<%= (submissionsByStatus[status.code] || []).length - 10 %> más
-            </div>
-          <% } %>
-        </div>
-      </div>
-    <% }) %>
-    <div class="kanban-add-column" id="add-column-btn">
-      + Agregar columna
-    </div>
-  </div>
-</div>
-
-<!-- Column Edit Modal -->
-<div class="column-edit-modal" id="column-edit-modal">
-  <div class="column-edit-modal-content">
-    <h5 id="column-modal-title">Editar Columna</h5>
-    <label>Nombre</label>
-    <input type="text" id="column-name-input" placeholder="Nombre de la columna">
-    <label>Color</label>
-    <div class="color-row">
-      <input type="color" id="column-color-input" value="#6c757d">
-      <span id="column-color-preview" style="font-size: 0.8rem; color: #666;">#6c757d</span>
-    </div>
-    <div class="column-edit-modal-buttons">
-      <button type="button" class="btn-delete" id="column-delete-btn" style="display: none;">Eliminar</button>
-      <button type="button" class="btn-cancel" id="column-cancel-btn">Cancelar</button>
-      <button type="button" class="btn-save" id="column-save-btn">Guardar</button>
-    </div>
-  </div>
 </div>
 
 <div class="filter-card">
@@ -1142,193 +643,52 @@
   </div>
 </div>
 
-<%
-  // Merge groups and ungrouped submissions, interleaved by date
-  const allItems = [];
-
-  // Add groups with their most recent submission date for sorting
-  Object.values(groupedSubmissions).forEach(groupData => {
-    const mostRecentDate = groupData.submissions.reduce((latest, sub) => {
-      const subDate = new Date(sub.createdAt).getTime();
-      return subDate > latest ? subDate : latest;
-    }, 0);
-    allItems.push({
-      type: 'group',
-      data: groupData,
-      sortDate: mostRecentDate,
-      order: groupData.group.order || 0
-    });
-  });
-
-  // Add ungrouped submissions
-  ungroupedSubmissions.forEach(sub => {
-    allItems.push({
-      type: 'card',
-      data: sub,
-      sortDate: new Date(sub.createdAt).getTime(),
-      order: 999999 // Cards don't have manual order, always after groups with same date
-    });
-  });
-
-  // Sort by date (newest first), then by order for groups
-  allItems.sort((a, b) => {
-    // First sort by date (newest first)
-    const dateDiff = b.sortDate - a.sortDate;
-    if (dateDiff !== 0) return dateDiff;
-    // If same date, sort by order (lower order first)
-    return a.order - b.order;
-  });
-%>
+<!-- Chat Modal -->
+<div id="chat-modal" class="chat-modal-backdrop">
+  <div class="chat-modal">
+    <div class="chat-modal-header">
+      <div>
+        <h5 class="mb-0">💬 <span id="chat-test-case">Caso</span></h5>
+        <small style="opacity: 0.8;">con <span id="chat-user-name">Usuario</span></small>
+      </div>
+      <button type="button" class="btn-close btn-close-white" onclick="closeChatModal()"></button>
+    </div>
+    <div class="chat-modal-body" id="chat-messages">
+      <div class="chat-empty">Cargando mensajes...</div>
+    </div>
+    <div class="chat-modal-footer">
+      <form id="chat-form" enctype="multipart/form-data">
+        <input type="hidden" id="chat-submission-id">
+        <div class="d-flex gap-2 align-items-end">
+          <div class="flex-grow-1">
+            <input type="text" class="form-control" id="chat-input" placeholder="Escribe tu mensaje..." autocomplete="off">
+          </div>
+          <label class="btn btn-outline-secondary" title="Adjuntar imagen">
+            <input type="file" id="chat-screenshot" accept="image/*" style="display: none;">
+            📎
+          </label>
+          <button type="submit" class="btn btn-success">Enviar</button>
+        </div>
+        <div id="chat-screenshot-preview" style="display: none; margin-top: 0.5rem;">
+          <small class="text-muted">Imagen: <span id="chat-screenshot-name"></span></small>
+          <button type="button" class="btn btn-link btn-sm text-danger p-0 ms-2" onclick="clearChatScreenshot()">✕</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <div id="submissions-container">
-  <% allItems.forEach(item => { %>
-    <% if (item.type === 'group') { %>
-      <% const groupData = item.data; %>
-      <%
-        const groupName = groupData.group.name || 'Grupo';
-        const groupCount = groupData.submissions.length;
-        const firstUser = groupData.submissions[0]?.user?.username || 'zzz';
-      %>
-    <div class="submission-item"
-         data-sort-date="<%= item.sortDate %>"
-         data-sort-name="<%= firstUser.toLowerCase() %>"
-         data-sort-count="<%= groupCount %>"
-         data-sort-group-name="<%= groupName.toLowerCase() %>"
-         data-is-group="true">
-      <div class="submission-group" data-group-id="<%= groupData.group._id %>" draggable="false">
-        <div class="submission-group-header">
-          <span class="group-label">
-            <span class="group-name" data-group-id="<%= groupData.group._id %>" title="Clic para editar nombre"><%= groupData.group.name || 'Grupo' %></span>
-            <span class="group-count"><%= groupData.submissions.length %> envios</span>
-          </span>
-          <div class="group-actions">
-            <button type="button" class="btn btn-outline-danger btn-sm dissolve-group-btn" data-group-id="<%= groupData.group._id %>">
-              Disolver Grupo
-            </button>
-          </div>
-        </div>
-
-        <% groupData.submissions.forEach(sub => { %>
-          <div class="submission-card <%= sub.hiddenByAdmin ? 'hidden-card' : '' %>"
-               data-submission-id="<%= sub._id %>"
-               data-group-id="<%= sub.submissionGroup ? sub.submissionGroup._id : '' %>"
-               data-in-group="true"
-               data-hidden="<%= sub.hiddenByAdmin ? 'true' : 'false' %>"
-               draggable="false">
-            <div class="submission-header">
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <span class="drag-handle card-handle" title="Arrastrar tarjeta">⋮⋮</span>
-                  <span class="status-dot <%= sub.status %>"></span>
-                  <strong><%= sub.user ? sub.user.username : 'N/A' %></strong>
-                  <% if (sub.userGroupAtSubmission) { %>
-                    <span class="badge ms-1" style="background-color: <%= sub.userGroupAtSubmission.color %>; font-size: 0.65rem;">
-                      <%= sub.userGroupAtSubmission.code %>
-                    </span>
-                  <% } %>
-                  <span class="text-muted">· <%= sub.createdAt.toLocaleDateString() %></span>
-                  <% if (!sub.pointsAwarded) { %>
-                    <span class="badge bg-warning text-dark ms-2">Pendiente</span>
-                  <% } %>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                  <button type="button" class="btn btn-outline-secondary hide-btn"
-                          data-submission-id="<%= sub._id %>"
-                          title="<%= sub.hiddenByAdmin ? 'Mostrar' : 'Ocultar' %>">
-                    <%= sub.hiddenByAdmin ? '👁' : '👁‍🗨' %>
-                  </button>
-                  <span class="text-muted"><%= sub.pointsEarned %> pts</span>
-                  <button type="button" class="btn btn-link btn-sm p-0 text-danger ungroup-btn"
-                          data-submission-id="<%= sub._id %>" title="Quitar del grupo">✕</button>
-                </div>
-              </div>
-              <div class="mt-1 d-flex align-items-center">
-                <small class="text-muted">
-                  <%= sub.flow ? sub.flow.name : 'N/A' %> → <%= sub.testCase ? sub.testCase.title : 'N/A' %>
-                </small>
-                <span class="collapse-indicator">▼</span>
-              </div>
-            </div>
-
-            <div class="submission-body">
-              <div class="row">
-                <div class="col-8">
-                  <% if (sub.feedback) { %>
-                    <h6>Comentarios</h6>
-                    <div class="feedback-box"><%= sub.feedback %></div>
-                  <% } else { %>
-                    <div class="text-muted mb-3"><em>Sin comentarios</em></div>
-                  <% } %>
-                  <div class="admin-notes">
-                    <div class="admin-notes-label">📝 Nota Admin</div>
-                    <div class="admin-notes-content <%= sub.adminNotes ? '' : 'empty' %>"
-                         data-submission-id="<%= sub._id %>"
-                         title="Clic para editar"><%= sub.adminNotes || 'Agregar nota...' %></div>
-                  </div>
-                  <% if (sub.screenshot) { %>
-                    <h6 class="mt-3">Captura</h6>
-                    <a href="/uploads/<%= sub.screenshot %>" target="_blank">
-                      <img src="/uploads/<%= sub.screenshot %>" alt="Captura" class="screenshot-preview">
-                    </a>
-                  <% } %>
-                </div>
-                <div class="col-4">
-                  <h6>Puntos</h6>
-                  <div class="points-breakdown">
-                    <div class="points-item"><span>Base</span><span>1</span></div>
-                    <% if (sub.status === 'failed') { %>
-                      <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.bug ? 'rejected' : '' %>">
-                        <span>Error</span><span>+3</span>
-                      </div>
-                    <% } %>
-                    <% if (sub.feedback && sub.feedback.trim()) { %>
-                      <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.feedback ? 'rejected' : '' %>">
-                        <span>Feedback</span><span>+1</span>
-                      </div>
-                    <% } %>
-                    <% if (sub.screenshot) { %>
-                      <div class="points-item <%= sub.rejectedPoints && sub.rejectedPoints.screenshot ? 'rejected' : '' %>">
-                        <span>Captura</span><span>+1</span>
-                      </div>
-                    <% } %>
-                    <div class="points-item" style="border-top: 1px solid #ddd; margin-top: 0.25rem; padding-top: 0.5rem;">
-                      <strong>Total</strong><strong><%= sub.pointsEarned %></strong>
-                    </div>
-                  </div>
-                  <div class="action-buttons">
-                    <% if (!sub.pointsAwarded) { %>
-                      <form method="POST" action="/admin/submissions/<%= sub._id %>/approve<%= filterQuery %>" class="d-inline">
-                        <button type="submit" class="btn btn-dark btn-sm">Aprobar</button>
-                      </form>
-                    <% } %>
-                    <form method="POST" action="/admin/submissions/<%= sub._id %>/reset<%= filterQuery %>" class="d-inline">
-                      <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Eliminar?')">Reiniciar</button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        <% }) %>
-      </div>
-    </div>
-    <% } else { %>
-      <% const sub = item.data; %>
+  <% submissions.forEach(sub => { %>
     <div class="submission-item <%= sub.hiddenByAdmin ? 'hidden-by-admin' : '' %>"
-         data-sort-date="<%= item.sortDate %>"
+         data-sort-date="<%= new Date(sub.createdAt).getTime() %>"
          data-sort-name="<%= (sub.user?.username || 'zzz').toLowerCase() %>"
          data-sort-count="1"
-         data-is-group="false"
          data-hidden="<%= sub.hiddenByAdmin ? 'true' : 'false' %>">
-      <div class="submission-card"
-           data-submission-id="<%= sub._id %>"
-           data-group-id=""
-           data-in-group="false"
-           draggable="false">
+      <div class="submission-card" data-submission-id="<%= sub._id %>">
         <div class="submission-header">
           <div class="d-flex justify-content-between align-items-start">
             <div>
-              <span class="drag-handle card-handle" title="Arrastrar para agrupar">⋮⋮</span>
               <span class="status-dot <%= sub.status %>"></span>
               <strong><%= sub.user ? sub.user.username : 'N/A' %></strong>
               <% if (sub.userGroupAtSubmission) { %>
@@ -1382,12 +742,6 @@
               <% } else { %>
                 <div class="text-muted mb-3"><em>Sin comentarios proporcionados</em></div>
               <% } %>
-              <div class="admin-notes">
-                <div class="admin-notes-label">📝 Nota Admin</div>
-                <div class="admin-notes-content <%= sub.adminNotes ? '' : 'empty' %>"
-                     data-submission-id="<%= sub._id %>"
-                     title="Clic para editar"><%= sub.adminNotes || 'Agregar nota...' %></div>
-              </div>
               <% if (sub.screenshot) { %>
                 <h6 class="mt-3">Captura de Pantalla</h6>
                 <a href="/uploads/<%= sub.screenshot %>" target="_blank">
@@ -1455,6 +809,14 @@
               </div>
 
               <div class="action-buttons">
+                <button type="button" class="btn btn-outline-success btn-sm chat-btn"
+                        data-user-id="<%= sub.user ? sub.user._id : '' %>"
+                        data-user-name="<%= sub.user ? sub.user.username : 'N/A' %>"
+                        data-submission-id="<%= sub._id %>"
+                        data-test-case="<%= sub.testCase ? sub.testCase.title : '' %>"
+                        title="Enviar mensaje">
+                  💬
+                </button>
                 <% if (!sub.pointsAwarded) { %>
                   <form method="POST" action="/admin/submissions/<%= sub._id %>/approve<%= filterQuery %>" class="d-inline">
                     <button type="submit" class="btn btn-dark btn-sm">Aprobar</button>
@@ -1477,392 +839,13 @@
         </div>
       </div>
     </div>
-    <% } %>
   <% }) %>
 </div>
-<% } %>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   let draggedElement = null;
   let draggedId = null;
-
-  // ==================== Kanban Board ====================
-  const kanbanBoard = document.getElementById('kanban-board');
-  const kanbanWrapper = document.getElementById('kanban-wrapper');
-  const kanbanToggle = document.getElementById('kanban-toggle');
-  let kanbanDraggedCard = null;
-
-  // Toggle Kanban visibility
-  if (kanbanToggle) {
-    kanbanToggle.addEventListener('click', function() {
-      kanbanWrapper.classList.toggle('collapsed');
-      this.textContent = kanbanWrapper.classList.contains('collapsed') ? 'Mostrar' : 'Ocultar';
-    });
-  }
-
-  // Kanban card drag start
-  document.querySelectorAll('.kanban-card').forEach(card => {
-    card.addEventListener('dragstart', function(e) {
-      kanbanDraggedCard = this;
-      this.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', this.dataset.submissionId);
-    });
-
-    card.addEventListener('dragend', function() {
-      this.classList.remove('dragging');
-      kanbanDraggedCard = null;
-      document.querySelectorAll('.kanban-column-body.drag-over').forEach(col => {
-        col.classList.remove('drag-over');
-      });
-    });
-
-    // Toggle details on click (only on card body, not editable fields)
-    card.addEventListener('click', function(e) {
-      // Don't toggle if clicking on editable fields or thumbnail
-      if (e.target.classList.contains('kanban-card-thumb')) return;
-      if (e.target.classList.contains('kanban-card-title')) return;
-      if (e.target.classList.contains('kanban-card-feedback')) return;
-      if (e.target.classList.contains('kanban-card-notes')) return;
-      if (e.target.closest('.kanban-card-notes')) return;
-      if (e.target.classList.contains('kanban-card-input')) return;
-      const details = this.querySelector('.kanban-card-details');
-      if (details) {
-        details.classList.toggle('visible');
-      }
-    });
-  });
-
-  // Kanban card inline editing
-  function createKanbanEditor(element, field, isTextarea = false) {
-    const submissionId = element.dataset.submissionId;
-    const currentValue = element.classList.contains('empty') ? '' :
-      (field === 'notes' ? element.querySelector('.notes-text').textContent.trim() : element.textContent.trim());
-
-    const input = document.createElement(isTextarea ? 'textarea' : 'input');
-    input.className = 'kanban-card-input';
-    input.value = currentValue;
-    if (isTextarea) {
-      input.rows = 3;
-    }
-
-    element.style.display = 'none';
-    element.parentNode.insertBefore(input, element.nextSibling);
-    input.focus();
-    input.select();
-
-    let saved = false;
-
-    const saveValue = async () => {
-      if (saved) return;
-      saved = true;
-
-      const newValue = input.value.trim();
-
-      try {
-        const endpoint = field === 'title' ? 'title' : field === 'feedback' ? 'feedback' : 'notes';
-        const bodyKey = field === 'notes' ? 'notes' : field;
-
-        const response = await fetch(`/admin/submissions/${submissionId}/${endpoint}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ [bodyKey]: newValue })
-        });
-
-        if (response.ok) {
-          if (field === 'notes') {
-            element.querySelector('.notes-text').textContent = newValue || 'Agregar nota...';
-          } else {
-            element.textContent = newValue || (field === 'title' ? 'Agregar título...' : 'Agregar feedback...');
-          }
-
-          if (newValue) {
-            element.classList.remove('empty');
-          } else {
-            element.classList.add('empty');
-          }
-        }
-      } catch (err) {
-        console.error('Save error:', err);
-      }
-
-      input.remove();
-      element.style.display = '';
-    };
-
-    const cancelEdit = () => {
-      if (saved) return;
-      saved = true;
-      input.remove();
-      element.style.display = '';
-    };
-
-    input.addEventListener('blur', saveValue);
-    input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !isTextarea) {
-        e.preventDefault();
-        saveValue();
-      } else if (e.key === 'Enter' && e.ctrlKey) {
-        e.preventDefault();
-        saveValue();
-      } else if (e.key === 'Escape') {
-        cancelEdit();
-      }
-    });
-  }
-
-  // Attach click handlers for editable fields
-  document.querySelectorAll('.kanban-card-title').forEach(el => {
-    el.addEventListener('click', function(e) {
-      e.stopPropagation();
-      createKanbanEditor(this, 'title', false);
-    });
-  });
-
-  document.querySelectorAll('.kanban-card-feedback').forEach(el => {
-    el.addEventListener('click', function(e) {
-      e.stopPropagation();
-      createKanbanEditor(this, 'feedback', true);
-    });
-  });
-
-  document.querySelectorAll('.kanban-card-notes').forEach(el => {
-    el.addEventListener('click', function(e) {
-      e.stopPropagation();
-      createKanbanEditor(this, 'notes', true);
-    });
-  });
-
-  // Kanban column body as drop target
-  document.querySelectorAll('.kanban-column-body').forEach(columnBody => {
-    columnBody.addEventListener('dragover', function(e) {
-      e.preventDefault();
-      if (kanbanDraggedCard) {
-        this.classList.add('drag-over');
-      }
-    });
-
-    columnBody.addEventListener('dragleave', function(e) {
-      if (!this.contains(e.relatedTarget)) {
-        this.classList.remove('drag-over');
-      }
-    });
-
-    columnBody.addEventListener('drop', async function(e) {
-      e.preventDefault();
-      this.classList.remove('drag-over');
-
-      if (!kanbanDraggedCard) return;
-
-      // Save reference before async operation (dragend may set kanbanDraggedCard to null)
-      const card = kanbanDraggedCard;
-      const submissionId = card.dataset.submissionId;
-      const newStatus = this.dataset.statusCode;
-      const oldStatus = card.dataset.status;
-
-      if (newStatus === oldStatus) return;
-
-      try {
-        const response = await fetch(`/admin/submissions/${submissionId}/status`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: newStatus })
-        });
-
-        if (response.ok) {
-          // Move card to new column
-          card.dataset.status = newStatus;
-          this.appendChild(card);
-
-          // Update counts
-          updateColumnCounts();
-        } else {
-          alert('Error al cambiar estado');
-        }
-      } catch (err) {
-        console.error('Status change error:', err);
-        alert('Error al cambiar estado');
-      }
-    });
-  });
-
-  // Update column counts after drag
-  function updateColumnCounts() {
-    document.querySelectorAll('.kanban-column').forEach(column => {
-      const body = column.querySelector('.kanban-column-body');
-      const count = body.querySelectorAll('.kanban-card').length;
-      const countEl = column.querySelector('.kanban-column-count');
-      if (countEl) {
-        countEl.textContent = count;
-      }
-    });
-  }
-
-  // Column Edit Modal
-  const columnEditModal = document.getElementById('column-edit-modal');
-  const columnModalTitle = document.getElementById('column-modal-title');
-  const columnNameInput = document.getElementById('column-name-input');
-  const columnColorInput = document.getElementById('column-color-input');
-  const columnColorPreview = document.getElementById('column-color-preview');
-  const columnDeleteBtn = document.getElementById('column-delete-btn');
-  const columnCancelBtn = document.getElementById('column-cancel-btn');
-  const columnSaveBtn = document.getElementById('column-save-btn');
-  const addColumnBtn = document.getElementById('add-column-btn');
-
-  let editingStatusCode = null;
-  let isNewColumn = false;
-
-  // Update color preview
-  if (columnColorInput) {
-    columnColorInput.addEventListener('input', function() {
-      columnColorPreview.textContent = this.value;
-    });
-  }
-
-  // Edit column button
-  document.querySelectorAll('.edit-column-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      editingStatusCode = this.dataset.statusCode;
-      isNewColumn = false;
-
-      columnModalTitle.textContent = 'Editar Columna';
-      columnNameInput.value = this.dataset.statusName;
-      columnColorInput.value = this.dataset.statusColor;
-      columnColorPreview.textContent = this.dataset.statusColor;
-
-      // Show delete button only for non-system statuses
-      columnDeleteBtn.style.display = this.dataset.isSystem === 'true' ? 'none' : 'block';
-
-      columnEditModal.classList.add('visible');
-    });
-  });
-
-  // Add new column
-  if (addColumnBtn) {
-    addColumnBtn.addEventListener('click', function() {
-      editingStatusCode = null;
-      isNewColumn = true;
-
-      columnModalTitle.textContent = 'Nueva Columna';
-      columnNameInput.value = '';
-      columnColorInput.value = '#6c757d';
-      columnColorPreview.textContent = '#6c757d';
-      columnDeleteBtn.style.display = 'none';
-
-      columnEditModal.classList.add('visible');
-    });
-  }
-
-  // Cancel modal
-  if (columnCancelBtn) {
-    columnCancelBtn.addEventListener('click', function() {
-      columnEditModal.classList.remove('visible');
-    });
-  }
-
-  // Close modal on backdrop click
-  if (columnEditModal) {
-    columnEditModal.addEventListener('click', function(e) {
-      if (e.target === columnEditModal) {
-        columnEditModal.classList.remove('visible');
-      }
-    });
-  }
-
-  // Save column
-  if (columnSaveBtn) {
-    columnSaveBtn.addEventListener('click', async function() {
-      const name = columnNameInput.value.trim();
-      const color = columnColorInput.value;
-
-      if (!name) {
-        alert('El nombre es requerido');
-        return;
-      }
-
-      try {
-        if (isNewColumn) {
-          // Create new column
-          const response = await fetch('/admin/submission-statuses', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, color })
-          });
-
-          if (response.ok) {
-            location.reload();
-          } else {
-            const data = await response.json();
-            alert('Error: ' + (data.error || 'Error al crear columna'));
-          }
-        } else {
-          // Update existing column
-          const response = await fetch(`/admin/submission-statuses/${editingStatusCode}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, color })
-          });
-
-          if (response.ok) {
-            // Update UI without reload
-            const column = document.querySelector(`.kanban-column[data-status-code="${editingStatusCode}"]`);
-            if (column) {
-              const nameEl = column.querySelector('.status-name');
-              const dotEl = column.querySelector('.kanban-column-title .status-dot');
-              const editBtn = column.querySelector('.edit-column-btn');
-
-              if (nameEl) nameEl.textContent = name;
-              if (dotEl) dotEl.style.backgroundColor = color;
-              if (editBtn) {
-                editBtn.dataset.statusName = name;
-                editBtn.dataset.statusColor = color;
-              }
-            }
-            columnEditModal.classList.remove('visible');
-          } else {
-            const data = await response.json();
-            alert('Error: ' + (data.error || 'Error al actualizar columna'));
-          }
-        }
-      } catch (err) {
-        console.error('Save column error:', err);
-        alert('Error al guardar columna');
-      }
-    });
-  }
-
-  // Delete column
-  if (columnDeleteBtn) {
-    columnDeleteBtn.addEventListener('click', async function() {
-      if (!editingStatusCode) return;
-
-      showConfirm({
-        icon: '🗑️',
-        title: 'Eliminar columna',
-        message: 'Los envios de esta columna se moveran a Backlog. Esta accion no se puede deshacer.',
-        confirmText: 'Eliminar',
-        onConfirm: async () => {
-          try {
-            const response = await fetch(`/admin/submission-statuses/${editingStatusCode}`, {
-              method: 'DELETE'
-            });
-
-            if (response.ok) {
-              location.reload();
-            } else {
-              const data = await response.json();
-              alert('Error: ' + (data.error || 'Error al eliminar columna'));
-            }
-          } catch (err) {
-            console.error('Delete column error:', err);
-            alert('Error al eliminar columna');
-          }
-        }
-      });
-    });
-  }
 
   // Sorting functionality
   const container = document.getElementById('submissions-container');
@@ -2522,5 +1505,211 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   });
+
+  // ===== CHAT MODAL =====
+  const chatModal = document.getElementById('chat-modal');
+  const chatMessages = document.getElementById('chat-messages');
+  const chatForm = document.getElementById('chat-form');
+  const chatInput = document.getElementById('chat-input');
+  const chatSubmissionId = document.getElementById('chat-submission-id');
+  const chatUserName = document.getElementById('chat-user-name');
+  const chatTestCase = document.getElementById('chat-test-case');
+
+  // Open chat modal - now submission-based
+  document.querySelectorAll('.chat-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const submissionId = this.dataset.submissionId;
+      const userName = this.dataset.userName;
+      const testCase = this.dataset.testCase;
+
+      if (!submissionId) {
+        alert('Envio no encontrado');
+        return;
+      }
+
+      chatSubmissionId.value = submissionId;
+      chatUserName.textContent = userName;
+      chatTestCase.textContent = testCase || 'Sin caso';
+
+      chatModal.classList.add('visible');
+      loadSubmissionChat(submissionId);
+      chatInput.focus();
+    });
+  });
+
+  // Close chat modal
+  window.closeChatModal = function() {
+    chatModal.classList.remove('visible');
+    chatMessages.innerHTML = '<div class="chat-empty">Cargando mensajes...</div>';
+  };
+
+  // Close on backdrop click
+  chatModal.addEventListener('click', function(e) {
+    if (e.target === chatModal) {
+      closeChatModal();
+    }
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && chatModal.classList.contains('visible')) {
+      closeChatModal();
+    }
+  });
+
+  // Load chat messages for a specific submission
+  async function loadSubmissionChat(submissionId) {
+    try {
+      const response = await fetch(`/admin/messages/submission/${submissionId}`);
+      const data = await response.json();
+
+      if (!data.success) {
+        chatMessages.innerHTML = '<div class="chat-empty">Error al cargar mensajes</div>';
+        return;
+      }
+
+      chatMessages.innerHTML = '';
+
+      // Show case data card at the top
+      if (data.submission && data.submission.testCase) {
+        const tc = data.submission.testCase;
+        const sub = data.submission;
+        const caseCard = document.createElement('div');
+        caseCard.className = 'chat-case-card';
+        caseCard.innerHTML = `
+          <div class="case-status ${sub.status}">${sub.status === 'passed' ? '✓ Aprobado' : '✗ Fallido'}</div>
+          <div><strong>${escapeHtml(tc.title)}</strong></div>
+          ${tc.description ? `<div class="case-section"><div class="case-label">Objetivo</div><div>${escapeHtml(tc.description)}</div></div>` : ''}
+          ${tc.scenario ? `<div class="case-section"><div class="case-label">Pasos</div><div style="white-space: pre-wrap;">${escapeHtml(tc.scenario)}</div></div>` : ''}
+          ${tc.expectedResult ? `<div class="case-section"><div class="case-label">Resultado esperado</div><div>${escapeHtml(tc.expectedResult)}</div></div>` : ''}
+          ${sub.feedback ? `<div class="case-section" style="background: rgba(255,255,255,0.1); border-radius: 6px; padding: 0.5rem; margin-top: 0.75rem;"><div class="case-label">Comentario del usuario</div><div style="white-space: pre-wrap;">${escapeHtml(sub.feedback)}</div></div>` : ''}
+          ${sub.screenshot ? `<div class="case-section"><div class="case-label">Captura del usuario</div><a href="/uploads/${sub.screenshot}" target="_blank"><img src="/uploads/${sub.screenshot}" style="max-width: 100%; max-height: 150px; border-radius: 6px; margin-top: 0.25rem; border: 2px solid rgba(255,255,255,0.3);" alt="Captura"></a></div>` : ''}
+        `;
+        chatMessages.appendChild(caseCard);
+      }
+
+      // Show messages
+      if (!data.messages || data.messages.length === 0) {
+        const emptyNote = document.createElement('div');
+        emptyNote.className = 'chat-empty';
+        emptyNote.innerHTML = 'No hay mensajes. Inicia la conversacion!';
+        chatMessages.appendChild(emptyNote);
+      } else {
+        data.messages.forEach(msg => {
+          const bubble = document.createElement('div');
+          bubble.className = `message-bubble ${msg.sender}`;
+          bubble.style.display = 'flex';
+          bubble.style.flexDirection = 'column';
+
+          const time = new Date(msg.createdAt).toLocaleString('es', {
+            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+          });
+
+          let html = '';
+          if (msg.content) {
+            html += `<div>${escapeHtml(msg.content)}</div>`;
+          }
+          if (msg.screenshot) {
+            html += `<a href="/uploads/${msg.screenshot}" target="_blank"><img src="/uploads/${msg.screenshot}" class="message-screenshot" alt="Imagen"></a>`;
+          }
+          html += `<div class="message-time">${time}</div>`;
+
+          bubble.innerHTML = html;
+          chatMessages.appendChild(bubble);
+        });
+      }
+
+      // Scroll to bottom
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    } catch (err) {
+      console.error('Load messages error:', err);
+      chatMessages.innerHTML = '<div class="chat-empty">Error al cargar mensajes</div>';
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Screenshot handling for chat
+  const chatScreenshotInput = document.getElementById('chat-screenshot');
+  const chatScreenshotPreview = document.getElementById('chat-screenshot-preview');
+  const chatScreenshotName = document.getElementById('chat-screenshot-name');
+
+  chatScreenshotInput?.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      chatScreenshotName.textContent = this.files[0].name;
+      chatScreenshotPreview.style.display = 'block';
+    }
+  });
+
+  window.clearChatScreenshot = function() {
+    chatScreenshotInput.value = '';
+    chatScreenshotPreview.style.display = 'none';
+  };
+
+  // Send message - now submission-based
+  chatForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const content = chatInput.value.trim();
+    const submissionId = chatSubmissionId.value;
+    const file = chatScreenshotInput?.files[0];
+
+    if ((!content && !file) || !submissionId) return;
+
+    try {
+      const formData = new FormData();
+      if (content) formData.append('content', content);
+      if (file) formData.append('screenshot', file);
+
+      const response = await fetch(`/admin/messages/submission/${submissionId}`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        chatInput.value = '';
+        clearChatScreenshot();
+
+        // Remove empty state if present
+        const emptyState = chatMessages.querySelector('.chat-empty');
+        if (emptyState) emptyState.remove();
+
+        // Add message to chat
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble admin';
+        bubble.style.display = 'flex';
+        bubble.style.flexDirection = 'column';
+
+        const time = new Date().toLocaleString('es', {
+          day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+        });
+
+        let html = '';
+        if (content) {
+          html += `<div>${escapeHtml(content)}</div>`;
+        }
+        if (data.message.screenshot) {
+          html += `<a href="/uploads/${data.message.screenshot}" target="_blank"><img src="/uploads/${data.message.screenshot}" class="message-screenshot" alt="Imagen"></a>`;
+        }
+        html += `<div class="message-time">${time}</div>`;
+
+        bubble.innerHTML = html;
+        chatMessages.appendChild(bubble);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      } else {
+        alert('Error al enviar mensaje: ' + (data.error || 'Error desconocido'));
+      }
+    } catch (err) {
+      console.error('Send message error:', err);
+      alert('Error al enviar mensaje');
+    }
+  });
 });
 </script>
+
+<% } %>
